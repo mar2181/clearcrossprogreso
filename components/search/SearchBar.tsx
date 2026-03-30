@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,31 +18,27 @@ export default function SearchBar({
   className,
   defaultValue = '',
 }: SearchBarProps) {
-  const [query, setQuery] = useState(defaultValue);
+  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    // Read directly from the DOM input as fallback (in case React state didn't sync)
-    const formData = new FormData(e.currentTarget);
-    const q = ((formData.get('q') as string) || query).trim();
-
+    e.preventDefault();
+    const q = (inputRef.current?.value || '').trim();
     if (q.length >= 2) {
-      e.preventDefault();
       router.push(`/search?q=${encodeURIComponent(q)}`);
     }
-    // If q is too short, let native form action handle it (no preventDefault)
   };
 
   if (variant === 'mobile') {
     return (
-      <form action="/search" method="GET" onSubmit={handleSubmit} className={cn('w-full', className)}>
+      <form onSubmit={handleSubmit} className={cn('w-full', className)}>
         <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 overflow-hidden">
           <Search className="w-4 h-4 text-white/50 ml-3 flex-shrink-0" />
           <input
+            ref={inputRef}
             type="text"
             name="q"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            defaultValue={defaultValue}
             placeholder={placeholder}
             className="flex-1 px-3 py-2.5 bg-transparent text-white text-sm placeholder-white/40 focus:outline-none"
           />
@@ -59,14 +55,14 @@ export default function SearchBar({
 
   if (variant === 'compact') {
     return (
-      <form action="/search" method="GET" onSubmit={handleSubmit} className={cn('w-full', className)}>
+      <form onSubmit={handleSubmit} className={cn('w-full', className)}>
         <div className="flex items-center bg-white rounded-lg border border-neutral-200 shadow-sm overflow-hidden hover:border-brand-blue/40 transition-colors">
           <Search className="w-4 h-4 text-neutral-400 ml-3 flex-shrink-0" />
           <input
+            ref={inputRef}
             type="text"
             name="q"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            defaultValue={defaultValue}
             placeholder={placeholder}
             className="flex-1 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
           />
@@ -83,14 +79,14 @@ export default function SearchBar({
 
   // Hero variant (desktop)
   return (
-    <form action="/search" method="GET" onSubmit={handleSubmit} className={cn('w-full', className)}>
+    <form onSubmit={handleSubmit} className={cn('w-full', className)}>
       <div className="relative max-w-2xl mx-auto">
         <div className="flex items-center bg-white rounded-full shadow-2xl overflow-hidden">
           <input
+            ref={inputRef}
             type="text"
             name="q"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            defaultValue={defaultValue}
             placeholder={placeholder}
             className="flex-1 px-6 py-4 text-gray-900 placeholder-gray-500 focus:outline-none font-sans"
           />
