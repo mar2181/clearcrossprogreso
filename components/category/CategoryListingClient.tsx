@@ -5,7 +5,7 @@ import { Provider, Procedure } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import ProviderCard from '@/components/providers/ProviderCard';
 import Button from '@/components/ui/Button';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Award } from 'lucide-react';
 
 interface CategoryListingClientProps {
   providers: Provider[];
@@ -24,29 +24,39 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
 }) => {
   const [selectedProcedures, setSelectedProcedures] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('rating');
+  const [minExperience, setMinExperience] = useState<number>(0);
 
-  // Filter providers by selected procedures
+  const currentYear = new Date().getFullYear();
+
+  // Filter providers by selected procedures and experience
   const filteredProviders = useMemo(() => {
-    if (selectedProcedures.length === 0) {
-      return providers;
+    let filtered = providers;
+
+    // Filter by procedures
+    if (selectedProcedures.length > 0) {
+      filtered = filtered.filter((provider) => {
+        const prices = (provider as any).provider_prices;
+        if (!prices || prices.length === 0) return false;
+        const providerProcedureIds = (prices as any[]).map(
+          (p) => p.procedure_id || p.procedure?.id
+        );
+        return selectedProcedures.some((procId) =>
+          providerProcedureIds.includes(procId)
+        );
+      });
     }
 
-    return providers.filter((provider) => {
-      // Check if provider has prices for any selected procedures
-      const prices = (provider as any).provider_prices;
-      if (!prices || prices.length === 0) {
-        return false;
-      }
+    // Filter by experience
+    if (minExperience > 0) {
+      filtered = filtered.filter((provider) => {
+        if (!provider.graduation_year) return false;
+        const years = currentYear - provider.graduation_year;
+        return years >= minExperience;
+      });
+    }
 
-      const providerProcedureIds = (prices as any[]).map(
-        (p) => p.procedure_id || p.procedure?.id
-      );
-
-      return selectedProcedures.some((procId) =>
-        providerProcedureIds.includes(procId)
-      );
-    });
-  }, [providers, selectedProcedures]);
+    return filtered;
+  }, [providers, selectedProcedures, minExperience, currentYear]);
 
   // Sort providers (featured providers always stay at top)
   const sortedProviders = useMemo(() => {
@@ -123,6 +133,32 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
         </div>
       )}
 
+      {/* Experience Filter */}
+      {providers.some(p => p.graduation_year) && (
+        <div>
+          <p className="text-sm font-semibold text-neutral-dark mb-3 flex items-center gap-1.5">
+            <Award className="w-4 h-4 text-brand-navy" />
+            Filter by Experience
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            {[0, 5, 10, 15, 20, 25].map((years) => (
+              <button
+                key={years}
+                onClick={() => setMinExperience(years)}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border',
+                  minExperience === years
+                    ? 'bg-brand-navy text-white border-brand-navy'
+                    : 'bg-white text-neutral-dark border-neutral-200 hover:border-brand-navy hover:text-brand-navy'
+                )}
+              >
+                {years === 0 ? 'Any' : `${years}+ years`}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Sort and Results */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <p className="text-sm text-neutral-500">
@@ -169,7 +205,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
             No providers found matching your criteria.
           </p>
           <button
-            onClick={() => setSelectedProcedures([])}
+            onClick={() => { setSelectedProcedures([]); setMinExperience(0); }}
             className="text-brand-blue font-medium hover:underline"
           >
             Clear filters

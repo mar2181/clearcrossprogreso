@@ -20,12 +20,14 @@ export interface Provider {
   website: string | null;
   description: string | null;
   logo_url: string | null;
+  photo_url: string | null;
   gallery_urls: string[];
   verified: boolean;
   featured: boolean;
   plan: 'free' | 'featured' | 'premium';
   avg_rating: number | null;
   review_count: number;
+  graduation_year: number | null;
   lat: number | null;
   lng: number | null;
   created_at: string;

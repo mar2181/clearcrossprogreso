@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { MapPin, Star } from 'lucide-react';
+import Image from 'next/image';
+import { MapPin, Star, Award } from 'lucide-react';
 import { Provider, ProviderPrice } from '@/lib/types';
 import { cn, formatUSD } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -20,9 +21,15 @@ interface ProviderCardProps {
   };
 }
 
+function getYearsExperience(graduationYear: number | null): number | null {
+  if (!graduationYear) return null;
+  return new Date().getFullYear() - graduationYear;
+}
+
 const ProviderCard: React.FC<ProviderCardProps> = ({ provider }) => {
   const categoryName = provider.category?.name || 'Medical';
   const categorySlug = provider.category?.slug || 'dentists';
+  const yearsExp = getYearsExperience(provider.graduation_year);
 
   // Get first available price (check both 'prices' and 'provider_prices' keys)
   const priceList = provider.prices || (provider as any).provider_prices || [];
@@ -33,6 +40,22 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider }) => {
   return (
     <Card hover className="flex flex-col h-full overflow-hidden">
       <CardContent className="flex-1 p-0">
+        {/* Provider photo */}
+        {provider.photo_url && (
+          <Link href={`/${categorySlug}/${provider.slug}`}>
+            <div className="relative w-full h-40 overflow-hidden">
+              <Image
+                src={provider.photo_url}
+                alt={provider.name}
+                fill
+                className="object-cover object-top hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            </div>
+          </Link>
+        )}
+
         {/* Header with badges */}
         <div className="p-4 pb-3 border-b border-neutral-100">
           <div className="flex items-start justify-between gap-2 mb-2">
@@ -58,10 +81,20 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider }) => {
             </div>
           </div>
 
-          {/* Category badge */}
-          <Badge variant="default" className="text-xs inline-block">
-            {categoryName}
-          </Badge>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Category badge */}
+            <Badge variant="default" className="text-xs inline-block">
+              {categoryName}
+            </Badge>
+
+            {/* Experience badge */}
+            {yearsExp && yearsExp > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs bg-brand-navy/5 text-brand-navy font-medium px-2 py-0.5 rounded-full border border-brand-navy/10">
+                <Award className="w-3 h-3" />
+                {yearsExp}+ yrs
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Rating and review count */}

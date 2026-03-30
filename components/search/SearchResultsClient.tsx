@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Star, Search, ArrowRight, Sparkles, SearchX, TrendingUp } from 'lucide-react';
+import { MapPin, Star, Search, ArrowRight, Sparkles, SearchX, TrendingUp, Award } from 'lucide-react';
 import { formatUSD } from '@/lib/utils';
 import type { SearchResult } from '@/lib/data';
 
@@ -202,6 +202,10 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
                   .filter((mp) => mp.price_usd)
                   .map((mp) => mp.price_usd!);
                 const minPrice = lowestPrice.length > 0 ? Math.min(...lowestPrice) : null;
+                const cardImage = result.provider.photo_url || catImage;
+                const yearsExp = result.provider.graduation_year
+                  ? new Date().getFullYear() - result.provider.graduation_year
+                  : null;
 
                 return (
                   <Link
@@ -214,14 +218,14 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
                     }`}
                   >
                     <div className="flex items-stretch">
-                      {/* Category thumbnail */}
-                      {catImage && (
+                      {/* Provider photo or category thumbnail */}
+                      {cardImage && (
                         <div className="relative w-20 sm:w-24 flex-shrink-0 hidden sm:block">
                           <Image
-                            src={catImage}
-                            alt={categoryName}
+                            src={cardImage}
+                            alt={result.provider.photo_url ? result.provider.name : categoryName}
                             fill
-                            className="object-cover rounded-l-xl"
+                            className={`object-cover rounded-l-xl ${result.provider.photo_url ? 'object-top' : ''}`}
                             sizes="96px"
                           />
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/20 rounded-l-xl" />
@@ -247,6 +251,12 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
                                 <span className="flex-shrink-0 text-[10px] bg-amber/10 text-amber font-semibold px-2 py-0.5 rounded-full border border-amber/20 inline-flex items-center gap-0.5">
                                   <Sparkles className="w-2.5 h-2.5" />
                                   Featured
+                                </span>
+                              )}
+                              {yearsExp && yearsExp > 0 && (
+                                <span className="flex-shrink-0 text-[10px] bg-brand-navy/5 text-brand-navy font-semibold px-2 py-0.5 rounded-full border border-brand-navy/10 inline-flex items-center gap-0.5">
+                                  <Award className="w-2.5 h-2.5" />
+                                  {yearsExp}+ yrs exp
                                 </span>
                               )}
                             </div>

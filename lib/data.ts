@@ -24,6 +24,8 @@ export interface SearchResult {
     avg_rating: number | null;
     review_count: number;
     description: string | null;
+    photo_url: string | null;
+    graduation_year: number | null;
   };
   category: {
     name: string;
@@ -255,7 +257,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
   const { data: providerResults } = await supabase
     .from('providers')
     .select(`
-      id, name, slug, address, verified, featured, avg_rating, review_count, description,
+      id, name, slug, address, verified, featured, avg_rating, review_count, description, photo_url, graduation_year,
       categories(name, slug),
       provider_prices(
         price_usd, price_notes,
@@ -282,7 +284,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
         price_usd, price_notes,
         procedure:procedure_id(id, name),
         provider:provider_id(
-          id, name, slug, address, verified, featured, avg_rating, review_count, description,
+          id, name, slug, address, verified, featured, avg_rating, review_count, description, photo_url, graduation_year,
           categories(name, slug)
         )
       `)
@@ -302,6 +304,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
         verified: p.verified, featured: p.featured,
         avg_rating: p.avg_rating, review_count: p.review_count,
         description: p.description,
+        photo_url: (p as any).photo_url || null, graduation_year: (p as any).graduation_year || null,
       },
       category: { name: cat?.name || '', slug: cat?.slug || '' },
       matchedProcedures: ((p as any).provider_prices || []).map((pp: any) => ({
@@ -334,6 +337,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
           verified: prov.verified, featured: prov.featured,
           avg_rating: prov.avg_rating, review_count: prov.review_count,
           description: prov.description,
+          photo_url: prov.photo_url || null, graduation_year: prov.graduation_year || null,
         },
         category: { name: cat?.name || '', slug: cat?.slug || '' },
         matchedProcedures: [{
@@ -345,7 +349,11 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
     }
   }
 
-  return Array.from(resultsMap.values());
+  return Array.from(resultsMap.values()).sort((a, b) => {
+    if (a.provider.featured && !b.provider.featured) return -1;
+    if (!a.provider.featured && b.provider.featured) return 1;
+    return (b.provider.avg_rating || 0) - (a.provider.avg_rating || 0);
+  });
 }
 
 // Search across mock data
@@ -388,6 +396,7 @@ function searchMockData(q: string): SearchResult[] {
         verified: prov.verified, featured: prov.featured,
         avg_rating: prov.avg_rating, review_count: prov.review_count,
         description: prov.description,
+        photo_url: prov.photo_url || null, graduation_year: prov.graduation_year || null,
       },
       category: { name: cat?.name || '', slug: cat?.slug || '' },
       matchedProcedures: prices,
@@ -423,6 +432,7 @@ function searchMockData(q: string): SearchResult[] {
             verified: prov.verified, featured: prov.featured,
             avg_rating: prov.avg_rating, review_count: prov.review_count,
             description: prov.description,
+            photo_url: prov.photo_url || null, graduation_year: prov.graduation_year || null,
           },
           category: { name: cat?.name || '', slug: cat?.slug || '' },
           matchedProcedures: [{
