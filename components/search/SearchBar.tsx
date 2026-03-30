@@ -21,12 +21,16 @@ export default function SearchBar({
   const [query, setQuery] = useState(defaultValue);
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = query.trim();
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    // Read directly from the DOM input as fallback (in case React state didn't sync)
+    const formData = new FormData(e.currentTarget);
+    const q = ((formData.get('q') as string) || query).trim();
+
     if (q.length >= 2) {
+      e.preventDefault();
       router.push(`/search?q=${encodeURIComponent(q)}`);
     }
+    // If q is too short, let native form action handle it (no preventDefault)
   };
 
   if (variant === 'mobile') {
