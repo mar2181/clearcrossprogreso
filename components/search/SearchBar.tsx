@@ -51,19 +51,19 @@ export default function SearchBar({
 
   if (variant === 'compact') {
     return (
-      <form onSubmit={handleSubmit} className={cn('w-full', className)}>
-        <div className="flex items-center bg-white rounded-lg border border-neutral-200 shadow-sm overflow-hidden hover:border-brand-blue/40 transition-colors">
-          <Search className="w-4 h-4 text-neutral-400 ml-3 flex-shrink-0" />
+      <form onSubmit={handleSubmit} className={cn('w-full max-w-2xl', className)}>
+        <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 overflow-hidden shadow-lg">
+          <Search className="w-4 h-4 text-white/50 ml-4 flex-shrink-0" />
           <input
             type="text"
             name="q"
             defaultValue={defaultValue}
             placeholder={placeholder}
-            className="flex-1 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
+            className="flex-1 px-3 py-3 bg-transparent text-white text-sm placeholder-white/40 focus:outline-none"
           />
           <button
             type="submit"
-            className="px-4 py-2.5 bg-brand-blue text-white text-sm font-medium hover:bg-brand-navy transition-colors"
+            className="px-5 py-3 bg-white/20 text-white text-sm font-semibold hover:bg-white/30 transition-colors border-l border-white/10"
           >
             Search
           </button>
