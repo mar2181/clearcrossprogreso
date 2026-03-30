@@ -31,11 +31,12 @@ export default function SearchBar({
 
   if (variant === 'mobile') {
     return (
-      <form onSubmit={handleSubmit} className={cn('w-full', className)}>
+      <form action="/search" method="GET" onSubmit={handleSubmit} className={cn('w-full', className)}>
         <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 overflow-hidden">
           <Search className="w-4 h-4 text-white/50 ml-3 flex-shrink-0" />
           <input
             type="text"
+            name="q"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
@@ -54,11 +55,12 @@ export default function SearchBar({
 
   if (variant === 'compact') {
     return (
-      <form onSubmit={handleSubmit} className={cn('w-full', className)}>
+      <form action="/search" method="GET" onSubmit={handleSubmit} className={cn('w-full', className)}>
         <div className="flex items-center bg-white rounded-lg border border-neutral-200 shadow-sm overflow-hidden hover:border-brand-blue/40 transition-colors">
           <Search className="w-4 h-4 text-neutral-400 ml-3 flex-shrink-0" />
           <input
             type="text"
+            name="q"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
@@ -77,11 +79,12 @@ export default function SearchBar({
 
   // Hero variant (desktop)
   return (
-    <form onSubmit={handleSubmit} className={cn('w-full', className)}>
+    <form action="/search" method="GET" onSubmit={handleSubmit} className={cn('w-full', className)}>
       <div className="relative max-w-2xl mx-auto">
         <div className="flex items-center bg-white rounded-full shadow-2xl overflow-hidden">
           <input
             type="text"
+            name="q"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={placeholder}
