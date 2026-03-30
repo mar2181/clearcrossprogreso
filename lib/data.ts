@@ -437,8 +437,11 @@ function searchMockData(q: string): SearchResult[] {
     }
   }
 
-  // Sort: procedure matches first (most relevant), then by rating
+  // Sort: featured first, then procedure matches (most relevant), then by rating
   return Array.from(resultsMap.values()).sort((a, b) => {
+    // Featured providers always come first
+    if (a.provider.featured && !b.provider.featured) return -1;
+    if (!a.provider.featured && b.provider.featured) return 1;
     // Procedure matches are more relevant
     if (a.matchType === 'procedure' && b.matchType === 'provider') return -1;
     if (a.matchType === 'provider' && b.matchType === 'procedure') return 1;

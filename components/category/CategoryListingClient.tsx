@@ -48,42 +48,42 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
     });
   }, [providers, selectedProcedures]);
 
-  // Sort providers
+  // Sort providers (featured providers always stay at top)
   const sortedProviders = useMemo(() => {
     const sorted = [...filteredProviders];
 
-    switch (sortBy) {
-      case 'rating':
-        return sorted.sort(
-          (a, b) => (b.avg_rating || 0) - (a.avg_rating || 0)
-        );
-
-      case 'price-low': {
-        return sorted.sort((a, b) => {
+    const compareBySort = (a: typeof sorted[0], b: typeof sorted[0]) => {
+      switch (sortBy) {
+        case 'rating':
+          return (b.avg_rating || 0) - (a.avg_rating || 0);
+        case 'price-low': {
           const priceA = getLowestPrice(a);
           const priceB = getLowestPrice(b);
           if (priceA === null) return 1;
           if (priceB === null) return -1;
           return priceA - priceB;
-        });
-      }
-
-      case 'price-high': {
-        return sorted.sort((a, b) => {
+        }
+        case 'price-high': {
           const priceA = getLowestPrice(a);
           const priceB = getLowestPrice(b);
           if (priceA === null) return -1;
           if (priceB === null) return 1;
           return priceB - priceA;
-        });
+        }
+        case 'reviewed':
+          return b.review_count - a.review_count;
+        default:
+          return 0;
       }
+    };
 
-      case 'reviewed':
-        return sorted.sort((a, b) => b.review_count - a.review_count);
-
-      default:
-        return sorted;
-    }
+    return sorted.sort((a, b) => {
+      // Featured providers always come first
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      // Within same featured status, apply selected sort
+      return compareBySort(a, b);
+    });
   }, [filteredProviders, sortBy]);
 
   const handleProcedureToggle = (procId: string) => {

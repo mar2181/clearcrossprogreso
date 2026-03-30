@@ -195,6 +195,30 @@ export const procedures = [
 // =====================================================================
 
 export const providers = [
+  // --- PARTNER PROVIDER (ClearCross partner — always top of list) ---
+  {
+    id: 'prov-fernando-rodriguez',
+    category_id: 'cat-dentists',
+    name: 'Fernando Rodriguez DDS',
+    slug: 'fernando-rodriguez-dds',
+    address: 'Plaza Rincones de Mexico Local 11, Benito Juárez esquina con Coahuila, 88810 Nuevo Progreso, Tamaulipas, Mexico',
+    phone: null,
+    whatsapp: null,
+    website: null,
+    description:
+      'Trusted ClearCross partner dentist in Nuevo Progreso. Full-service dental care including cleanings, crowns, implants, veneers, and cosmetic dentistry. Competitive pricing across all procedures.',
+    logo_url: null,
+    gallery_urls: [],
+    verified: true,
+    featured: true,
+    plan: 'featured' as const,
+    avg_rating: 5.0,
+    review_count: 1,
+    lat: 26.0547,
+    lng: -97.9529,
+    created_at: '2026-01-01T00:00:00Z',
+  },
+
   // --- HIGH CONFIDENCE (official clinic-owned sites) ---
   {
     id: 'prov-progreso-smile',
@@ -1633,6 +1657,31 @@ export const providers = [
 // =====================================================================
 
 export const providerPrices = [
+  // === Fernando Rodriguez DDS (ClearCross partner — average market prices) ===
+  { id: 'pp-fr-exam', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-exam', price_usd: 0, price_notes: 'Free consultation', updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-cleaning', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-cleaning', price_usd: 30, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-deep-cleaning', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-deep-cleaning', price_usd: 55, price_notes: '$55–$240 per quadrant', updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-xray', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-xray', price_usd: 10, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-filling', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-filling', price_usd: 45, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-extraction', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-extraction', price_usd: 45, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-wisdom', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-wisdom', price_usd: 145, price_notes: '$145–$350', updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-root-canal', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-root-canal', price_usd: 215, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-crown-metal', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-crown-metal', price_usd: 200, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-crown-zirconia', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-crown-zirconia', price_usd: 360, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-crown-emax', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-crown-emax', price_usd: 390, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-veneer-comp', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-veneer-composite', price_usd: 200, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-veneer-porc', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-veneer-porcelain', price_usd: 380, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-lumineer', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-lumineer', price_usd: 450, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-whitening', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-whitening', price_usd: 150, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-implant', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-implant', price_usd: 1050, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-implant-crown', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-implant-crown', price_usd: 600, price_notes: 'Zirconia crown over implant', updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-dentures', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-dentures', price_usd: 290, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-all-on-4', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-all-on-4', price_usd: 9000, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-all-on-6', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-all-on-6', price_usd: 11000, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-braces', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-braces', price_usd: 300, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-bridge', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-bridge-3unit', price_usd: 850, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+  { id: 'pp-fr-bone', provider_id: 'prov-fernando-rodriguez', procedure_id: 'proc-bone-graft', price_usd: 500, price_notes: null, updated_at: '2026-03-30T00:00:00Z' },
+
   // === Progreso Smile Dental Center (HIGH confidence — official booking page) ===
   { id: 'pp-ps-exam', provider_id: 'prov-progreso-smile', procedure_id: 'proc-exam', price_usd: 0, price_notes: 'Free routine exam', updated_at: '2026-03-01T00:00:00Z' },
   { id: 'pp-ps-cleaning', provider_id: 'prov-progreso-smile', procedure_id: 'proc-cleaning', price_usd: 30, price_notes: null, updated_at: '2026-03-01T00:00:00Z' },
