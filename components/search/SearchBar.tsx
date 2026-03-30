@@ -1,7 +1,5 @@
 'use client';
 
-import { useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,28 +16,19 @@ export default function SearchBar({
   className,
   defaultValue = '',
 }: SearchBarProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const q = (inputRef.current?.value || '').trim();
-    if (q.length >= 2) {
-      router.push(`/search?q=${encodeURIComponent(q)}`);
-    }
-  };
 
   if (variant === 'mobile') {
     return (
-      <form onSubmit={handleSubmit} className={cn('w-full', className)}>
+      <form action="/search" method="GET" className={cn('w-full', className)}>
         <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 overflow-hidden">
           <Search className="w-4 h-4 text-white/50 ml-3 flex-shrink-0" />
           <input
-            ref={inputRef}
             type="text"
             name="q"
             defaultValue={defaultValue}
             placeholder={placeholder}
+            required
+            minLength={2}
             className="flex-1 px-3 py-2.5 bg-transparent text-white text-sm placeholder-white/40 focus:outline-none"
           />
           <button
@@ -55,15 +44,16 @@ export default function SearchBar({
 
   if (variant === 'compact') {
     return (
-      <form onSubmit={handleSubmit} className={cn('w-full', className)}>
+      <form action="/search" method="GET" className={cn('w-full', className)}>
         <div className="flex items-center bg-white rounded-lg border border-neutral-200 shadow-sm overflow-hidden hover:border-brand-blue/40 transition-colors">
           <Search className="w-4 h-4 text-neutral-400 ml-3 flex-shrink-0" />
           <input
-            ref={inputRef}
             type="text"
             name="q"
             defaultValue={defaultValue}
             placeholder={placeholder}
+            required
+            minLength={2}
             className="flex-1 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
           />
           <button
@@ -79,15 +69,16 @@ export default function SearchBar({
 
   // Hero variant (desktop)
   return (
-    <form onSubmit={handleSubmit} className={cn('w-full', className)}>
+    <form action="/search" method="GET" className={cn('w-full', className)}>
       <div className="relative max-w-2xl mx-auto">
         <div className="flex items-center bg-white rounded-full shadow-2xl overflow-hidden">
           <input
-            ref={inputRef}
             type="text"
             name="q"
             defaultValue={defaultValue}
             placeholder={placeholder}
+            required
+            minLength={2}
             className="flex-1 px-6 py-4 text-gray-900 placeholder-gray-500 focus:outline-none font-sans"
           />
           <button
