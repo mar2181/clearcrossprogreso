@@ -4,14 +4,9 @@ import { Search } from 'lucide-react';
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import SearchBar from '@/components/search/SearchBar';
 
 export default function Hero() {
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Search:', searchQuery);
-  };
 
   return (
     <section className="relative w-full overflow-hidden">
@@ -100,25 +95,9 @@ export default function Hero() {
           </p>
 
           {/* Search Bar */}
-          <form onSubmit={handleSearch} className="mb-8">
-            <div className="relative max-w-2xl mx-auto">
-              <div className="flex items-center bg-white rounded-full shadow-2xl overflow-hidden">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search for a procedure or provider..."
-                  className="flex-1 px-6 py-4 text-gray-900 placeholder-gray-500 focus:outline-none font-sans"
-                />
-                <button
-                  type="submit"
-                  className="px-6 py-4 bg-brand-blue text-white hover:bg-brand-navy transition-colors flex items-center gap-2"
-                >
-                  <Search size={20} />
-                </button>
-              </div>
-            </div>
-          </form>
+          <div className="mb-8">
+            <SearchBar variant="hero" />
+          </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

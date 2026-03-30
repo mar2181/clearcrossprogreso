@@ -13,6 +13,7 @@ const CATEGORY_SLUGS = [
   'dentists',
   'pharmacies',
   'spas',
+  'doctors',
   'optometrists',
   'cosmetic-surgery',
   'liquor',

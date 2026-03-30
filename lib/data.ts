@@ -13,6 +13,31 @@ import {
   getReviewsByProvider,
 } from './mock-data';
 
+export interface SearchResult {
+  provider: {
+    id: string;
+    name: string;
+    slug: string;
+    address: string;
+    verified: boolean;
+    featured: boolean;
+    avg_rating: number | null;
+    review_count: number;
+    description: string | null;
+  };
+  category: {
+    name: string;
+    slug: string;
+  };
+  matchedProcedures: {
+    id: string;
+    name: string;
+    price_usd: number | null;
+    price_notes: string | null;
+  }[];
+  matchType: 'provider' | 'procedure' | 'both';
+}
+
 function shouldUseMock(): boolean {
   // Use mock data when:
   // 1. Explicit env flag USE_MOCK_DATA=mock
@@ -211,4 +236,213 @@ export async function getAllProviderSlugs() {
     category: provider.categories?.slug || 'dentists',
     provider: provider.slug,
   }));
+}
+
+// Global search across providers, procedures, and prices
+export async function searchAll(query: string): Promise<SearchResult[]> {
+  const q = query.toLowerCase().trim();
+  if (!q || q.length < 2) return [];
+
+  if (shouldUseMock()) {
+    return searchMockData(q);
+  }
+
+  // Supabase full search (when connected)
+  const { createServerSupabaseClient } = await import('./supabase/server');
+  const supabase = createServerSupabaseClient();
+
+  // Search providers by name
+  const { data: providerResults } = await supabase
+    .from('providers')
+    .select(`
+      id, name, slug, address, verified, featured, avg_rating, review_count, description,
+      categories(name, slug),
+      provider_prices(
+        price_usd, price_notes,
+        procedure:procedure_id(id, name)
+      )
+    `)
+    .ilike('name', `%${q}%`)
+    .eq('verified', true)
+    .limit(20);
+
+  // Search procedures by name, then find providers with those procedures
+  const { data: procedureMatches } = await supabase
+    .from('procedures')
+    .select('id, name, category_id')
+    .ilike('name', `%${q}%`);
+
+  const procedureIds = procedureMatches?.map((p: any) => p.id) || [];
+
+  let procedureProviderResults: any[] = [];
+  if (procedureIds.length > 0) {
+    const { data } = await supabase
+      .from('provider_prices')
+      .select(`
+        price_usd, price_notes,
+        procedure:procedure_id(id, name),
+        provider:provider_id(
+          id, name, slug, address, verified, featured, avg_rating, review_count, description,
+          categories(name, slug)
+        )
+      `)
+      .in('procedure_id', procedureIds);
+    procedureProviderResults = data || [];
+  }
+
+  // Merge results
+  const resultsMap = new Map<string, SearchResult>();
+
+  // Add provider name matches
+  for (const p of providerResults || []) {
+    const cat = (p as any).categories;
+    resultsMap.set(p.id, {
+      provider: {
+        id: p.id, name: p.name, slug: p.slug, address: p.address,
+        verified: p.verified, featured: p.featured,
+        avg_rating: p.avg_rating, review_count: p.review_count,
+        description: p.description,
+      },
+      category: { name: cat?.name || '', slug: cat?.slug || '' },
+      matchedProcedures: ((p as any).provider_prices || []).map((pp: any) => ({
+        id: pp.procedure?.id || '', name: pp.procedure?.name || '',
+        price_usd: pp.price_usd, price_notes: pp.price_notes,
+      })),
+      matchType: 'provider',
+    });
+  }
+
+  // Add procedure-matched providers
+  for (const pp of procedureProviderResults) {
+    const prov = pp.provider;
+    if (!prov?.verified) continue;
+    const existing = resultsMap.get(prov.id);
+    if (existing) {
+      existing.matchType = 'both';
+      const alreadyHas = existing.matchedProcedures.some((mp: any) => mp.id === pp.procedure?.id);
+      if (!alreadyHas) {
+        existing.matchedProcedures.push({
+          id: pp.procedure?.id || '', name: pp.procedure?.name || '',
+          price_usd: pp.price_usd, price_notes: pp.price_notes,
+        });
+      }
+    } else {
+      const cat = prov.categories;
+      resultsMap.set(prov.id, {
+        provider: {
+          id: prov.id, name: prov.name, slug: prov.slug, address: prov.address,
+          verified: prov.verified, featured: prov.featured,
+          avg_rating: prov.avg_rating, review_count: prov.review_count,
+          description: prov.description,
+        },
+        category: { name: cat?.name || '', slug: cat?.slug || '' },
+        matchedProcedures: [{
+          id: pp.procedure?.id || '', name: pp.procedure?.name || '',
+          price_usd: pp.price_usd, price_notes: pp.price_notes,
+        }],
+        matchType: 'procedure',
+      });
+    }
+  }
+
+  return Array.from(resultsMap.values());
+}
+
+// Search across mock data
+function searchMockData(q: string): SearchResult[] {
+  const resultsMap = new Map<string, SearchResult>();
+
+  // 1. Find procedures matching the query
+  const matchedProcedures = mockProcedures.filter(
+    (proc) =>
+      proc.name.toLowerCase().includes(q) ||
+      (proc.description && proc.description.toLowerCase().includes(q))
+  );
+
+  // 2. Find providers matching the query by name or description
+  const matchedProviders = mockProviders.filter(
+    (p) =>
+      p.verified &&
+      (p.name.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q)))
+  );
+
+  // 3. Add provider name matches with all their prices
+  for (const prov of matchedProviders) {
+    const cat = mockCategories.find((c) => c.id === prov.category_id);
+    const prices = mockPrices
+      .filter((pp) => pp.provider_id === prov.id)
+      .map((pp) => {
+        const proc = mockProcedures.find((p) => p.id === pp.procedure_id);
+        return {
+          id: proc?.id || '',
+          name: proc?.name || '',
+          price_usd: pp.price_usd,
+          price_notes: pp.price_notes,
+        };
+      });
+
+    resultsMap.set(prov.id, {
+      provider: {
+        id: prov.id, name: prov.name, slug: prov.slug, address: prov.address,
+        verified: prov.verified, featured: prov.featured,
+        avg_rating: prov.avg_rating, review_count: prov.review_count,
+        description: prov.description,
+      },
+      category: { name: cat?.name || '', slug: cat?.slug || '' },
+      matchedProcedures: prices,
+      matchType: 'provider',
+    });
+  }
+
+  // 4. For each matched procedure, find providers that offer it
+  for (const proc of matchedProcedures) {
+    const pricesForProc = mockPrices.filter((pp) => pp.procedure_id === proc.id);
+
+    for (const price of pricesForProc) {
+      const prov = mockProviders.find((p) => p.id === price.provider_id);
+      if (!prov || !prov.verified) continue;
+
+      const existing = resultsMap.get(prov.id);
+      if (existing) {
+        existing.matchType = 'both';
+        const alreadyHas = existing.matchedProcedures.some((mp) => mp.id === proc.id);
+        if (!alreadyHas) {
+          existing.matchedProcedures.push({
+            id: proc.id,
+            name: proc.name,
+            price_usd: price.price_usd,
+            price_notes: price.price_notes,
+          });
+        }
+      } else {
+        const cat = mockCategories.find((c) => c.id === prov.category_id);
+        resultsMap.set(prov.id, {
+          provider: {
+            id: prov.id, name: prov.name, slug: prov.slug, address: prov.address,
+            verified: prov.verified, featured: prov.featured,
+            avg_rating: prov.avg_rating, review_count: prov.review_count,
+            description: prov.description,
+          },
+          category: { name: cat?.name || '', slug: cat?.slug || '' },
+          matchedProcedures: [{
+            id: proc.id,
+            name: proc.name,
+            price_usd: price.price_usd,
+            price_notes: price.price_notes,
+          }],
+          matchType: 'procedure',
+        });
+      }
+    }
+  }
+
+  // Sort: procedure matches first (most relevant), then by rating
+  return Array.from(resultsMap.values()).sort((a, b) => {
+    // Procedure matches are more relevant
+    if (a.matchType === 'procedure' && b.matchType === 'provider') return -1;
+    if (a.matchType === 'provider' && b.matchType === 'procedure') return 1;
+    // Then by rating
+    return (b.provider.avg_rating || 0) - (a.provider.avg_rating || 0);
+  });
 }

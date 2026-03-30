@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Home, LayoutGrid, Phone, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import SearchBar from '@/components/search/SearchBar';
 
 const navItems = [
   { label: 'Home', href: '/', icon: Home },
@@ -57,8 +58,15 @@ export function MobileBottomNav() {
         </div>
       )}
 
-      {/* Bottom floating bar */}
-      <div className="md:hidden fixed bottom-4 left-4 right-4 z-[80]">
+      {/* Search bar + Bottom floating bar */}
+      <div className="md:hidden fixed bottom-4 left-4 right-4 z-[80] flex flex-col gap-2">
+        {/* Search bar above the nav */}
+        <SearchBar
+          variant="mobile"
+          placeholder="Search procedures, providers..."
+        />
+
+        {/* Navigation bar */}
         <div className="bg-brand-navy/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/10 flex items-center justify-around px-2 py-2">
           {navItems.map((item) => {
             const isActive =
