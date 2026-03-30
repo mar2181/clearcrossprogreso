@@ -33,6 +33,10 @@ export const metadata: Metadata = {
     description:
       'Find and compare prices for dentists, pharmacies, spas, and medical services in Nuevo Progreso, Mexico. Know the price before you cross.',
     images: ['/og-image.jpg']
+  },
+  icons: {
+    icon: '/favicon.png',
+    apple: '/apple-touch-icon.png',
   }
 }
 

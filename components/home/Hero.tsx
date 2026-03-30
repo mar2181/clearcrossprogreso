@@ -35,10 +35,20 @@ export default function Hero() {
 
         {/* Info Card */}
         <div className="px-5 pt-6 pb-28 flex-1 flex flex-col">
-          {/* Business Name */}
-          <h1 className="font-display text-3xl font-bold text-white leading-tight">
-            ClearCross Progreso
-          </h1>
+          {/* Logo + Business Name */}
+          <div className="flex items-center gap-3">
+            <Image
+              src="/images/clearcross-logo.png"
+              alt="ClearCross Progreso logo"
+              width={56}
+              height={56}
+              priority
+              className="h-14 w-auto drop-shadow-lg"
+            />
+            <h1 className="font-display text-3xl font-bold text-white leading-tight">
+              ClearCross<br />Progreso
+            </h1>
+          </div>
 
           {/* Tagline — accent color like reference */}
           <p className="font-display text-lg font-semibold text-amber mt-1.5">

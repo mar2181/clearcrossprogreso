@@ -46,10 +46,10 @@ export function Navbar() {
             <Image
               src="/images/clearcross-logo.png"
               alt="ClearCross Progreso"
-              width={120}
-              height={38}
+              width={48}
+              height={48}
               priority
-              className="h-9 w-auto brightness-0 invert"
+              className="h-10 w-auto drop-shadow-lg"
             />
           </Link>
           {/* Decorative hamburger — actual nav is in MobileBottomNav */}
@@ -68,10 +68,10 @@ export function Navbar() {
               <Image
                 src="/images/clearcross-logo.png"
                 alt="ClearCross Progreso"
-                width={140}
-                height={44}
+                width={56}
+                height={56}
                 priority
-                className="h-11 w-auto"
+                className="h-12 w-auto drop-shadow-md"
               />
             </Link>
 

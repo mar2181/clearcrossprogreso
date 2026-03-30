@@ -50,9 +50,9 @@ export function Footer() {
               <Image
                 src="/images/clearcross-logo.png"
                 alt="ClearCross Progreso"
-                width={140}
-                height={44}
-                className="h-11 w-auto brightness-0 invert"
+                width={80}
+                height={80}
+                className="h-16 w-auto drop-shadow-lg"
               />
             </Link>
             <div className="space-y-2 text-sm">
