@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { searchAll, type SearchResult } from '@/lib/data';
 import SearchResultsClient from '@/components/search/SearchResultsClient';
+import SearchBar from '@/components/search/SearchBar';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,14 +20,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <main className="min-h-screen bg-white">
-      {/* Header */}
+      {/* Header with search bar */}
       <div className="bg-gradient-to-br from-brand-blue/5 to-brand-green/5 border-b border-neutral-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-dark mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-dark mb-4">
             Search Results
           </h1>
+          <SearchBar variant="compact" defaultValue={query} />
           {query && (
-            <p className="text-neutral-mid">
+            <p className="text-neutral-mid mt-3">
               {results.length} {results.length === 1 ? 'result' : 'results'} for{' '}
               <span className="font-semibold text-neutral-dark">&ldquo;{query}&rdquo;</span>
             </p>

@@ -77,10 +77,10 @@ export default function Hero() {
       <div className="hidden md:flex relative w-full min-h-screen flex-col items-center justify-center">
         {/* Background */}
         <div
-          className="absolute inset-0 z-0 bg-cover bg-center"
+          className="absolute inset-0 z-0 bg-cover bg-center pointer-events-none"
           style={{ backgroundImage: 'url(/images/hero-bg.jpg)' }}
         />
-        <div className="absolute inset-0 z-0 bg-gradient-to-b from-brand-navy/70 via-brand-navy/50 to-brand-navy/80" />
+        <div className="absolute inset-0 z-0 bg-gradient-to-b from-brand-navy/70 via-brand-navy/50 to-brand-navy/80 pointer-events-none" />
 
         {/* Content */}
         <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
@@ -95,7 +95,7 @@ export default function Hero() {
           </p>
 
           {/* Search Bar */}
-          <div className="mb-8">
+          <div className="mb-8 relative z-20">
             <SearchBar variant="hero" />
           </div>
 
