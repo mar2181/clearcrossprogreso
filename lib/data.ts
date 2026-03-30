@@ -14,9 +14,12 @@ import {
 } from './mock-data';
 
 function shouldUseMock(): boolean {
-  // Explicit env flag: set USE_MOCK_DATA=mock in .env.local to use local data
-  // Remove it (or set to empty) once ClearCross tables exist in Supabase
-  return process.env.USE_MOCK_DATA === 'mock';
+  // Use mock data when:
+  // 1. Explicit env flag USE_MOCK_DATA=mock
+  // 2. Supabase not configured (no URL or key)
+  if (process.env.USE_MOCK_DATA === 'mock') return true;
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return true;
+  return false;
 }
 
 export async function getCategory(slug: string) {

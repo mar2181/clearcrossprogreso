@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { MetadataRoute } from 'next';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getAllPosts } from '@/lib/blog';
