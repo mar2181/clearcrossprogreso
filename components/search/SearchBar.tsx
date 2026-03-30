@@ -29,18 +29,18 @@ export default function SearchBar({
   if (variant === 'mobile') {
     return (
       <form onSubmit={handleSubmit} className={cn('w-full', className)}>
-        <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 overflow-hidden">
-          <Search className="w-4 h-4 text-white/50 ml-3 flex-shrink-0" />
+        <div className="flex items-center bg-white rounded-xl shadow-lg overflow-hidden">
+          <Search className="w-4 h-4 text-gray-400 ml-3 flex-shrink-0" />
           <input
             type="text"
             name="q"
             defaultValue={defaultValue}
             placeholder={placeholder}
-            className="flex-1 px-3 py-2.5 bg-transparent text-white text-sm placeholder-white/40 focus:outline-none"
+            className="flex-1 px-3 py-2.5 bg-transparent text-gray-900 text-sm placeholder-gray-400 focus:outline-none"
           />
           <button
             type="submit"
-            className="px-3 py-2.5 bg-brand-blue text-white text-xs font-semibold hover:bg-brand-blue/80 transition-colors"
+            className="px-4 py-2.5 bg-brand-blue text-white text-xs font-semibold hover:bg-brand-navy transition-colors"
           >
             Go
           </button>
