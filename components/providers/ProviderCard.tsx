@@ -43,7 +43,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider }) => {
         {/* Provider photo */}
         {provider.photo_url && (
           <Link href={`/${categorySlug}/${provider.slug}`}>
-            <div className="relative w-full h-40 overflow-hidden">
+            <div className="relative w-full h-40 overflow-hidden rounded-t-xl">
               <Image
                 src={provider.photo_url}
                 alt={provider.name}

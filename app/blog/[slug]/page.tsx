@@ -97,16 +97,18 @@ export default async function BlogPostPage({ params }: Props) {
 
       {/* Cover Image Hero */}
       {post.coverImage && (
-        <div className="relative w-full h-64 sm:h-80 lg:h-96">
-          <Image
-            src={post.coverImage}
-            alt={post.title}
-            fill
-            className="object-cover"
-            sizes="100vw"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
+          <div className="relative w-full h-64 sm:h-80 lg:h-96 rounded-2xl overflow-hidden">
+            <Image
+              src={post.coverImage}
+              alt={post.title}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          </div>
         </div>
       )}
 

@@ -125,7 +125,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       </nav>
 
       {/* Hero Banner — tall, immersive, minimal overlay */}
-      <div className="relative bg-brand-navy overflow-hidden">
+      <div className="relative bg-brand-navy overflow-hidden lg:mx-6 lg:mt-4 lg:rounded-2xl">
         {/* Full-bleed background image */}
         {heroImage && (
           <div className="absolute inset-0">
