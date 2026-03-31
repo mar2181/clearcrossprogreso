@@ -124,9 +124,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         </div>
       </nav>
 
-      {/* Hero Banner */}
+      {/* Hero Banner — tall, immersive, minimal overlay */}
       <div className="relative bg-brand-navy overflow-hidden">
-        {/* Background image */}
+        {/* Full-bleed background image */}
         {heroImage && (
           <div className="absolute inset-0">
             <Image
@@ -137,28 +137,30 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               sizes="100vw"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/90 via-brand-navy/70 to-brand-navy/50" />
+            {/* Light bottom gradient only — lets the image breathe */}
+            <div className="absolute inset-0 bg-gradient-to-t from-brand-navy/80 via-brand-navy/20 to-transparent" />
           </div>
         )}
 
-        <div className="container-page relative z-10 py-12 sm:py-16 lg:py-20">
+        {/* Taller hero: min-h so image is prominent on desktop */}
+        <div className="container-page relative z-10 flex items-end py-16 sm:py-20 lg:py-0 lg:min-h-[420px] lg:items-end lg:pb-12">
           <div className="max-w-2xl">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 font-display">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 font-display drop-shadow-lg">
               {categoryData.name} in Nuevo Progreso
             </h1>
-            <p className="text-lg text-blue-100/80 mb-5 leading-relaxed">
+            <p className="text-lg text-white/90 mb-5 leading-relaxed drop-shadow-md">
               {tagline}
             </p>
 
             {/* Quick stats */}
             <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm">
-              <div className="flex items-center gap-2 text-white/90">
+              <div className="flex items-center gap-2 text-white">
                 <ShieldCheck className="w-4 h-4 text-brand-green" />
                 <span>
                   <strong>{providersList.length}</strong> verified providers
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-white/90">
+              <div className="flex items-center gap-2 text-white">
                 <TrendingDown className="w-4 h-4 text-amber" />
                 <span>Save <strong>40-70%</strong> vs US prices</span>
               </div>

@@ -117,8 +117,8 @@ export default function Hero() {
       </div>
 
       {/* ========== DESKTOP HERO ========== */}
-      <div className="hidden md:flex relative w-full min-h-screen flex-col items-center justify-center">
-        {/* Background with slow zoom animation */}
+      <div className="hidden md:flex relative w-full min-h-[92vh] flex-col items-center justify-center">
+        {/* Background with slow zoom animation — minimal overlay to show the image */}
         <motion.div
           className="absolute inset-0 z-0 bg-cover bg-center pointer-events-none"
           style={{ backgroundImage: 'url(/images/hero-bg.jpg)' }}
@@ -126,45 +126,61 @@ export default function Hero() {
           animate={{ scale: 1.05 }}
           transition={{ duration: 20, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
         />
-        <div className="absolute inset-0 z-0 bg-gradient-to-b from-brand-navy/70 via-brand-navy/50 to-brand-navy/80 pointer-events-none" />
+        {/* Lighter overlay — lets the image show through more */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/40 via-black/25 to-brand-navy/70 pointer-events-none" />
 
         {/* Content */}
         <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
           <motion.h1
-            className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-4 tracking-tight"
+            className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-5 tracking-tight drop-shadow-lg"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
           >
-            Know the price before you cross.
+            Know the price{' '}
+            <span className="text-amber">before</span>{' '}
+            you cross.
           </motion.h1>
 
           <motion.p
-            className="font-display text-xl sm:text-2xl text-blue-100 mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            Conoce el precio antes de cruzar.
-          </motion.p>
-
-          <motion.p
-            className="font-sans text-base sm:text-lg text-blue-50 max-w-2xl mx-auto mb-4"
+            className="font-sans text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-3 drop-shadow-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
           >
-            Compare prices for dental work, prescriptions, spa treatments and more in Nuevo Progreso, Mexico. Get firm quotes before you leave the US.
+            Compare prices for dental work, prescriptions, and more in Nuevo Progreso, Mexico. Get written quotes before you leave home.
           </motion.p>
+
+          {/* Value prop pills */}
+          <motion.div
+            className="flex flex-wrap justify-center gap-3 mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            {[
+              'Save 40–70%',
+              'Upfront pricing',
+              'Verified providers',
+              '5 min from the US border',
+            ].map((pill) => (
+              <span
+                key={pill}
+                className="px-4 py-1.5 bg-white/10 backdrop-blur-sm text-white text-sm font-medium rounded-full border border-white/20"
+              >
+                {pill}
+              </span>
+            ))}
+          </motion.div>
 
           {/* Rotating search suggestion */}
           <motion.div
-            className="mb-8 text-sm text-blue-200/60"
+            className="mb-6 text-sm text-white/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
+            transition={{ delay: 1.0 }}
           >
-            <span>Try: </span>
+            <span>Try searching: </span>
             <AnimatePresence mode="wait">
               <motion.span
                 key={currentSuggestion}
@@ -181,7 +197,7 @@ export default function Hero() {
 
           {/* Search Bar */}
           <motion.div
-            className="mb-8 relative z-20"
+            className="mb-8 relative z-20 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
@@ -198,15 +214,15 @@ export default function Hero() {
           >
             <Link
               href="/dentists"
-              className="px-8 py-3 bg-brand-blue text-white font-sans font-semibold rounded-lg hover:bg-brand-navy hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 shadow-lg"
+              className="px-10 py-3.5 bg-brand-blue text-white font-semibold rounded-lg hover:bg-brand-navy hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 shadow-lg text-base"
             >
-              Find a Dentist
+              Browse Services
             </Link>
             <Link
               href="/quote"
-              className="px-8 py-3 bg-brand-green text-white font-sans font-semibold rounded-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 shadow-lg"
+              className="px-10 py-3.5 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white font-semibold rounded-lg hover:bg-white/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 text-base"
             >
-              Compare Prices
+              Get a Free Quote
             </Link>
           </motion.div>
         </div>
@@ -221,9 +237,8 @@ export default function Hero() {
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            className="flex flex-col items-center gap-2 text-white/40"
+            className="flex flex-col items-center gap-2 text-white/30"
           >
-            <span className="text-xs font-medium tracking-wider uppercase">Scroll</span>
             <ChevronDown className="w-5 h-5" />
           </motion.div>
         </motion.div>

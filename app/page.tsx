@@ -1,5 +1,6 @@
 import Hero from '@/components/home/Hero';
 import SocialProofBar from '@/components/home/SocialProofBar';
+import WhyClearCross from '@/components/home/WhyClearCross';
 import CategoryGrid from '@/components/home/CategoryGrid';
 import HowItWorks from '@/components/home/HowItWorks';
 import TrustBar from '@/components/home/TrustBar';
@@ -27,6 +28,9 @@ export default async function Home() {
 
       {/* Social Proof Stats — immediately after hero for trust */}
       <SocialProofBar />
+
+      {/* Why ClearCross — explains the concept for new visitors */}
+      <WhyClearCross />
 
       {/* Category Grid */}
       <CategoryGrid counts={categoryCounts} />
