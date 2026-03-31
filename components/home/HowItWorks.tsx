@@ -1,83 +1,114 @@
-import { Search, BarChart3, ShieldCheck } from 'lucide-react';
+'use client';
+
+import { Search, BarChart3, ShieldCheck, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import AnimateIn, { StaggerContainer, StaggerItem } from '@/components/ui/AnimateIn';
 
 interface Step {
   number: number;
   title: string;
   description: string;
   icon: React.ReactNode;
+  detail: string;
 }
 
 const steps: Step[] = [
   {
     number: 1,
     title: 'Pick a Procedure',
-    description: 'Browse categories and find the treatment you need. See every provider\'s price instantly.',
-    icon: <Search size={40} />,
+    description: 'Browse categories and find the treatment you need.',
+    detail: 'See every provider\'s price instantly — no accounts, no hidden fees.',
+    icon: <Search className="w-8 h-8" />,
   },
   {
     number: 2,
     title: 'Compare Prices',
-    description: 'View real prices from real clinics side by side. No hidden fees, no surprises.',
-    icon: <BarChart3 size={40} />,
+    description: 'View real prices from real clinics side by side.',
+    detail: 'Filter by rating, experience, and procedure to find your best match.',
+    icon: <BarChart3 className="w-8 h-8" />,
   },
   {
     number: 3,
     title: 'Get a Locked Quote',
-    description: 'Upload a photo, receive a firm written quote. Price is guaranteed — it cannot change.',
-    icon: <ShieldCheck size={40} />,
+    description: 'Receive a firm written quote before you visit.',
+    detail: 'Upload a photo, describe your needs — price is guaranteed and cannot change.',
+    icon: <ShieldCheck className="w-8 h-8" />,
   },
 ];
 
 export default function HowItWorks() {
   return (
     <section className="w-full py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-neutral-light">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Section Title */}
-        <div className="text-center mb-12 sm:mb-16">
-          <h2 className="font-display text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-            How ClearCross Works
-          </h2>
-          <p className="font-sans text-gray-600 text-lg max-w-2xl mx-auto">
-            Simple, transparent, and straightforward. Get the care you need at the price you want.
-          </p>
-        </div>
+        <AnimateIn>
+          <div className="text-center mb-12 sm:mb-16">
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-brand-blue mb-2">
+              Simple & Transparent
+            </p>
+            <h2 className="font-display text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+              How ClearCross Works
+            </h2>
+            <p className="font-sans text-gray-600 text-lg max-w-2xl mx-auto">
+              Three steps to savings. No accounts needed, no hidden fees.
+            </p>
+          </div>
+        </AnimateIn>
 
-        {/* Steps Container */}
-        <div className="relative">
+        {/* Steps */}
+        <StaggerContainer className="relative" stagger={0.15}>
           <div className="grid grid-cols-1 gap-8 sm:gap-6 md:grid-cols-3">
             {steps.map((step, index) => (
-              <div key={step.number} className="relative flex flex-col items-center">
-                {/* Connecting Line (Desktop Only) */}
-                {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-20 left-1/2 w-full h-1 bg-gradient-to-r from-brand-blue to-brand-green transform translate-y-full translate-x-1/2" />
-                )}
+              <StaggerItem key={step.number}>
+                <div className="relative flex flex-col items-center group">
+                  {/* Connecting Line (Desktop Only) */}
+                  {index < steps.length - 1 && (
+                    <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-px bg-gradient-to-r from-brand-blue/30 to-brand-green/30" />
+                  )}
 
-                {/* Step Card */}
-                <div className="relative z-10 flex flex-col items-center text-center w-full">
-                  {/* Number Badge */}
-                  <div className="w-16 h-16 rounded-full bg-brand-blue text-white flex items-center justify-center mb-6 shadow-lg">
-                    <span className="font-display font-bold text-2xl">{step.number}</span>
+                  {/* Step Card */}
+                  <div className="relative z-10 flex flex-col items-center text-center w-full p-6 bg-white rounded-xl border border-neutral-200/60 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    {/* Number + Icon */}
+                    <div className="relative mb-5">
+                      <div className="w-16 h-16 rounded-2xl bg-brand-blue/10 flex items-center justify-center text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors duration-300">
+                        {step.icon}
+                      </div>
+                      <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-brand-navy text-white flex items-center justify-center font-display font-bold text-xs shadow-md">
+                        {step.number}
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="font-display font-bold text-xl text-gray-900 mb-2">
+                      {step.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="font-sans text-gray-600 text-sm leading-relaxed mb-1">
+                      {step.description}
+                    </p>
+                    <p className="font-sans text-gray-400 text-xs leading-relaxed">
+                      {step.detail}
+                    </p>
                   </div>
-
-                  {/* Icon */}
-                  <div className="text-brand-green mb-6">
-                    {step.icon}
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="font-display font-bold text-xl sm:text-2xl text-gray-900 mb-4">
-                    {step.title}
-                  </h3>
-
-                  {/* Description */}
-                  <p className="font-sans text-gray-600 text-sm sm:text-base leading-relaxed">
-                    {step.description}
-                  </p>
                 </div>
-              </div>
+              </StaggerItem>
             ))}
           </div>
-        </div>
+        </StaggerContainer>
+
+        {/* CTA */}
+        <AnimateIn delay={0.4}>
+          <div className="text-center mt-10">
+            <Link
+              href="/how-it-works"
+              className="inline-flex items-center gap-2 text-sm text-brand-blue font-semibold hover:text-brand-navy hover:gap-3 transition-all"
+            >
+              Learn more about how it works
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </AnimateIn>
       </div>
     </section>
   );

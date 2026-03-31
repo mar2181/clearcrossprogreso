@@ -30,8 +30,8 @@ const footerSections: FooterSection[] = [
     links: [
       { label: 'Blog', href: '/blog' },
       { label: 'How It Works', href: '/how-it-works' },
-      { label: 'Safety Guide', href: '/safety-guide' },
-      { label: 'List Your Business', href: '/list-business' }
+      { label: 'Safety Guide', href: '/safety' },
+      { label: 'List Your Business', href: '/quote' }
     ]
   }
 ]
@@ -112,7 +112,7 @@ export function Footer() {
               </a>
               <div>
                 <Link
-                  href="/for-providers"
+                  href="/quote"
                   className="text-neutral-light hover:text-white transition-colors text-sm font-medium"
                 >
                   For Providers

@@ -16,21 +16,60 @@
   h1, h2, h3 {
     @apply font-display;
   }
+
+  /* Selection color */
+  ::selection {
+    background-color: rgba(26, 92, 176, 0.15);
+    color: #1A3A6B;
+  }
+
+  /* Focus-visible for keyboard navigation */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-blue rounded-sm;
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
   .container-page {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
+
+  /* Button system */
   .btn-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 bg-brand-blue text-white font-semibold rounded-lg hover:bg-brand-blue/90 transition-colors duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-brand-blue text-white font-semibold rounded-lg
+    hover:bg-brand-navy hover:shadow-lg hover:-translate-y-0.5
+    active:translate-y-0 active:shadow-md
+    transition-all duration-200 ease-out;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-6 py-3 bg-brand-green text-white font-semibold rounded-lg hover:bg-brand-green/90 transition-colors duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-brand-green text-white font-semibold rounded-lg
+    hover:shadow-lg hover:-translate-y-0.5
+    active:translate-y-0 active:shadow-md
+    transition-all duration-200 ease-out;
   }
   .btn-outline {
-    @apply inline-flex items-center justify-center px-6 py-3 border-2 border-brand-blue text-brand-blue font-semibold rounded-lg hover:bg-brand-blue hover:text-white transition-colors duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-brand-blue text-brand-blue font-semibold rounded-lg
+    hover:bg-brand-blue hover:text-white hover:shadow-lg hover:-translate-y-0.5
+    active:translate-y-0 active:shadow-md
+    transition-all duration-200 ease-out;
   }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-neutral-mid font-medium rounded-lg
+    hover:bg-neutral-light hover:text-neutral-dark
+    transition-all duration-150;
+  }
+
+  /* Badge system */
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
@@ -40,7 +79,21 @@
   .badge-featured {
     @apply badge bg-amber/10 text-amber;
   }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply bg-white rounded-xl border border-neutral-200/60 shadow-sm
+    hover:shadow-lg hover:-translate-y-1
+    transition-all duration-300 ease-out;
+  }
+
+  /* Price display */
   .price-display {
     @apply text-2xl font-bold text-brand-green;
+  }
+
+  /* Section label (small caps above headings) */
+  .section-label {
+    @apply text-xs font-bold tracking-[0.2em] uppercase mb-2;
   }
 }

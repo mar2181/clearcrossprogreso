@@ -356,6 +356,96 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
   });
 }
 
+// Get featured providers for homepage
+export async function getFeaturedProviders() {
+  if (shouldUseMock()) {
+    const featured = mockProviders
+      .filter((p) => p.featured && p.verified)
+      .sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0))
+      .slice(0, 6);
+
+    return featured.map((p) => {
+      const category = mockCategories.find((c) => c.id === p.category_id);
+      const prices = mockPrices
+        .filter((pp) => pp.provider_id === p.id)
+        .map((pp) => {
+          const proc = mockProcedures.find((pr) => pr.id === pp.procedure_id);
+          return {
+            price_usd: pp.price_usd,
+            price_notes: pp.price_notes,
+            procedure: proc ? { id: proc.id, name: proc.name } : undefined,
+          };
+        });
+
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        category_id: p.category_id,
+        featured: p.featured,
+        verified: p.verified,
+        avg_rating: p.avg_rating,
+        review_count: p.review_count,
+        photo_url: p.photo_url || null,
+        graduation_year: p.graduation_year || null,
+        provider_prices: prices,
+        category: category ? { name: category.name, slug: category.slug } : undefined,
+      };
+    });
+  }
+
+  const { createServerSupabaseClient } = await import('./supabase/server');
+  const supabase = createServerSupabaseClient();
+  const { data } = await supabase
+    .from('providers')
+    .select(`
+      id, name, slug, category_id, featured, verified, avg_rating, review_count, photo_url, graduation_year,
+      categories(name, slug),
+      provider_prices(
+        price_usd, price_notes,
+        procedure:procedure_id(id, name)
+      )
+    `)
+    .eq('featured', true)
+    .eq('verified', true)
+    .order('avg_rating', { ascending: false })
+    .limit(6);
+
+  return (data || []).map((p: any) => ({
+    ...p,
+    category: p.categories || undefined,
+  }));
+}
+
+// Get provider counts per category for homepage grid
+export async function getCategoryCounts(): Promise<Record<string, number>> {
+  if (shouldUseMock()) {
+    const counts: Record<string, number> = {};
+    for (const cat of mockCategories) {
+      counts[cat.slug] = mockProviders.filter(
+        (p) => p.category_id === cat.id && p.verified
+      ).length;
+    }
+    return counts;
+  }
+
+  const { createServerSupabaseClient } = await import('./supabase/server');
+  const supabase = createServerSupabaseClient();
+  const { data } = await supabase
+    .from('providers')
+    .select('category_id, categories(slug)')
+    .eq('verified', true);
+
+  const counts: Record<string, number> = {};
+  for (const row of data || []) {
+    const slug = (row as any).categories?.slug;
+    if (slug) {
+      counts[slug] = (counts[slug] || 0) + 1;
+    }
+  }
+  return counts;
+}
+
 // Search across mock data
 function searchMockData(q: string): SearchResult[] {
   const resultsMap = new Map<string, SearchResult>();

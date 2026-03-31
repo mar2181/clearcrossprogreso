@@ -1,20 +1,48 @@
 'use client';
 
-import { Search } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import SearchBar from '@/components/search/SearchBar';
 
+const searchSuggestions = [
+  'dental implant',
+  'Ozempic',
+  'teeth whitening',
+  'deep tissue massage',
+  'dental crown',
+  'Viagra',
+  'root canal',
+  'Botox',
+  'eye exam',
+  'dental cleaning',
+];
+
 export default function Hero() {
+  const [currentSuggestion, setCurrentSuggestion] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSuggestion((prev) => (prev + 1) % searchSuggestions.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <section className="relative w-full overflow-hidden">
-      {/* ========== MOBILE HERO (matches reference template) ========== */}
+      {/* ========== MOBILE HERO ========== */}
       <div className="md:hidden bg-brand-navy min-h-screen flex flex-col">
-        {/* Hero Image — ~45% of viewport, rounded, with small gaps */}
+        {/* Hero Image */}
         <div className="px-3 pt-3">
-          <div className="relative w-full rounded-2xl overflow-hidden" style={{ height: '45vh' }}>
+          <motion.div
+            className="relative w-full rounded-2xl overflow-hidden"
+            style={{ height: '45vh' }}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+          >
             <Image
               src="/images/general/main-avenue-dental.jpg"
               alt="Nuevo Progreso main avenue — dental clinics and pharmacies"
@@ -23,15 +51,18 @@ export default function Hero() {
               className="object-cover"
               sizes="100vw"
             />
-            {/* Subtle bottom gradient for smooth transition */}
             <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-brand-navy/60 to-transparent" />
-          </div>
+          </motion.div>
         </div>
 
         {/* Info Card */}
         <div className="px-5 pt-6 pb-28 flex-1 flex flex-col">
-          {/* Logo + Business Name */}
-          <div className="flex items-center gap-3">
+          <motion.div
+            className="flex items-center gap-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
             <Image
               src="/images/clearcross-logo.png"
               alt="ClearCross Progreso logo"
@@ -43,78 +74,159 @@ export default function Hero() {
             <h1 className="font-display text-3xl font-bold text-white leading-tight">
               ClearCross<br />Progreso
             </h1>
-          </div>
+          </motion.div>
 
-          {/* Tagline — accent color like reference */}
-          <p className="font-display text-lg font-semibold text-amber mt-1.5">
+          <motion.p
+            className="font-display text-lg font-semibold text-amber mt-1.5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
             Know the Price Before You Cross
-          </p>
+          </motion.p>
 
-          {/* Description */}
-          <p className="text-blue-100/80 text-sm leading-relaxed mt-3 max-w-xs">
+          <motion.p
+            className="text-blue-100/80 text-sm leading-relaxed mt-3 max-w-xs"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
             Compare prices for dental work, prescriptions, spa treatments and more in Nuevo Progreso, Mexico. Get firm quotes before you leave the US.
-          </p>
+          </motion.p>
 
-          {/* CTA Buttons — outlined style like reference */}
-          <div className="flex gap-3 mt-6">
+          <motion.div
+            className="flex gap-3 mt-6"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
             <Link
               href="/dentists"
-              className="flex-1 text-center px-5 py-3 rounded-full border-2 border-amber text-amber font-semibold text-sm hover:bg-amber hover:text-brand-navy transition-colors"
+              className="flex-1 text-center px-5 py-3 rounded-full border-2 border-amber text-amber font-semibold text-sm hover:bg-amber hover:text-brand-navy transition-all duration-300 hover:shadow-lg hover:shadow-amber/20"
             >
               Browse Services
             </Link>
             <Link
               href="/quote"
-              className="flex-1 text-center px-5 py-3 rounded-full border-2 border-white/40 text-white font-semibold text-sm hover:bg-white/10 transition-colors"
+              className="flex-1 text-center px-5 py-3 rounded-full border-2 border-white/40 text-white font-semibold text-sm hover:bg-white/10 transition-all duration-300"
             >
               Get a Quote
             </Link>
-          </div>
+          </motion.div>
         </div>
       </div>
 
-      {/* ========== DESKTOP HERO (original fullscreen style) ========== */}
+      {/* ========== DESKTOP HERO ========== */}
       <div className="hidden md:flex relative w-full min-h-screen flex-col items-center justify-center">
-        {/* Background */}
-        <div
+        {/* Background with slow zoom animation */}
+        <motion.div
           className="absolute inset-0 z-0 bg-cover bg-center pointer-events-none"
           style={{ backgroundImage: 'url(/images/hero-bg.jpg)' }}
+          initial={{ scale: 1 }}
+          animate={{ scale: 1.05 }}
+          transition={{ duration: 20, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
         />
         <div className="absolute inset-0 z-0 bg-gradient-to-b from-brand-navy/70 via-brand-navy/50 to-brand-navy/80 pointer-events-none" />
 
         {/* Content */}
         <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
-          <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-4 tracking-tight">
+          <motion.h1
+            className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-4 tracking-tight"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+          >
             Know the price before you cross.
-          </h1>
-          <p className="font-display text-xl sm:text-2xl text-blue-100 mb-6">
+          </motion.h1>
+
+          <motion.p
+            className="font-display text-xl sm:text-2xl text-blue-100 mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
             Conoce el precio antes de cruzar.
-          </p>
-          <p className="font-sans text-base sm:text-lg text-blue-50 max-w-2xl mx-auto mb-12">
+          </motion.p>
+
+          <motion.p
+            className="font-sans text-base sm:text-lg text-blue-50 max-w-2xl mx-auto mb-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
             Compare prices for dental work, prescriptions, spa treatments and more in Nuevo Progreso, Mexico. Get firm quotes before you leave the US.
-          </p>
+          </motion.p>
+
+          {/* Rotating search suggestion */}
+          <motion.div
+            className="mb-8 text-sm text-blue-200/60"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 }}
+          >
+            <span>Try: </span>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={currentSuggestion}
+                className="text-amber font-medium"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3 }}
+              >
+                &ldquo;{searchSuggestions[currentSuggestion]}&rdquo;
+              </motion.span>
+            </AnimatePresence>
+          </motion.div>
 
           {/* Search Bar */}
-          <div className="mb-8 relative z-20">
+          <motion.div
+            className="mb-8 relative z-20"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
             <SearchBar variant="hero" />
-          </div>
+          </motion.div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <motion.div
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
             <Link
               href="/dentists"
-              className="px-8 py-3 bg-brand-blue text-white font-sans font-semibold rounded-lg hover:bg-brand-navy transition-colors shadow-lg"
+              className="px-8 py-3 bg-brand-blue text-white font-sans font-semibold rounded-lg hover:bg-brand-navy hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 shadow-lg"
             >
               Find a Dentist
             </Link>
             <Link
               href="/quote"
-              className="px-8 py-3 bg-brand-green text-white font-sans font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-lg"
+              className="px-8 py-3 bg-brand-green text-white font-sans font-semibold rounded-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 shadow-lg"
             >
               Compare Prices
             </Link>
-          </div>
+          </motion.div>
         </div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+        >
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className="flex flex-col items-center gap-2 text-white/40"
+          >
+            <span className="text-xs font-medium tracking-wider uppercase">Scroll</span>
+            <ChevronDown className="w-5 h-5" />
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );

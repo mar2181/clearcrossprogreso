@@ -9,7 +9,7 @@ import SearchBar from '@/components/search/SearchBar';
 
 const navItems = [
   { label: 'Home', href: '/', icon: Home },
-  { label: 'Services', href: '/#categories', icon: LayoutGrid },
+  { label: 'Services', href: '/dentists', icon: LayoutGrid },
   { label: 'Contact', href: '/quote', icon: Phone },
 ];
 
@@ -87,7 +87,7 @@ export function MobileBottomNav() {
                 )}
               >
                 <Icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-[11px] font-medium">{item.label}</span>
               </Link>
             );
           })}
@@ -103,7 +103,7 @@ export function MobileBottomNav() {
             )}
           >
             <Menu className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Menu</span>
+            <span className="text-[11px] font-medium">Menu</span>
           </button>
         </div>
       </div>

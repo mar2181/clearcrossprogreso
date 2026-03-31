@@ -3,14 +3,26 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MessageCircle, Globe, MapPin, Phone, Star } from 'lucide-react';
+import {
+  MessageCircle,
+  Globe,
+  MapPin,
+  Phone,
+  Star,
+  ChevronRight,
+  Award,
+  ShieldCheck,
+  Sparkles,
+  Clock,
+  MessageSquare,
+  Camera,
+} from 'lucide-react';
 import PriceTable from '@/components/providers/PriceTable';
 import ReviewList from '@/components/providers/ReviewList';
 import ProviderCard from '@/components/providers/ProviderCard';
 import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
 import StarRating from '@/components/ui/StarRating';
-import { Card, CardContent } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import { formatUSD } from '@/lib/utils';
 import { getProviderGallery } from '@/lib/provider-gallery';
 import {
@@ -30,25 +42,38 @@ const CATEGORY_SLUGS = [
   'vets',
 ];
 
+const CATEGORY_LABELS: Record<string, string> = {
+  dentists: 'Dentists',
+  pharmacies: 'Pharmacies',
+  spas: 'Spas',
+  optometrists: 'Eye Care',
+  'cosmetic-surgery': 'Cosmetic Surgery',
+  doctors: 'Doctors',
+  liquor: 'Liquor',
+  vets: 'Veterinary',
+};
+
 interface ProviderPageProps {
   params: Promise<{ category: string; provider: string }>;
+}
+
+function getYearsExperience(graduationYear: number | null | undefined): number | null {
+  if (!graduationYear) return null;
+  return new Date().getFullYear() - graduationYear;
 }
 
 export async function generateMetadata({
   params,
 }: ProviderPageProps): Promise<Metadata> {
   const { category, provider } = await params;
-
   const providerData = await getProviderBySlug(provider);
 
   if (!providerData) {
-    return {
-      title: 'Provider Not Found | ClearCross',
-    };
+    return { title: 'Provider Not Found | ClearCross' };
   }
 
   return {
-    title: `${providerData.name} — ${CATEGORY_SLUGS.includes(category) ? category : 'Medical'} in Nuevo Progreso Mexico | Prices & Reviews | ClearCross`,
+    title: `${providerData.name} — ${CATEGORY_LABELS[category] || category} in Nuevo Progreso Mexico | Prices & Reviews | ClearCross`,
     description: `View prices, reviews, and details for ${providerData.name} in Nuevo Progreso, Mexico. Get a quote for medical services.`,
     openGraph: {
       title: `${providerData.name} | ClearCross Progreso`,
@@ -65,25 +90,23 @@ export async function generateStaticParams() {
 export default async function ProviderPage({ params }: ProviderPageProps) {
   const { category, provider } = await params;
 
-  // Fetch provider with prices and procedures
   const providerData = await getProviderBySlug(provider);
+  if (!providerData) notFound();
 
-  if (!providerData) {
-    notFound();
-  }
-
-  // Fetch reviews
   const reviews = await getProviderReviews(providerData.id);
-
-  // Fetch related providers (same category)
   const relatedProviders = await getRelatedProviders(
     providerData.category_id,
     providerData.id
   );
 
   const categoryData = (providerData as any).categories || { name: 'Services', slug: category };
+  const yearsExp = getYearsExperience((providerData as any).graduation_year);
+  const galleryImages = getProviderGallery(providerData.slug, category);
+  const hasGallery = galleryImages.length > 0;
+  const providerPrices = (providerData as any).provider_prices || [];
+  const hasPrices = providerPrices.length > 0;
 
-  // Format structured data
+  // Structured data
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -107,59 +130,133 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* JSON-LD structured data */}
+    <main className="min-h-screen bg-neutral-50">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
-      {/* Header */}
-      <div className="bg-gradient-to-br from-brand-blue/5 to-brand-green/5 border-b border-neutral-200">
-        <div className="container-page py-8 sm:py-12">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div className="flex-1">
-              <h1 className="text-3xl sm:text-4xl font-bold text-neutral-dark mb-2">
-                {providerData.name}
-              </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3 flex-wrap">
-                <Badge variant="default">{categoryData.name}</Badge>
-                {providerData.verified && (
-                  <Badge variant="verified">✓ Verified</Badge>
-                )}
-                {providerData.featured && (
-                  <Badge variant="featured">★ Featured</Badge>
-                )}
-              </div>
+      {/* ── Breadcrumbs ── */}
+      <nav className="bg-white border-b border-neutral-100">
+        <div className="container-page py-3">
+          <ol className="flex items-center gap-1.5 text-sm text-neutral-400">
+            <li>
+              <Link href="/" className="hover:text-brand-blue transition-colors">Home</Link>
+            </li>
+            <li><ChevronRight className="w-3.5 h-3.5" /></li>
+            <li>
+              <Link href={`/${category}`} className="hover:text-brand-blue transition-colors">
+                {CATEGORY_LABELS[category] || categoryData.name}
+              </Link>
+            </li>
+            <li><ChevronRight className="w-3.5 h-3.5" /></li>
+            <li className="text-neutral-dark font-medium truncate max-w-[200px]">
+              {providerData.name}
+            </li>
+          </ol>
+        </div>
+      </nav>
 
-              {/* Contact Info */}
-              <div className="space-y-2 text-sm text-neutral-mid">
-                <div className="flex items-center gap-2">
-                  <MapPin size={16} />
-                  <span>{providerData.address}</span>
-                </div>
-                {providerData.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone size={16} />
-                    <a
-                      href={`tel:${providerData.phone}`}
-                      className="text-brand-blue hover:underline"
-                    >
-                      {providerData.phone}
-                    </a>
+      {/* ── Header ── */}
+      <div className="bg-white border-b border-neutral-200">
+        <div className="container-page py-8 sm:py-10">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            {/* Left: Provider info */}
+            <div className="flex-1">
+              {/* Photo + Name row */}
+              <div className="flex items-start gap-5">
+                {/* Provider photo or initial */}
+                {(providerData as any).photo_url ? (
+                  <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 border-2 border-neutral-200 shadow-sm">
+                    <Image
+                      src={(providerData as any).photo_url}
+                      alt={providerData.name}
+                      fill
+                      className="object-cover object-top"
+                      sizes="96px"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-brand-blue/10 flex items-center justify-center flex-shrink-0 border-2 border-brand-blue/20">
+                    <span className="font-display text-3xl font-bold text-brand-blue">
+                      {providerData.name.charAt(0)}
+                    </span>
                   </div>
                 )}
+
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-dark mb-2 leading-tight">
+                    {providerData.name}
+                  </h1>
+
+                  {/* Badges */}
+                  <div className="flex items-center gap-2 flex-wrap mb-3">
+                    <Badge variant="default">{categoryData.name}</Badge>
+                    {providerData.verified && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-brand-green/10 text-brand-green text-xs font-bold rounded-full border border-brand-green/20">
+                        <ShieldCheck className="w-3 h-3" />
+                        Verified
+                      </span>
+                    )}
+                    {providerData.featured && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber/10 text-amber text-xs font-bold rounded-full border border-amber/20">
+                        <Sparkles className="w-3 h-3" />
+                        Featured
+                      </span>
+                    )}
+                    {yearsExp && yearsExp > 0 && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-brand-navy/5 text-brand-navy text-xs font-bold rounded-full border border-brand-navy/10">
+                        <Award className="w-3 h-3" />
+                        {yearsExp}+ years experience
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Contact */}
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-neutral-mid">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-neutral-400" />
+                      <span>{providerData.address}</span>
+                    </div>
+                    {providerData.phone && (
+                      <div className="flex items-center gap-1.5">
+                        <Phone className="w-4 h-4 text-neutral-400" />
+                        <a href={`tel:${providerData.phone}`} className="text-brand-blue hover:underline">
+                          {providerData.phone}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
+
+              {/* Rating */}
+              {providerData.avg_rating && (
+                <div className="mt-5 flex items-center gap-4 p-4 bg-neutral-50 rounded-xl border border-neutral-200">
+                  <div className="text-center">
+                    <p className="font-display text-3xl font-bold text-neutral-dark">
+                      {providerData.avg_rating.toFixed(1)}
+                    </p>
+                    <p className="text-xs text-neutral-400 mt-0.5">out of 5</p>
+                  </div>
+                  <div className="border-l border-neutral-200 pl-4">
+                    <StarRating rating={providerData.avg_rating} size="md" />
+                    <p className="text-sm text-neutral-mid mt-1">
+                      {providerData.review_count} {providerData.review_count === 1 ? 'review' : 'reviews'}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2 flex-shrink-0">
+            {/* Right: Action buttons */}
+            <div className="flex flex-row lg:flex-col gap-3 flex-shrink-0">
               {providerData.whatsapp && (
                 <a
                   href={`https://wa.me/${providerData.whatsapp.replace(/\D/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-sm"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#25D366] text-white rounded-xl hover:bg-[#20BD5A] transition-colors font-semibold text-sm shadow-sm"
                 >
                   <MessageCircle size={18} />
                   WhatsApp
@@ -170,103 +267,186 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                   href={providerData.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 border-2 border-brand-blue text-brand-blue rounded-lg hover:bg-brand-blue hover:text-white transition-colors font-medium text-sm"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 border-2 border-brand-blue text-brand-blue rounded-xl hover:bg-brand-blue hover:text-white transition-colors font-semibold text-sm"
                 >
                   <Globe size={18} />
                   Website
                 </a>
               )}
+              <a
+                href="#quote-form"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-blue text-white rounded-xl hover:bg-brand-navy transition-colors font-semibold text-sm shadow-sm"
+              >
+                <MessageSquare size={18} />
+                Get a Quote
+              </a>
             </div>
           </div>
-
-          {/* Rating Summary */}
-          {providerData.avg_rating && (
-            <div className="mt-4 flex items-center gap-3">
-              <StarRating rating={providerData.avg_rating} size="md" />
-              <span className="text-sm text-neutral-mid">
-                {providerData.avg_rating.toFixed(1)} ({providerData.review_count}{' '}
-                {providerData.review_count === 1 ? 'review' : 'reviews'})
-              </span>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Content */}
+      {/* ── Content ── */}
       <div className="container-page py-10 sm:py-14">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-10">
-            {/* Photo Gallery */}
-            <section>
-              <h2 className="text-2xl font-bold text-neutral-dark mb-4">
-                Gallery
+
+            {/* About Section */}
+            <section className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-200 shadow-sm">
+              <h2 className="text-xl font-bold text-neutral-dark mb-4 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-brand-green" />
+                About {providerData.name}
               </h2>
-              <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
-                <div className="flex gap-3 sm:flex-wrap">
-                  {getProviderGallery(providerData.slug, category).map((src, i) => (
-                    <div
-                      key={i}
-                      className="flex-shrink-0 w-40 h-40 sm:w-48 sm:h-48 rounded-lg overflow-hidden relative group"
-                    >
-                      <Image
-                        src={src}
-                        alt={`${providerData.name} photo ${i + 1}`}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="(max-width: 640px) 160px, 192px"
-                      />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                {yearsExp && yearsExp > 0 && (
+                  <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
+                    <Award className="w-5 h-5 text-brand-navy flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-neutral-dark">{yearsExp}+ Years Experience</p>
+                      <p className="text-xs text-neutral-mid">Licensed since {(providerData as any).graduation_year}</p>
                     </div>
-                  ))}
+                  </div>
+                )}
+                <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
+                  <MapPin className="w-5 h-5 text-brand-blue flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-neutral-dark">Nuevo Progreso</p>
+                    <p className="text-xs text-neutral-mid">{providerData.address}</p>
+                  </div>
                 </div>
+                {providerData.verified && (
+                  <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
+                    <ShieldCheck className="w-5 h-5 text-brand-green flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-neutral-dark">Verified Provider</p>
+                      <p className="text-xs text-neutral-mid">Credentials checked by ClearCross</p>
+                    </div>
+                  </div>
+                )}
+                {hasPrices && (
+                  <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
+                    <Clock className="w-5 h-5 text-amber flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-neutral-dark">{providerPrices.length} Services Listed</p>
+                      <p className="text-xs text-neutral-mid">Transparent pricing</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
 
+            {/* Photo Gallery — only if images exist */}
+            {hasGallery && (
+              <section className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-200 shadow-sm">
+                <h2 className="text-xl font-bold text-neutral-dark mb-4 flex items-center gap-2">
+                  <Camera className="w-5 h-5 text-neutral-400" />
+                  Photos
+                  <span className="text-sm font-normal text-neutral-400 ml-1">
+                    ({galleryImages.length})
+                  </span>
+                </h2>
+                <div className="overflow-x-auto pb-2 -mx-2 px-2">
+                  <div className="flex gap-3 sm:flex-wrap">
+                    {galleryImages.map((src, i) => (
+                      <div
+                        key={i}
+                        className="flex-shrink-0 w-40 h-40 sm:w-48 sm:h-48 rounded-lg overflow-hidden relative group"
+                      >
+                        <Image
+                          src={src}
+                          alt={`${providerData.name} photo ${i + 1}`}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          sizes="(max-width: 640px) 160px, 192px"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
+
             {/* Prices */}
-            {(providerData as any).provider_prices &&
-              (providerData as any).provider_prices.length > 0 && (
-                <section>
-                  <h2 className="text-2xl font-bold text-neutral-dark mb-6">
-                    Pricing
-                  </h2>
-                  <PriceTable
-                    prices={(providerData as any).provider_prices}
-                    providerName={providerData.name}
-                    providerId={providerData.id}
-                  />
-                </section>
-              )}
+            {hasPrices && (
+              <section className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-200 shadow-sm">
+                <h2 className="text-xl font-bold text-neutral-dark mb-6">
+                  Pricing
+                </h2>
+                <PriceTable
+                  prices={providerPrices}
+                  providerName={providerData.name}
+                  providerId={providerData.id}
+                />
+                <div className="mt-4 p-3 bg-brand-green/5 rounded-lg border border-brand-green/20">
+                  <p className="text-xs text-brand-green font-medium flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4" />
+                    All prices are written quotes — the price listed is the price you pay. No hidden fees.
+                  </p>
+                </div>
+              </section>
+            )}
 
             {/* Reviews */}
-            <section>
-              <h2 className="text-2xl font-bold text-neutral-dark mb-6">
+            <section className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-200 shadow-sm">
+              <h2 className="text-xl font-bold text-neutral-dark mb-6 flex items-center gap-2">
+                <Star className="w-5 h-5 text-amber" />
                 Patient Reviews
               </h2>
-              <ReviewList reviews={reviews || []} />
+              {reviews && reviews.length > 0 ? (
+                <ReviewList reviews={reviews} />
+              ) : (
+                <div className="text-center py-10">
+                  <div className="w-14 h-14 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="w-7 h-7 text-neutral-300" />
+                  </div>
+                  <p className="text-neutral-dark font-semibold mb-1">
+                    No reviews yet
+                  </p>
+                  <p className="text-sm text-neutral-400 max-w-sm mx-auto">
+                    Have you visited {providerData.name}? Be the first to share your experience and help other patients make informed decisions.
+                  </p>
+                </div>
+              )}
             </section>
 
-            {/* Map */}
-            <section>
-              <h2 className="text-2xl font-bold text-neutral-dark mb-4">
+            {/* Location */}
+            <section className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-200 shadow-sm">
+              <h2 className="text-xl font-bold text-neutral-dark mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-brand-blue" />
                 Location
               </h2>
               <div
-                className="w-full h-96 bg-neutral-100 border border-neutral-300 rounded-lg flex items-center justify-center"
+                className="w-full h-72 bg-neutral-100 border border-neutral-200 rounded-lg flex items-center justify-center"
                 data-lat={providerData.lat}
                 data-lng={providerData.lng}
               >
-                <span className="text-neutral-500">Map loading...</span>
+                <div className="text-center">
+                  <MapPin className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
+                  <p className="text-sm text-neutral-500">{providerData.address}</p>
+                  <p className="text-xs text-neutral-400 mt-1">Nuevo Progreso, Tamaulipas, Mexico</p>
+                  {providerData.lat && providerData.lng && (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${providerData.lat},${providerData.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 mt-3 text-sm text-brand-blue font-semibold hover:underline"
+                    >
+                      Open in Google Maps
+                      <Globe className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
               </div>
             </section>
 
             {/* Related Providers */}
             {relatedProviders && relatedProviders.length > 0 && (
               <section>
-                <h2 className="text-2xl font-bold text-neutral-dark mb-6">
-                  Related {categoryData.name}
+                <h2 className="text-xl font-bold text-neutral-dark mb-6">
+                  Other {CATEGORY_LABELS[category] || categoryData.name} in Nuevo Progreso
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {relatedProviders.map((relProvider: any) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5">
+                  {relatedProviders.slice(0, 4).map((relProvider: any) => (
                     <ProviderCard
                       key={relProvider.id}
                       provider={{
@@ -276,16 +456,27 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                     />
                   ))}
                 </div>
+                <div className="text-center mt-6">
+                  <Link
+                    href={`/${category}`}
+                    className="inline-flex items-center gap-2 text-sm text-brand-blue font-semibold hover:text-brand-navy transition-colors"
+                  >
+                    View all {CATEGORY_LABELS[category] || categoryData.name}
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
               </section>
             )}
           </div>
 
-          {/* Sidebar */}
+          {/* ── Sidebar ── */}
           <div>
-            {/* Quote CTA */}
-            <Card className="sticky top-6 overflow-hidden">
-              <div className="bg-gradient-to-br from-brand-blue to-brand-blue/80 text-white p-6">
-                <h3 className="text-xl font-bold mb-4">Get a Quote</h3>
+            <Card id="quote-form" className="sticky top-6 overflow-hidden">
+              <div className="bg-gradient-to-br from-brand-blue to-brand-navy text-white p-6">
+                <h3 className="text-xl font-bold mb-1">Get a Quote</h3>
+                <p className="text-blue-200/70 text-sm mb-5">
+                  Free, no commitment — most providers respond within 2 hours
+                </p>
 
                 <form
                   action={`/quote?provider=${providerData.id}`}
@@ -293,83 +484,134 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                   className="space-y-4"
                 >
                   {/* Procedure Select */}
-                  {(providerData as any).provider_prices &&
-                    (providerData as any).provider_prices.length > 0 && (
-                      <div>
-                        <label
-                          htmlFor="procedure"
-                          className="block text-sm font-medium mb-2"
-                        >
-                          Procedure
-                        </label>
-                        <select
-                          id="procedure"
-                          name="procedure"
-                          className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"
-                        >
-                          <option value="">Select a procedure</option>
-                          {Array.from(
-                            new Map(
-                              ((providerData as any).provider_prices as any[]).map((p: any) => [
-                                p.procedure?.id,
-                                p.procedure?.name,
-                              ])
-                            ).entries()
-                          ).map(([id, name]) => (
-                            <option key={id} value={id}>
-                              {name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
+                  {hasPrices && (
+                    <div>
+                      <label htmlFor="procedure" className="block text-sm font-medium mb-1.5">
+                        Procedure
+                      </label>
+                      <select
+                        id="procedure"
+                        name="procedure"
+                        className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"
+                      >
+                        <option value="">Select a procedure (optional)</option>
+                        {Array.from(
+                          new Map(
+                            (providerPrices as any[]).map((p: any) => [
+                              p.procedure?.id,
+                              p.procedure?.name,
+                            ])
+                          ).entries()
+                        ).map(([id, name]) => (
+                          <option key={id} value={id}>
+                            {name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   {/* Description */}
                   <div>
-                    <label
-                      htmlFor="description"
-                      className="block text-sm font-medium mb-2"
-                    >
-                      Additional Details
+                    <label htmlFor="description" className="block text-sm font-medium mb-1.5">
+                      What do you need?
                     </label>
                     <textarea
                       id="description"
                       name="description"
                       rows={3}
-                      placeholder="Tell us more about what you need..."
-                      className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm resize-none"
+                      placeholder="Describe what you're looking for..."
+                      className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm resize-none"
                     />
                   </div>
 
                   {/* Photo Upload */}
                   <div>
-                    <label htmlFor="photo" className="block text-sm font-medium mb-2">
-                      Upload Photo (Optional)
+                    <label htmlFor="photo" className="block text-sm font-medium mb-1.5">
+                      Upload Photo <span className="text-blue-200/50">(optional)</span>
                     </label>
-                    <input
-                      type="file"
-                      id="photo"
-                      name="photo"
-                      accept="image/*"
-                      className="w-full text-xs"
-                    />
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/20 text-xs text-blue-200/60">
+                      <Camera className="w-4 h-4" />
+                      <input
+                        type="file"
+                        id="photo"
+                        name="photo"
+                        accept="image/*"
+                        className="w-full text-xs file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:bg-white/20 file:text-white hover:file:bg-white/30"
+                      />
+                    </div>
                   </div>
 
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    className="w-full px-4 py-2.5 bg-white text-brand-blue font-bold rounded-lg hover:bg-white/90 transition-colors"
+                    className="w-full px-4 py-3 bg-white text-brand-blue font-bold rounded-lg hover:bg-neutral-light transition-colors shadow-sm"
                   >
                     Request Quote
                   </button>
                 </form>
 
-                <p className="text-xs text-white/70 mt-4 text-center">
-                  Free quotes, no commitment
+                <p className="text-xs text-blue-200/50 mt-4 text-center">
+                  Your information is private and only shared with this provider
                 </p>
               </div>
             </Card>
+
+            {/* Trust signal under quote form */}
+            <div className="mt-4 p-4 bg-white rounded-xl border border-neutral-200 shadow-sm">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2.5 text-sm">
+                  <ShieldCheck className="w-4 h-4 text-brand-green flex-shrink-0" />
+                  <span className="text-neutral-mid">Written price guarantee</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-sm">
+                  <Clock className="w-4 h-4 text-amber flex-shrink-0" />
+                  <span className="text-neutral-mid">Average response: &lt;2 hours</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-sm">
+                  <Star className="w-4 h-4 text-brand-blue flex-shrink-0" />
+                  <span className="text-neutral-mid">No commitment required</span>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Sticky Mobile CTA */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-neutral-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex-1 min-w-0">
+            <p className="font-display font-bold text-neutral-dark text-sm truncate">
+              {providerData.name}
+            </p>
+            {providerData.avg_rating && (
+              <div className="flex items-center gap-1 text-xs text-neutral-mid">
+                <Star className="w-3 h-3 fill-amber text-amber" />
+                {providerData.avg_rating.toFixed(1)}
+                <span className="text-neutral-400">
+                  ({providerData.review_count})
+                </span>
+              </div>
+            )}
+          </div>
+          {providerData.whatsapp && (
+            <a
+              href={`https://wa.me/${providerData.whatsapp.replace(/\D/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-[#25D366] text-white rounded-lg font-semibold text-sm shadow-sm"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Chat
+            </a>
+          )}
+          <a
+            href="#quote-form"
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-brand-blue text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-brand-navy transition-colors"
+          >
+            Get Quote
+          </a>
         </div>
       </div>
     </main>
