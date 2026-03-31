@@ -44,8 +44,8 @@ export default function Hero() {
             transition={{ duration: 0.8 }}
           >
             <Image
-              src="/images/general/main-avenue-dental.jpg"
-              alt="Nuevo Progreso main avenue — dental clinics and pharmacies"
+              src="/images/hero-bg.jpg"
+              alt="Nuevo Progreso main street at golden hour — clinics, pharmacies, and storefronts"
               fill
               priority
               className="object-cover"
