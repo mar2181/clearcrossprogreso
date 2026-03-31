@@ -234,7 +234,7 @@ export const providers = [
     description:
       'Full-service dental clinic with one of the most transparent price menus in Nuevo Progreso. Official booking page with published prices for cleanings, crowns, implants, veneers, and more. High confidence pricing from clinic-owned website.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/clinic-exterior-modern.jpg',
     gallery_urls: [],
     verified: true,
     featured: true,
@@ -258,7 +258,7 @@ export const providers = [
     description:
       'The most comprehensive official price list in Nuevo Progreso. Specializes in implants and full-mouth rehabilitation. All prices published on clinic-owned website. High confidence — best documented clinic in the area.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/operatory-room.jpg',
     gallery_urls: [],
     verified: true,
     featured: true,
@@ -284,7 +284,7 @@ export const providers = [
     description:
       'Dental clinic with some of the lowest published prices for cleanings and composite veneers in Nuevo Progreso. Offers a wide range of cosmetic and restorative procedures including All-on-4 and invisible aligners.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/premium-interior.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -308,7 +308,7 @@ export const providers = [
     description:
       'Dental clinic offering a range of services from basic cleanings to crowns and veneers. Known for competitive pricing on standard procedures.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/reception-waiting-room.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -332,7 +332,7 @@ export const providers = [
     description:
       'Full-service dental clinic with published pricing for a wide range of procedures including braces, implants, All-on-4, veneers, and whitening. Good price volume on directory listings.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/dental-team.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -356,7 +356,7 @@ export const providers = [
     description:
       'Dental clinic specializing in cosmetic dentistry, veneers, and full-mouth rehabilitation. Offers implant services, braces, and comprehensive smile makeovers.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/luxury-chair.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -380,7 +380,7 @@ export const providers = [
     description:
       'Implant-focused dental clinic with published pricing for single implants, All-on-4, All-on-6, veneers, crowns, and routine cleanings.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/implant-surgery-room.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -404,7 +404,7 @@ export const providers = [
     description:
       'Dental clinic offering a comprehensive range of services including cleanings, crowns, veneers, implants, and full-mouth rehabilitation. Published pricing on directory listings.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/smile-design.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -428,7 +428,7 @@ export const providers = [
     description:
       'Dental clinic with some of the lowest published prices in Nuevo Progreso. Offers detailed pricing for cleanings, veneers, crowns, and implant packages with clear inclusion details.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/sterilization-room.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -452,7 +452,7 @@ export const providers = [
     description:
       'Dental clinic offering affordable cleanings, root canals, crowns, bridges, and implants. Free exam and estimation available.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/greeting-patient.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -476,7 +476,7 @@ export const providers = [
     description:
       'General and implant dentistry clinic offering bone grafts, braces, bridges, crowns, dentures, and extractions at published prices. Free dental checkup and consultation.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/consultation-desk.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -500,7 +500,7 @@ export const providers = [
     description:
       'Dental clinic with published pricing for cleanings, implants, braces, Invisalign, crowns, veneers, and dentures. Offers competitive implant pricing starting at $800.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/simple-operatory.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -524,7 +524,7 @@ export const providers = [
     description:
       'Dental clinic offering implants, All-on-4, All-on-6, veneers, crowns, and whitening services at published prices.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/clinic-hallway.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -548,7 +548,7 @@ export const providers = [
     description:
       'Dental office with published pricing for cleanings, veneers, implants, crowns, root canals, and whitening.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/intraoral-camera.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -572,7 +572,7 @@ export const providers = [
     description:
       'Implant-focused dental center in Nuevo Progreso. Specializes in dental implant placement and restoration.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/perfect-smile.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -596,7 +596,7 @@ export const providers = [
     description:
       'Private dental practice offering implants, braces, veneers, extractions, and whitening services.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/clinic-entrance-plaza.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -620,7 +620,7 @@ export const providers = [
     description:
       'Dental and implant center offering free consultations, veneers, Lumineers, root canals, deep cleaning, and bone grafting services.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/neighborhood-clinic.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -644,7 +644,7 @@ export const providers = [
     description:
       'Dental clinic offering cleaning, whitening, crowns, implants, braces, fillings, root canal, and dentures. Official website available but no public price list posted.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/cadcam-milling.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -674,7 +674,7 @@ export const providers = [
     description:
       'Major Mexican pharmacy chain with a location in Nuevo Progreso. Full catalog of prescription and OTC medications. Published pricing on their official website — high confidence pricing for most products.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/pharmacy-chain-exterior.jpg',
     gallery_urls: [],
     verified: true,
     featured: true,
@@ -700,7 +700,7 @@ export const providers = [
     description:
       'Well-known local pharmacy inside El Disco Super Center on the main strip. Popular with Winter Texans and day-trippers. Carries Ozempic, inhalers, skin care, and a wide range of prescriptions at competitive prices.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/pharmacy-local-exterior.jpg',
     gallery_urls: [],
     verified: true,
     featured: true,
@@ -726,7 +726,7 @@ export const providers = [
     description:
       'Local pharmacy and medical supplies store. Known for affordable insulin, gabapentin, and generic blood thinner medications. Frequently mentioned in community forums.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/pharmacy-chain-counter.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -752,7 +752,7 @@ export const providers = [
     description:
       'Independent pharmacy on the main Juárez strip. Featured in diabetes community guides for affordable insulin (Novolog, Levemir). Well-documented pricing from buying guides.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/pharmacy-local-counter.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -778,7 +778,7 @@ export const providers = [
     description:
       'Combined pharmacy and spa in Plaza Juárez. Known in community groups for very low prices on antibiotics. Also offers spa services.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/pharmacy-boutique.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -804,7 +804,7 @@ export const providers = [
     description:
       'Independent pharmacy on Juárez Avenue. Known for affordable albuterol inhalers and general prescriptions.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/pharmacy-consultation.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -830,7 +830,7 @@ export const providers = [
     description:
       'Pharmacy inside El Disco Super Center. Carries oral semaglutide and other popular medications. Convenient one-stop shopping with the supermarket.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/pharmacy-chain-interior.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -856,7 +856,7 @@ export const providers = [
     description:
       'Local independent pharmacy. Community reports mention Ozempic availability.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/pharmacy-local-service.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -882,7 +882,7 @@ export const providers = [
     description:
       'Local pharmacy mentioned in community groups for Ozempic availability.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/pharmacy-medcenter-exterior.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -908,7 +908,7 @@ export const providers = [
     description:
       'Pharmacy in Plaza Jalisco. Community reports on Mounjaro pricing available.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/pharmacy-counting-pills.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -937,7 +937,7 @@ export const providers = [
     description:
       'Full-service medical aesthetics and cosmetic clinic offering Botox, fillers, laser treatments, PRP, Hollywood Peel, endolifting, and facial rejuvenation. One of the highest-rated clinics in Nuevo Progreso.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/cosmetic-consultation.jpg',
     gallery_urls: [],
     verified: true,
     featured: true,
@@ -961,7 +961,7 @@ export const providers = [
     description:
       'Plastic surgery and medical spa offering consultations, breast implants, facelift, liposuction, tummy tuck, dermal fillers, mesotherapy, and mole removal. Perfect 5-star rating.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/cosmetic-treatment-room.jpg',
     gallery_urls: [],
     verified: true,
     featured: true,
@@ -985,7 +985,7 @@ export const providers = [
     description:
       'Plastic surgery clinic near the international bridge, offering cosmetic surgery procedures.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/cosmetic-botox-injection.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1009,7 +1009,7 @@ export const providers = [
     description:
       'Cosmetic and body aesthetics clinic on the main avenue in Nuevo Progreso.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/doctor-consultation-room.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1033,7 +1033,7 @@ export const providers = [
     description:
       'Cosmetic and aesthetic clinic offering Botox and injectable treatments in Nuevo Progreso.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/doctor-stethoscope.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1057,7 +1057,7 @@ export const providers = [
     description:
       'Medical aesthetics specialist offering dermal fillers, jaw fillers, lip fillers, mesotherapy, thread lifts, collagen stimulators, spider vein treatment, and excessive sweating treatment. Transparent pricing with strong online presence.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/ct-scanner.jpg',
     gallery_urls: [],
     verified: true,
     featured: true,
@@ -1081,7 +1081,7 @@ export const providers = [
     description:
       'Specialist in orofacial harmonization and facial aesthetics. Strong social media presence showcasing facial rejuvenation work.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/doctor-waiting-area.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1105,7 +1105,7 @@ export const providers = [
     description:
       'Combined cosmetic dentistry and aesthetics practice offering dental and facial cosmetic procedures.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/happy-result.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1129,7 +1129,7 @@ export const providers = [
     description:
       'Non-surgical aesthetics clinic offering chemical peels, dermal fillers, mesotherapy, thread lifts, laser resurfacing, tattoo removal, and Profhilo treatments at very competitive prices.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/family-waiting.jpg',
     gallery_urls: [],
     verified: true,
     featured: false,
@@ -1157,7 +1157,7 @@ export const providers = [
     description:
       'Full-service spa offering body scrubs, body wraps, sauna, pedicures, manicures, and beauty services. Open daily on the main avenue.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/spa-facial-treatment.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1181,7 +1181,7 @@ export const providers = [
     description:
       'Popular spa and salon offering facials, acne treatments, dermaplaning, body sculpting, cellulite treatment, eyebrow threading, bridal makeup, massages, nails, and waxing. 94% recommended on Facebook.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/spa-massage-room.jpg',
     gallery_urls: [],
     verified: false,
     featured: true,
@@ -1205,7 +1205,7 @@ export const providers = [
     description:
       'Relaxing spa in the heart of Nuevo Progreso with a perfect 5-star rating. Open Monday through Saturday.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/spa-salon-interior.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1229,7 +1229,7 @@ export const providers = [
     description:
       'Salon and spa on the main avenue offering spa treatments and beauty services. Open daily 8AM-7PM.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/spa-nail-station.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1253,7 +1253,7 @@ export const providers = [
     description:
       'Full-service salon and spa specializing in microblading, eyebrow services, balayage, beard trims, and beauty treatments. Open daily 8AM-6PM.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/spa-microblading.jpg',
     gallery_urls: [],
     verified: false,
     featured: true,
@@ -1277,7 +1277,7 @@ export const providers = [
     description:
       'Combined boutique and spa offering laser hair removal, nail services, barber/haircut services, and beauty products.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/spa-body-sculpting.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1301,7 +1301,7 @@ export const providers = [
     description:
       'Beauty and cosmetics spa specializing in microblading, microshading, tattooing, full lips, eyeliner, and artistic cosmetic work. Perfect 5-star rating.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/spa-relaxation-area.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1325,7 +1325,7 @@ export const providers = [
     description:
       'Spa and health club on the main avenue. Open Saturdays.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/spa-sauna-steam.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1353,7 +1353,7 @@ export const providers = [
     description:
       'Leading eye care center on the main avenue with 700+ frames from top brands including Ray-Ban Meta smart glasses. Offers eye exams, contacts (Acuvue, Air Optix, Biofinity), same-day glasses, and prescription options including anti-reflective and transition lenses.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/optical-exam-room.jpg',
     gallery_urls: [],
     verified: true,
     featured: true,
@@ -1377,7 +1377,7 @@ export const providers = [
     description:
       'Established optical shop offering free eye exams, prescription glasses, progressive Blueray Transition lenses, and contact lenses in a variety of brands and colors. Ships to any location.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/optical-frames-display.jpg',
     gallery_urls: [],
     verified: false,
     featured: true,
@@ -1401,7 +1401,7 @@ export const providers = [
     description:
       'Highly-rated optician offering free eye exams, modern eyeglass frames, contact lenses, and same-day specialty glasses at affordable prices. Perfect 5-star rating.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/optical-storefront.jpg',
     gallery_urls: [],
     verified: false,
     featured: true,
@@ -1425,7 +1425,7 @@ export const providers = [
     description:
       'Optical shop offering lenses and glasses with special discounts — 30% off for adults 65+ and 25% off for students during promotional periods.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/optical-exam-room.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1449,7 +1449,7 @@ export const providers = [
     description:
       'Optometrist located in Plaza Río offering eye care services. Open daily with extended hours.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/optical-frames-display.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1473,7 +1473,7 @@ export const providers = [
     description:
       'Combined pharmacy and optical shop. Perfect 5-star rating. Open daily 8AM-7PM.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/optical-storefront.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1497,7 +1497,7 @@ export const providers = [
     description:
       'Local optician offering free eye exams and eyeglasses.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/optical-exam-room.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1521,7 +1521,7 @@ export const providers = [
     description:
       'Ophthalmology medical office offering specialized eye care. Perfect 5-star rating.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/optical-frames-display.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1550,7 +1550,7 @@ export const providers = [
     description:
       'Highest-rated general practitioner in Nuevo Progreso with perfect 5-star reviews on Doctoralia. Offers house calls, primary care, chronic wound care, and pain medicine. Private practice with personal attention.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/doctor-consultation-room.jpg',
     gallery_urls: [],
     verified: false,
     featured: true,
@@ -1574,7 +1574,7 @@ export const providers = [
     description:
       'Popular family practice clinic run by Dr. Esequiel Gonzalez and Dr. Juan Pulido. Dr. Pulido speaks perfect English and is highly recommended by winter Texans on TripAdvisor. Walk-in visits, lab work available next door with 45-minute turnaround. $35 USD per visit.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/doctor-stethoscope.jpg',
     gallery_urls: [],
     verified: false,
     featured: true,
@@ -1598,7 +1598,7 @@ export const providers = [
     description:
       'General medicine clinic led by Dr. Marco Antonio Anaya Perez. Open 8 AM to 7 PM. Perfect 5-star rating on Doctoralia with positive patient reviews.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/doctor-waiting-area.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1622,7 +1622,7 @@ export const providers = [
     description:
       'General medicine practitioner with a 5-star rating on Doctoralia. Private practice on Calle Coahuila in the center of Nuevo Progreso.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/ct-scanner.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1646,7 +1646,7 @@ export const providers = [
     description:
       'General medicine doctor with a confirmed office in Nuevo Progreso. Listed on Doctoralia, Doctuo, and Guiatel directories.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/family-waiting.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1670,7 +1670,7 @@ export const providers = [
     description:
       'Walk-in medical office open 7 days a week on the main avenue. Convenient location for visitors crossing the border. General consultations available daily from 8 AM to 7 PM.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/doctor-consultation-room.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1694,7 +1694,7 @@ export const providers = [
     description:
       'General medicine practice on Avenida Reynosa. Listed on medical directories including Doctuo and Doctoralia.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/doctor-stethoscope.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1718,7 +1718,7 @@ export const providers = [
     description:
       'General medicine practitioner on the main avenue. Also practices in Rio Bravo. Listed on Doctuo and Doctoralia directories.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/doctor-waiting-area.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1742,7 +1742,7 @@ export const providers = [
     description:
       'General medicine doctor on Benito Juárez avenue near the bridge. 5-star rated on Doctoralia.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/ct-scanner.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,
@@ -1766,7 +1766,7 @@ export const providers = [
     description:
       'Pharmacy with an attached doctor consultation office — a common model in Mexico. Patients can see a doctor and fill prescriptions in the same visit. Reviewed on Yelp with praise for good bedside manner.',
     logo_url: null,
-    photo_url: null,
+    photo_url: '/images/providers/family-waiting.jpg',
     gallery_urls: [],
     verified: false,
     featured: false,

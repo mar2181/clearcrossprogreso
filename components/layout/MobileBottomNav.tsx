@@ -20,8 +20,6 @@ const menuLinks = [
   { label: 'Doctors', href: '/doctors' },
   { label: 'Optometrists', href: '/optometrists' },
   { label: 'Cosmetic Surgery', href: '/cosmetic-surgery' },
-  { label: 'Liquor', href: '/liquor' },
-  { label: 'Vets', href: '/vets' },
   { label: 'Blog', href: '/blog' },
   { label: 'Get a Quote', href: '/quote' },
   { label: 'Login', href: '/login' },

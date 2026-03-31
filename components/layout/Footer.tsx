@@ -20,9 +20,7 @@ const footerSections: FooterSection[] = [
       { label: 'Pharmacies', href: '/pharmacies' },
       { label: 'Spas', href: '/spas' },
       { label: 'Optometrists', href: '/optometrists' },
-      { label: 'Cosmetic Surgery', href: '/cosmetic-surgery' },
-      { label: 'Liquor', href: '/liquor' },
-      { label: 'Vets', href: '/vets' }
+      { label: 'Cosmetic Surgery', href: '/cosmetic-surgery' }
     ]
   },
   {
@@ -31,6 +29,7 @@ const footerSections: FooterSection[] = [
       { label: 'Blog', href: '/blog' },
       { label: 'How It Works', href: '/how-it-works' },
       { label: 'Safety Guide', href: '/safety' },
+      { label: 'About Us', href: '/about' },
       { label: 'List Your Business', href: '/quote' }
     ]
   }

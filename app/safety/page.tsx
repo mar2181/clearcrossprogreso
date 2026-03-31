@@ -103,7 +103,7 @@ export default function SafetyPage() {
             Safety Guide
           </h1>
           <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            Nuevo Progreso is one of the safest border towns in Mexico for medical tourism. Here is everything you need to know for a safe, smooth visit.
+            Nuevo Progreso is a popular border town for Americans seeking affordable healthcare. Here is everything you need to know for a safe, smooth visit.
           </p>
         </div>
       </section>
@@ -112,12 +112,12 @@ export default function SafetyPage() {
       <section className="bg-white py-10 px-4 sm:px-6 lg:px-8 border-b border-neutral-100">
         <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
           <div>
-            <p className="font-display text-3xl font-bold text-brand-blue">10K+</p>
-            <p className="text-sm text-neutral-mid mt-1">Americans visit monthly</p>
+            <p className="font-display text-3xl font-bold text-brand-blue">1000s</p>
+            <p className="text-sm text-neutral-mid mt-1">Americans visit each year</p>
           </div>
           <div>
             <p className="font-display text-3xl font-bold text-brand-green">60+</p>
-            <p className="text-sm text-neutral-mid mt-1">Verified providers</p>
+            <p className="text-sm text-neutral-mid mt-1">Providers listed</p>
           </div>
           <div>
             <p className="font-display text-3xl font-bold text-brand-navy">40-70%</p>

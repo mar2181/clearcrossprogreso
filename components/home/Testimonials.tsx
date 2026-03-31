@@ -141,6 +141,11 @@ export default function Testimonials() {
             </StaggerItem>
           ))}
         </StaggerContainer>
+
+        {/* Disclaimer */}
+        <p className="text-center text-xs text-neutral-400 mt-8 max-w-2xl mx-auto">
+          Names and identifying details have been changed to protect privacy. Savings figures are representative examples based on typical price differences between US and Nuevo Progreso providers. Individual results may vary.
+        </p>
       </div>
     </section>
   );

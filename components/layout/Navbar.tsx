@@ -29,8 +29,6 @@ const navLinks: NavLink[] = [
       { label: 'Doctors', href: '/doctors' },
       { label: 'Optometrists', href: '/optometrists' },
       { label: 'Cosmetic Surgery', href: '/cosmetic-surgery' },
-      { label: 'Liquor', href: '/liquor' },
-      { label: 'Vets', href: '/vets' },
     ],
   },
 ]
