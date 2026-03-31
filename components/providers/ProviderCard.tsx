@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Star, Award } from 'lucide-react';
@@ -13,12 +13,13 @@ import StarRating from '@/components/ui/StarRating';
 
 interface ProviderCardProps {
   provider: Provider & {
-    prices?: (ProviderPrice & { procedure?: { name: string } })[];
+    prices?: (ProviderPrice & { procedure?: { name: string; id?: string } })[];
     category?: {
       name: string;
       slug: string;
     };
   };
+  filteredProcedureIds?: string[];
 }
 
 function getYearsExperience(graduationYear: number | null): number | null {
@@ -26,16 +27,26 @@ function getYearsExperience(graduationYear: number | null): number | null {
   return new Date().getFullYear() - graduationYear;
 }
 
-const ProviderCard: React.FC<ProviderCardProps> = ({ provider }) => {
+const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedureIds = [] }) => {
   const categoryName = provider.category?.name || 'Medical';
   const categorySlug = provider.category?.slug || 'dentists';
   const yearsExp = getYearsExperience(provider.graduation_year);
 
-  // Get first available price (check both 'prices' and 'provider_prices' keys)
+  // Get price list (check both 'prices' and 'provider_prices' keys)
   const priceList = provider.prices || (provider as any).provider_prices || [];
-  const firstPrice = priceList.length > 0
-    ? priceList.find((p: any) => p.price_usd)
-    : null;
+
+  // Show filtered procedure price when filters are active, otherwise first price
+  const displayPrice = useMemo(() => {
+    if (filteredProcedureIds.length > 0) {
+      const matching = priceList.filter((p: any) =>
+        filteredProcedureIds.includes(p.procedure_id || p.procedure?.id)
+      );
+      return matching.find((p: any) => p.price_usd) || null;
+    }
+    return priceList.find((p: any) => p.price_usd) || null;
+  }, [priceList, filteredProcedureIds]);
+
+  const hasActiveFilter = filteredProcedureIds.length > 0;
 
   return (
     <Card hover className="flex flex-col h-full overflow-hidden">
@@ -122,15 +133,25 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider }) => {
           </div>
         </div>
 
-        {/* Price section */}
-        {firstPrice && firstPrice.price_usd ? (
+        {/* Price section — shows filtered procedure price when filters active */}
+        {displayPrice && displayPrice.price_usd ? (
           <div className="px-4 py-3 border-b border-neutral-100">
             <p className="text-xs text-neutral-500 mb-1">
-              {firstPrice.procedure?.name || 'Starting price'}
+              {displayPrice.procedure?.name || 'Starting price'}
             </p>
             <p className="price-display text-xl">
-              {formatUSD(firstPrice.price_usd)}
+              {formatUSD(displayPrice.price_usd)}
             </p>
+          </div>
+        ) : hasActiveFilter ? (
+          <div className="px-4 py-3 border-b border-neutral-100">
+            <p className="text-xs text-neutral-400 italic mb-1">No price listed for this procedure</p>
+            <Link
+              href={`/quote?provider=${provider.id}`}
+              className="text-sm font-medium text-brand-blue hover:underline"
+            >
+              Request Quote
+            </Link>
           </div>
         ) : (
           <div className="px-4 py-3 border-b border-neutral-100">
