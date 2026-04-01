@@ -3,8 +3,10 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronRight, ShieldCheck, ArrowRight, TrendingDown } from 'lucide-react';
+import { ChevronRight, ShieldCheck, ArrowRight, TrendingDown, DollarSign } from 'lucide-react';
 import CategoryListingClient from '@/components/category/CategoryListingClient';
+import SavingsBanner from '@/components/category/SavingsBanner';
+import CategoryMap from '@/components/category/CategoryMap';
 import {
   getCategory,
   getCategoryBySlug,
@@ -44,12 +46,12 @@ const CATEGORY_HEROES: Record<string, string> = {
 };
 
 const CATEGORY_TAGLINES: Record<string, string> = {
-  dentists: 'Save $100s–$1000s on dental work with verified providers',
-  pharmacies: 'Prescription medications at a fraction of US prices',
-  spas: 'Relaxation and wellness treatments at unbeatable prices',
-  doctors: 'Affordable consultations and medical care',
-  optometrists: 'Eye exams, glasses, and contacts for less',
-  'cosmetic-surgery': 'Board-certified surgeons at a fraction of US prices',
+  dentists: 'Save up to 96% on dental work — implants, crowns, veneers, braces and more',
+  pharmacies: 'Save up to 99% on prescriptions — Ozempic, insulin, antibiotics, Eliquis',
+  spas: 'Save up to 90% on facials, massages, body sculpting, and beauty treatments',
+  doctors: 'Save up to 90% on doctor visits, blood work, and checkups',
+  optometrists: 'Save up to 90% on eye exams, prescription glasses, and contact lenses',
+  'cosmetic-surgery': 'Save up to 100% on Botox, fillers, liposuction, and cosmetic procedures',
   liquor: 'Spirits, wine, and beer from Nuevo Progreso shops',
   vets: 'Affordable veterinary care for your pets',
 };
@@ -81,11 +83,11 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${categoryData.name} in Nuevo Progreso Mexico — Compare Prices | ClearCross`,
-    description: `Find and compare prices for ${categoryData.name.toLowerCase()} in Nuevo Progreso, Mexico. View verified providers, prices, and patient reviews.`,
+    title: `${categoryData.name} in Nuevo Progreso Mexico — Compare Prices & Save | ClearCross`,
+    description: `Find verified ${categoryData.name.toLowerCase()} in Nuevo Progreso, Mexico. Compare prices, read reviews, and save big vs US costs. Get written quotes before you cross.`,
     openGraph: {
       title: `${categoryData.name} in Nuevo Progreso Mexico | ClearCross`,
-      description: `Find and compare prices for ${categoryData.name.toLowerCase()} in Nuevo Progreso, Mexico.`,
+      description: `Compare prices and save on ${categoryData.name.toLowerCase()} in Nuevo Progreso, Mexico.`,
       type: 'website',
     },
   };
@@ -171,9 +173,27 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
       {/* Content */}
       <div className="container-page py-10 sm:py-14">
+        {/* Savings Comparison Banner */}
+        {['dentists', 'cosmetic-surgery', 'optometrists', 'doctors', 'pharmacies', 'spas'].includes(category) && (
+          <div className="mb-10">
+            <SavingsBanner
+              providers={providersList}
+              categoryName={categoryData.name}
+              categorySlug={category}
+            />
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
           <div className="lg:col-span-2">
+            {/* Map toggle */}
+            <CategoryMap
+              providers={providersList}
+              categoryName={categoryData.name}
+              categorySlug={category}
+            />
+
             <CategoryListingClient
               providers={providersList}
               procedures={procedures}

@@ -28,10 +28,10 @@ const stats: StatItem[] = [
   },
   {
     icon: <TrendingDown className="w-5 h-5" />,
-    value: '$1,000s',
-    numericValue: 70,
+    value: '75',
+    numericValue: 75,
     suffix: '%',
-    label: 'Average savings per visit',
+    label: 'Average savings vs US prices',
   },
   {
     icon: <Star className="w-5 h-5" />,

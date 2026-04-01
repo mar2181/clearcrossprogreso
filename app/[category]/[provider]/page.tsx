@@ -16,14 +16,17 @@ import {
   Clock,
   MessageSquare,
   Camera,
+  TrendingDown,
 } from 'lucide-react';
 import PriceTable from '@/components/providers/PriceTable';
+import ProviderMap from '@/components/providers/ProviderMap';
 import ReviewList from '@/components/providers/ReviewList';
 import ProviderCard from '@/components/providers/ProviderCard';
 import Badge from '@/components/ui/Badge';
 import StarRating from '@/components/ui/StarRating';
 import { Card } from '@/components/ui/Card';
 import { formatUSD } from '@/lib/utils';
+import { getSavings } from '@/lib/us-benchmarks';
 import { getProviderGallery } from '@/lib/provider-gallery';
 import {
   getProviderBySlug,
@@ -74,10 +77,10 @@ export async function generateMetadata({
 
   return {
     title: `${providerData.name} — ${CATEGORY_LABELS[category] || category} in Nuevo Progreso Mexico | Prices & Reviews | ClearCross`,
-    description: `View prices, reviews, and details for ${providerData.name} in Nuevo Progreso, Mexico. Get a quote for medical services.`,
+    description: `View prices and reviews for ${providerData.name} in Nuevo Progreso, Mexico. Save big vs US prices. Get a free written quote.`,
     openGraph: {
       title: `${providerData.name} | ClearCross Progreso`,
-      description: `View prices, reviews, and contact information for ${providerData.name}`,
+      description: `View prices, reviews, and contact information for ${providerData.name}. Compare prices and save vs US costs.`,
       type: 'website',
     },
   };
@@ -227,6 +230,26 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                       </div>
                     )}
                   </div>
+
+                  {/* Savings callout */}
+                  {hasPrices && (() => {
+                    const maxSav = providerPrices
+                      .map((p: any) => {
+                        const slug = p.procedure?.slug || p.procedure_id;
+                        return getSavings(slug, p.price_usd);
+                      })
+                      .filter(Boolean)
+                      .sort((a: any, b: any) => b.percentSaved - a.percentSaved)[0];
+                    if (!maxSav) return null;
+                    return (
+                      <div className="mt-3 flex items-center gap-2 p-3 bg-brand-green/5 rounded-lg border border-brand-green/20">
+                        <TrendingDown className="w-4 h-4 text-brand-green flex-shrink-0" />
+                        <p className="text-sm text-brand-green font-semibold">
+                          Save up to {maxSav.percentSaved}% vs US prices at this provider
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -415,28 +438,13 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                 <MapPin className="w-5 h-5 text-brand-blue" />
                 Location
               </h2>
-              <div
-                className="w-full h-72 bg-neutral-100 border border-neutral-200 rounded-lg flex items-center justify-center"
-                data-lat={providerData.lat}
-                data-lng={providerData.lng}
-              >
-                <div className="text-center">
-                  <MapPin className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
-                  <p className="text-sm text-neutral-500">{providerData.address}</p>
-                  <p className="text-xs text-neutral-400 mt-1">Nuevo Progreso, Tamaulipas, Mexico</p>
-                  {providerData.lat && providerData.lng && (
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${providerData.lat},${providerData.lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 mt-3 text-sm text-brand-blue font-semibold hover:underline"
-                    >
-                      Open in Google Maps
-                      <Globe className="w-3.5 h-3.5" />
-                    </a>
-                  )}
-                </div>
-              </div>
+              <ProviderMap
+                name={providerData.name}
+                address={providerData.address}
+                lat={providerData.lat}
+                lng={providerData.lng}
+                categorySlug={category}
+              />
             </section>
 
             {/* Related Providers */}

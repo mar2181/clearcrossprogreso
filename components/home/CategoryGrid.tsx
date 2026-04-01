@@ -9,17 +9,18 @@ interface Category {
   name: string;
   slug: string;
   image: string;
+  savings: string;
 }
 
 const categories: Category[] = [
-  { id: 'dentists', name: 'Dental Work', slug: 'dentists', image: '/images/categories/dental.jpg' },
-  { id: 'pharmacies', name: 'Pharmacies', slug: 'pharmacies', image: '/images/categories/pharmacies.jpg' },
-  { id: 'spas', name: 'Spa & Wellness', slug: 'spas', image: '/images/categories/spa.jpg' },
-  { id: 'doctors', name: 'Doctors', slug: 'doctors', image: '/images/providers/doctor-consultation-room.jpg' },
-  { id: 'optometrists', name: 'Eye Care', slug: 'optometrists', image: '/images/categories/eye-care.jpg' },
-  { id: 'cosmetic-surgery', name: 'Cosmetic Surgery', slug: 'cosmetic-surgery', image: '/images/categories/cosmetic-surgery.jpg' },
-  { id: 'liquor', name: 'Liquor & Spirits', slug: 'liquor', image: '/images/categories/wellness.jpg' },
-  { id: 'vets', name: 'Veterinary', slug: 'vets', image: '/images/categories/veterinary.jpg' },
+  { id: 'dentists', name: 'Dental Work', slug: 'dentists', image: '/images/categories/dental.jpg', savings: 'Save up to 96%' },
+  { id: 'pharmacies', name: 'Pharmacies', slug: 'pharmacies', image: '/images/categories/pharmacies.jpg', savings: 'Save up to 99%' },
+  { id: 'spas', name: 'Spa & Wellness', slug: 'spas', image: '/images/categories/spa.jpg', savings: 'Save up to 90%' },
+  { id: 'doctors', name: 'Doctors', slug: 'doctors', image: '/images/providers/doctor-consultation-room.jpg', savings: 'Save up to 90%' },
+  { id: 'optometrists', name: 'Eye Care', slug: 'optometrists', image: '/images/categories/eye-care.jpg', savings: 'Save up to 90%' },
+  { id: 'cosmetic-surgery', name: 'Cosmetic Surgery', slug: 'cosmetic-surgery', image: '/images/categories/cosmetic-surgery.jpg', savings: 'Save up to 100%' },
+  { id: 'liquor', name: 'Liquor & Spirits', slug: 'liquor', image: '/images/categories/wellness.jpg', savings: '' },
+  { id: 'vets', name: 'Veterinary', slug: 'vets', image: '/images/categories/veterinary.jpg', savings: '' },
 ];
 
 interface CategoryGridProps {
@@ -83,11 +84,18 @@ export default function CategoryGrid({ counts = {} }: CategoryGridProps) {
                       <h3 className="font-display font-semibold text-gray-900 mb-1 text-sm sm:text-base group-hover:text-brand-blue transition-colors">
                         {category.name}
                       </h3>
-                      <p className="font-sans text-xs sm:text-sm text-gray-500">
-                        {providerCount > 0
-                          ? `${providerCount} providers`
-                          : 'Coming soon'}
-                      </p>
+                      <div className="flex items-center justify-center gap-2">
+                        <p className="font-sans text-xs sm:text-sm text-gray-500">
+                          {providerCount > 0
+                            ? `${providerCount} providers`
+                            : 'Coming soon'}
+                        </p>
+                        {category.savings && (
+                          <span className="inline-flex items-center text-xs font-bold text-brand-green bg-brand-green/10 px-2 py-0.5 rounded-full">
+                            {category.savings}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Link>

@@ -3,9 +3,10 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Star, Award } from 'lucide-react';
+import { MapPin, Star, Award, TrendingDown, GitCompareArrows, Check } from 'lucide-react';
 import { Provider, ProviderPrice } from '@/lib/types';
 import { cn, formatUSD } from '@/lib/utils';
+import { getSavings } from '@/lib/us-benchmarks';
 import { Card, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -13,13 +14,15 @@ import StarRating from '@/components/ui/StarRating';
 
 interface ProviderCardProps {
   provider: Provider & {
-    prices?: (ProviderPrice & { procedure?: { name: string; id?: string } })[];
+    prices?: (ProviderPrice & { procedure?: { name: string; id?: string; slug?: string } })[];
     category?: {
       name: string;
       slug: string;
     };
   };
   filteredProcedureIds?: string[];
+  onCompare?: () => void;
+  isInCompare?: boolean;
 }
 
 function getYearsExperience(graduationYear: number | null): number | null {
@@ -27,7 +30,7 @@ function getYearsExperience(graduationYear: number | null): number | null {
   return new Date().getFullYear() - graduationYear;
 }
 
-const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedureIds = [] }) => {
+const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedureIds = [], onCompare, isInCompare = false }) => {
   const categoryName = provider.category?.name || 'Medical';
   const categorySlug = provider.category?.slug || 'dentists';
   const yearsExp = getYearsExperience(provider.graduation_year);
@@ -139,9 +142,32 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
             <p className="text-xs text-neutral-500 mb-1">
               {displayPrice.procedure?.name || 'Starting price'}
             </p>
-            <p className="price-display text-xl">
-              {formatUSD(displayPrice.price_usd)}
-            </p>
+            <div className="flex items-baseline gap-2">
+              <p className="price-display text-xl">
+                {formatUSD(displayPrice.price_usd)}
+              </p>
+              {(() => {
+                const slug = displayPrice.procedure?.slug || (displayPrice as any).procedure_id || '';
+                const savings = getSavings(slug, displayPrice.price_usd);
+                if (!savings) return null;
+                return (
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-brand-green bg-brand-green/10 px-2 py-0.5 rounded-full">
+                    <TrendingDown className="w-3 h-3" />
+                    Save {savings.percentSaved}%
+                  </span>
+                );
+              })()}
+            </div>
+            {(() => {
+              const slug = displayPrice.procedure?.slug || (displayPrice as any).procedure_id || '';
+              const savings = getSavings(slug, displayPrice.price_usd);
+              if (!savings) return null;
+              return (
+                <p className="text-xs text-neutral-400 mt-0.5">
+                  <span className="line-through">{formatUSD(savings.usPrice)}</span> US avg
+                </p>
+              );
+            })()}
           </div>
         ) : hasActiveFilter ? (
           <div className="px-4 py-3 border-b border-neutral-100">
@@ -167,6 +193,23 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
 
       {/* Action buttons */}
       <div className="p-4 flex gap-2">
+        {onCompare && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onCompare();
+            }}
+            className={cn(
+              'px-3 py-2 rounded-lg text-sm font-medium transition-all border',
+              isInCompare
+                ? 'bg-brand-blue/10 text-brand-blue border-brand-blue/30'
+                : 'bg-white text-neutral-500 border-neutral-200 hover:border-brand-blue hover:text-brand-blue'
+            )}
+            title={isInCompare ? 'Remove from compare' : 'Add to compare'}
+          >
+            {isInCompare ? <Check className="w-4 h-4" /> : <GitCompareArrows className="w-4 h-4" />}
+          </button>
+        )}
         <Link
           href={`/${categorySlug}/${provider.slug}`}
           className="flex-1"

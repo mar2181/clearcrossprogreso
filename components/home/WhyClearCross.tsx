@@ -8,9 +8,9 @@ import { motion } from 'framer-motion';
 const advantages = [
   {
     icon: <DollarSign className="w-6 h-6" />,
-    title: 'Save Hundreds to Thousands on Every Visit',
+    title: 'Save Up to 96% Across All Healthcare',
     description:
-      'The same dental implant that costs $3,000–$5,000 in the US is $800–$1,500 in Nuevo Progreso — same materials, same quality, a fraction of the price.',
+      'Braces: $6,000 → $250. Dental implants: $3,500 → $790. Botox: $17 → $2/unit. Eye exams: $200 → $20. Same quality, a fraction of the price.',
     color: 'text-brand-green',
     bg: 'bg-brand-green/10',
   },

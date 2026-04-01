@@ -159,10 +159,10 @@ export default function Hero() {
             transition={{ delay: 0.6 }}
           >
             {[
-              'Save $$$ on healthcare',
-              'Upfront pricing',
-              'Verified providers',
-              '5 min from the US border',
+              'Save up to 96% vs US prices',
+              'Prices locked before you cross',
+              '60+ verified providers',
+              '5 min walk from Texas',
             ].map((pill) => (
               <span
                 key={pill}

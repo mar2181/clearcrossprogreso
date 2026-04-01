@@ -4,32 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ProviderPrice } from '@/lib/types';
 import { cn, formatUSD } from '@/lib/utils';
-
-// US price benchmarks for comparison
-const US_BENCHMARKS: Record<string, number> = {
-  'dental-cleaning': 150,
-  'composite-filling': 250,
-  'root-canal': 1200,
-  'metal-porcelain-crown': 1200,
-  'zirconia-crown': 1500,
-  'emax-crown': 1800,
-  'dental-implant': 3500,
-  'all-on-4': 25000,
-  'all-on-6': 30000,
-  'porcelain-veneer': 1500,
-  'teeth-whitening': 600,
-  'dentures': 2000,
-  'wisdom-tooth-extraction': 400,
-  'braces': 6000,
-  'bone-graft': 1200,
-  'composite-veneer': 800,
-  'lumineer': 2000,
-  'crown-over-implant': 1500,
-  '3-unit-bridge': 3600,
-  'deep-cleaning': 300,
-  'tooth-extraction': 250,
-  'periapical-xray': 35,
-};
+import { US_BENCHMARKS } from '@/lib/us-benchmarks';
 
 interface PriceTableProps {
   prices: (ProviderPrice & { procedure?: { name: string; sort_order: number; slug?: string } })[];
