@@ -2626,7 +2626,7 @@ export function getProviderPricesWithProcedures(providerId: string) {
       return {
         ...pp,
         procedure: procedure
-          ? { id: procedure.id, name: procedure.name, sort_order: procedure.sort_order }
+          ? { id: procedure.id, name: procedure.name, sort_order: procedure.sort_order, slug: procedure.slug }
           : null,
       };
     });
