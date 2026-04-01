@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 const advantages = [
   {
     icon: <DollarSign className="w-6 h-6" />,
-    title: 'Save 55–99% on Every Visit',
+    title: 'Save Hundreds to Thousands on Every Visit',
     description:
       'The same dental implant that costs $3,000–$5,000 in the US is $800–$1,500 in Nuevo Progreso — same materials, same quality, a fraction of the price.',
     color: 'text-brand-green',

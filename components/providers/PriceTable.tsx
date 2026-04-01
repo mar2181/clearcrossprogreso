@@ -40,7 +40,6 @@ interface PriceTableProps {
 const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerId }) => {
   const [showComparison, setShowComparison] = useState(true);
 
-  // Sort by procedure sort_order
   const sortedPrices = [...prices].sort((a, b) => {
     const orderA = a.procedure?.sort_order ?? 999;
     const orderB = b.procedure?.sort_order ?? 999;
@@ -54,6 +53,18 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
       </div>
     );
   }
+
+  // Calculate total potential savings
+  let totalSaved = 0;
+  let savingsCount = 0;
+  sortedPrices.forEach(item => {
+    const slug = item.procedure?.slug || '';
+    const usPrice = US_BENCHMARKS[slug];
+    if (usPrice && item.price_usd && item.price_usd > 0) {
+      totalSaved += usPrice - item.price_usd;
+      savingsCount++;
+    }
+  });
 
   return (
     <div className="space-y-4">
@@ -87,7 +98,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
               <th className="text-left py-3 px-4 font-semibold text-neutral-dark">
                 Procedure
               </th>
-              <th className="text-right py-3 px-4 font-semibold text-neutral-dark">
+              <th className="text-right py-3 px-4 font-semibold text-brand-green">
                 Progreso Price
               </th>
               {showComparison && (
@@ -106,7 +117,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
             {sortedPrices.map((item, index) => {
               const procedureSlug = item.procedure?.slug || '';
               const usPrice = US_BENCHMARKS[procedureSlug] || null;
-              const savings = usPrice && item.price_usd ? Math.round(((usPrice - item.price_usd) / usPrice) * 100) : null;
+              const dollarSaved = usPrice && item.price_usd ? usPrice - item.price_usd : null;
 
               return (
                 <tr
@@ -127,9 +138,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
                   <td className="py-3 px-4 text-right">
                     {item.price_usd !== null && item.price_usd !== undefined ? (
                       item.price_usd === 0 ? (
-                        <span className="font-semibold text-brand-green">
-                          Free
-                        </span>
+                        <span className="font-semibold text-brand-green">Free</span>
                       ) : (
                         <span className="font-semibold text-brand-green">
                           {formatUSD(item.price_usd)}
@@ -154,9 +163,9 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
                         )}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        {savings ? (
+                        {dollarSaved && dollarSaved > 0 ? (
                           <span className="inline-flex items-center gap-1 bg-brand-green/10 text-brand-green font-bold text-xs px-2 py-1 rounded-full">
-                            {savings}% OFF
+                            Save ${dollarSaved.toLocaleString()}
                           </span>
                         ) : (
                           <span className="text-neutral-300">—</span>
@@ -172,11 +181,11 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
       </div>
 
       {/* Bottom savings summary */}
-      {showComparison && (
+      {showComparison && savingsCount > 0 && (
         <div className="bg-gradient-to-r from-brand-green/5 to-brand-blue/5 border border-brand-green/20 rounded-lg p-4">
           <p className="text-sm text-neutral-dark">
-            <span className="font-bold text-brand-green">💰 Save 55–99%</span> compared to US dental prices. 
-            All procedures at {providerName} are performed by licensed dentists using the same quality materials.
+            <span className="font-bold text-brand-green">💰 Save ${totalSaved.toLocaleString()}</span> on these {savingsCount} procedures compared to US prices. 
+            All procedures at {providerName} are performed by licensed professionals using the same quality materials.
           </p>
         </div>
       )}
