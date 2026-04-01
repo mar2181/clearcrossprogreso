@@ -159,7 +159,7 @@ export default function Hero() {
             transition={{ delay: 0.6 }}
           >
             {[
-              'Save 40–70%',
+              'Save 55–99%',
               'Upfront pricing',
               'Verified providers',
               '5 min from the US border',

@@ -77,7 +77,7 @@ const steps = [
 const benefits = [
   {
     icon: DollarSign,
-    title: 'Save 40-70%',
+    title: 'Save 55–99%',
     description: 'Same quality care at a fraction of US prices. Dental crowns, medications, spa treatments — all dramatically less.',
   },
   {

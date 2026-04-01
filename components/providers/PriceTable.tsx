@@ -175,7 +175,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
       {showComparison && (
         <div className="bg-gradient-to-r from-brand-green/5 to-brand-blue/5 border border-brand-green/20 rounded-lg p-4">
           <p className="text-sm text-neutral-dark">
-            <span className="font-bold text-brand-green">💰 Save 50-80%</span> compared to US dental prices. 
+            <span className="font-bold text-brand-green">💰 Save 55–99%</span> compared to US dental prices. 
             All procedures at {providerName} are performed by licensed dentists using the same quality materials.
           </p>
         </div>

@@ -878,7 +878,7 @@ export const providers = [
     website: null,
     facebook: 'https://www.facebook.com/odcnuevoprogreso/',
     description:
-      'Experts in All-on-4 Implants. Save 50% to 70% on top-tier dental treatments. Newer clinic (3 reviews, not yet rated).',
+      'Experts in All-on-4 Implants. Save 55-99% on top-tier dental treatments. Newer clinic (3 reviews, not yet rated).',
     logo_url: null,
     photo_url: '/images/providers/premium-interior.jpg',
     gallery_urls: [],
@@ -2263,7 +2263,7 @@ export const providers = [
     phone: '011528999370033',
     whatsapp: null,
     website: 'https://eldiscosupercenter.com/panchos-pharmacy-nuevo-progreso-tamaulipas/',
-    description: 'Save up to 80% on OTC and prescription medications. Wide selection. Person must purchase medications in person.',
+    description: 'Save up to 99% on OTC and prescription medications. Wide selection. Person must purchase medications in person.',
     logo_url: null,
     photo_url: null,
     gallery_urls: [],

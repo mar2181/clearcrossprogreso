@@ -44,7 +44,7 @@ const CATEGORY_HEROES: Record<string, string> = {
 };
 
 const CATEGORY_TAGLINES: Record<string, string> = {
-  dentists: 'Save 40-70% on dental work with verified providers',
+  dentists: 'Save 55–99% on dental work with verified providers',
   pharmacies: 'Prescription medications at a fraction of US prices',
   spas: 'Relaxation and wellness treatments at unbeatable prices',
   doctors: 'Affordable consultations and medical care',
@@ -162,7 +162,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               </div>
               <div className="flex items-center gap-2 text-white">
                 <TrendingDown className="w-4 h-4 text-amber" />
-                <span>Save <strong>40-70%</strong> vs US prices</span>
+                <span>Save <strong>55–99%</strong> vs US prices</span>
               </div>
             </div>
           </div>

@@ -120,7 +120,7 @@ export default function SafetyPage() {
             <p className="text-sm text-neutral-mid mt-1">Providers listed</p>
           </div>
           <div>
-            <p className="font-display text-3xl font-bold text-brand-navy">40-70%</p>
+            <p className="font-display text-3xl font-bold text-brand-navy">55-99%</p>
             <p className="text-sm text-neutral-mid mt-1">Average savings</p>
           </div>
           <div>
