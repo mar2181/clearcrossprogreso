@@ -27,7 +27,7 @@ export const es = {
     getQuote: 'Obtener Cotización',
     getFreeQuote: 'Cotización Gratis',
     trySearching: 'Pruebe buscar:',
-    pillSavings: 'Ahorre hasta 96% vs precios de EE.UU.',
+    pillSavings: 'Ahorre 80–500% vs precios de EE.UU.',
     pillLocked: 'Precios asegurados antes de cruzar',
     pillProviders: '60+ proveedores verificados',
     pillWalk: '5 min caminando desde Texas',
