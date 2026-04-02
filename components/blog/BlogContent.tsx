@@ -420,7 +420,7 @@ export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
       <section className="relative z-10 -mt-16">
         <div className="max-w-5xl mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard number="50–80%" label="Savings vs. U.S." sublabel="Across all categories" color="green" />
+            <StatCard number="70–96%" label="Savings vs. U.S." sublabel="Across all categories" color="green" />
             <StatCard number="$7,350" label="Avg. Dental Savings" sublabel="Two crowns + implant" color="blue" />
             <StatCard number="$3,150" label="Avg. Rx Savings" sublabel="3 meds + glasses/year" color="amber" />
             <StatCard number="30+" label="Years of Trust" sublabel="Medical tourism hub" color="green" />
