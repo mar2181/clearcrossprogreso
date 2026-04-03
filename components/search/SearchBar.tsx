@@ -1,6 +1,7 @@
 'use client';
 
 import { Search } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 interface SearchBarProps {
@@ -18,7 +19,8 @@ export default function SearchBar({
   defaultValue = '',
   buttonText,
 }: SearchBarProps) {
-  const isEs = typeof window !== 'undefined' && window.location.pathname.startsWith('/es');
+  const pathname = usePathname();
+  const isEs = pathname.startsWith('/es');
   const goText = buttonText || (isEs ? 'Ir' : 'Go');
   const searchText = buttonText || (isEs ? 'Buscar' : 'Search');
 
