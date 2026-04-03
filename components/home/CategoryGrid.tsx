@@ -34,17 +34,17 @@ export default function CategoryGrid({ counts = {} }: CategoryGridProps) {
 
   return (
     <section id="categories" className="w-full py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-neutral-light">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Section Title */}
         <AnimateIn>
           <div className="text-center mb-12 sm:mb-16">
-            <p className="text-xs font-bold tracking-[0.2em] uppercase text-brand-green mb-2">
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-brand-green mb-4">
               {dc.sectionLabel}
             </p>
-            <h2 className="font-display text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="font-display text-4xl sm:text-5xl font-bold text-neutral-dark mb-4">
               {dc.headline}
             </h2>
-            <p className="font-sans text-gray-600 text-lg max-w-2xl mx-auto">
+            <p className="font-sans text-neutral-mid text-lg max-w-2xl mx-auto">
               {dc.subtitle}
             </p>
           </div>

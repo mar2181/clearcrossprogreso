@@ -64,7 +64,7 @@ export default function Testimonials() {
 
   return (
     <section className="w-full py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-neutral-light">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Section header */}
         <AnimateIn>
           <div className="text-center mb-12 sm:mb-14">

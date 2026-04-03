@@ -150,7 +150,7 @@ export default function Hero() {
         {/* Content */}
         <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
           <motion.h1
-            className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-5 tracking-tight drop-shadow-lg"
+            className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-lg"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
@@ -159,7 +159,7 @@ export default function Hero() {
           </motion.h1>
 
           <motion.p
-            className="font-sans text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-3 drop-shadow-md"
+            className="font-sans text-xl text-white/80 max-w-2xl mx-auto mb-8 drop-shadow-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}
@@ -169,7 +169,7 @@ export default function Hero() {
 
           {/* Value prop pills */}
           <motion.div
-            className="flex flex-wrap justify-center gap-3 mb-8"
+            className="flex flex-wrap justify-center gap-3 mb-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
@@ -186,7 +186,7 @@ export default function Hero() {
 
           {/* Rotating search suggestion */}
           <motion.div
-            className="mb-6 text-sm text-white/50"
+            className="mb-8 text-sm text-white/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.0 }}
@@ -208,7 +208,7 @@ export default function Hero() {
 
           {/* Search Bar */}
           <motion.div
-            className="mb-8 relative z-20 max-w-2xl mx-auto"
+            className="mb-12 relative z-20 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}

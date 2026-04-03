@@ -65,7 +65,7 @@ export default function TrustBar() {
 
   return (
     <section className="w-full py-14 sm:py-18 px-4 sm:px-6 lg:px-8 bg-white border-y border-neutral-100">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Section header */}
         <div className="text-center mb-10">
           <p className="text-xs font-bold tracking-[0.2em] uppercase text-brand-blue mb-2">
