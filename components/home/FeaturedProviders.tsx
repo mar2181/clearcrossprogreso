@@ -125,7 +125,10 @@ export default function FeaturedProviders({ providers }: { providers: FeaturedPr
                       {catName}
                     </span>
                     {provider.verified && (
-                      <span className="inline-block px-2.5 py-0.5 bg-brand-green/10 text-brand-green text-xs font-semibold rounded-full border border-brand-green/20">
+                      <span
+                        className="inline-block px-2.5 py-0.5 bg-brand-green/10 text-brand-green text-xs font-semibold rounded-full border border-brand-green/20 cursor-help"
+                        title="Cedula Profesional verified. Credentials current as of 2026. Clinic conditions and sterilization protocols checked."
+                      >
                         {d.verified}
                       </span>
                     )}

@@ -35,7 +35,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 {d.title}
               </h1>
               {query && (
-                <p className="text-blue-200/70 text-sm">
+                <p className="text-blue-200 text-sm">
                   {results.length} {results.length === 1 ? d.result : d.resultsFor} &ldquo;{query}&rdquo;
                 </p>
               )}

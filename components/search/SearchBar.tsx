@@ -45,11 +45,11 @@ export default function SearchBar({
             name="q"
             defaultValue={defaultValue}
             placeholder={placeholder}
-            className="flex-1 px-3 py-2.5 bg-transparent text-gray-900 text-sm placeholder-gray-400 focus:outline-none"
+            className="flex-1 px-3 py-3 bg-transparent text-gray-900 text-sm placeholder-gray-400 focus:outline-none"
           />
           <button
             type="submit"
-            className="px-4 py-2.5 bg-brand-blue text-white text-xs font-semibold hover:bg-brand-navy transition-colors"
+            className="px-4 py-3 bg-brand-blue text-white text-xs font-semibold hover:bg-brand-navy transition-colors"
           >
             {goText}
           </button>

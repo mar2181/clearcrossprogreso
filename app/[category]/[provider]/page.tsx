@@ -197,7 +197,10 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                   <div className="flex items-center gap-2 flex-wrap mb-3">
                     <Badge variant="default">{categoryData.name}</Badge>
                     {providerData.verified && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-brand-green/10 text-brand-green text-xs font-bold rounded-full border border-brand-green/20">
+                      <span
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-brand-green/10 text-brand-green text-xs font-bold rounded-full border border-brand-green/20 cursor-help"
+                        title="Cedula Profesional verified. Credentials current as of 2026. Clinic conditions and sterilization protocols checked by ClearCross."
+                      >
                         <ShieldCheck className="w-3 h-3" />
                         Verified
                       </span>
@@ -339,7 +342,10 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                   </div>
                 </div>
                 {providerData.verified && (
-                  <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
+                  <div
+                    className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg cursor-help"
+                    title="Cedula Profesional verified. Credentials current as of 2026. Clinic conditions and sterilization protocols checked by ClearCross."
+                  >
                     <ShieldCheck className="w-5 h-5 text-brand-green flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold text-neutral-dark">Verified Provider</p>
@@ -521,7 +527,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
               href={`https://wa.me/${providerData.whatsapp.replace(/\D/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-4 py-2.5 bg-[#25D366] text-white rounded-lg font-semibold text-sm shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-3 bg-[#25D366] text-white rounded-lg font-semibold text-sm shadow-sm"
             >
               <MessageCircle className="w-4 h-4" />
               Chat
@@ -529,7 +535,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
           )}
           <a
             href="#quote-form"
-            className="flex items-center gap-1.5 px-5 py-2.5 bg-brand-blue text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-brand-navy transition-colors"
+            className="flex items-center gap-1.5 px-5 py-3 bg-brand-blue text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-brand-navy transition-colors"
           >
             Get Quote
           </a>

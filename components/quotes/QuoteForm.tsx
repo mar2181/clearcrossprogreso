@@ -156,7 +156,7 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
     <Card id="quote-form" className="sticky top-6 overflow-hidden">
       <div className="bg-gradient-to-br from-brand-blue to-brand-navy text-white p-6">
         <h3 className="text-xl font-bold mb-1">Get a Quote</h3>
-        <p className="text-blue-200/70 text-sm mb-5">
+        <p className="text-blue-200 text-sm mb-5">
           Free, no commitment — most providers respond within 2 hours
         </p>
 

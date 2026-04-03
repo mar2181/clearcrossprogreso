@@ -119,7 +119,7 @@ export default function SocialProofBar() {
                 {stat.icon}
               </div>
               <AnimatedNumber value={stat.value} suffix={stat.suffix} />
-              <p className="text-blue-200/70 text-sm mt-1 font-medium">
+              <p className="text-blue-200 text-sm mt-1 font-medium">
                 {stat.label}
               </p>
             </div>
