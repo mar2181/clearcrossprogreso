@@ -1,157 +1,80 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { AlertCircle, CheckCircle } from 'lucide-react';
-import { Category, Provider, Procedure } from '@/lib/types';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import { PhotoUpload } from './PhotoUpload';
-import { cn } from '@/lib/utils';
+import { useState, useTransition } from 'react';
+import { MessageSquare, Camera, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Card } from '@/components/ui/Card';
+import { ShieldCheck, Clock, Star } from 'lucide-react';
 
 interface QuoteFormProps {
-  providers: Provider[];
-  procedures: Procedure[];
-  preselectedProviderId?: string;
+  providerId: string;
+  providerName: string;
+  procedures: Array<{ id: string; name: string }>;
+  hasProcedures: boolean;
 }
 
-interface FormErrors {
-  provider?: string;
-  procedure?: string;
-  description?: string;
-  photo?: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-}
-
-interface FormData {
-  provider: string;
-  procedure: string;
+interface FormState {
+  procedureId: string;
   description: string;
-  photo: File | null;
   name: string;
   email: string;
   phone: string;
+  photo: File | null;
 }
 
-export function QuoteForm({
-  providers,
-  procedures,
-  preselectedProviderId,
-}: QuoteFormProps) {
-  const [formData, setFormData] = useState<FormData>({
-    provider: preselectedProviderId || '',
-    procedure: '',
+type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
+
+export default function QuoteForm({ providerId, providerName, procedures, hasProcedures }: QuoteFormProps) {
+  const [isPending, startTransition] = useTransition();
+  const [status, setStatus] = useState<SubmitStatus>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [quoteId, setQuoteId] = useState<string>('');
+
+  const [form, setForm] = useState<FormState>({
+    procedureId: '',
     description: '',
-    photo: null,
     name: '',
     email: '',
     phone: '',
+    photo: null,
   });
 
-  const [preview, setPreview] = useState<string | null>(null);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
-  const selectedProvider = providers.find((p) => p.id === formData.provider);
-  const filteredProcedures =
-    selectedProvider && selectedProvider.category_id
-      ? procedures.filter((p) => p.category_id === selectedProvider.category_id)
-      : [];
+  function validate(): boolean {
+    const newErrors: Partial<Record<keyof FormState, string>> = {};
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!formData.provider.trim()) {
-      newErrors.provider = 'Please select a provider';
-    }
-    if (!formData.procedure.trim()) {
-      newErrors.procedure = 'Please select a procedure';
-    }
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
-    } else if (formData.description.length < 50) {
-      newErrors.description = 'Description must be at least 50 characters';
-    } else if (formData.description.length > 2000) {
-      newErrors.description = 'Description must not exceed 2000 characters';
-    }
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^[\d\s\-\+\(\)]+$/.test(formData.phone) || formData.phone.replace(/\D/g, '').length < 10) {
-      newErrors.phone = 'Please enter a valid phone number';
-    }
+    if (!form.name.trim()) newErrors.name = 'Name is required';
+    if (!form.email.trim()) newErrors.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Enter a valid email';
+    if (!form.phone.trim()) newErrors.phone = 'Phone is required';
+    if (!form.description.trim()) newErrors.description = 'Description is required';
+    else if (form.description.length < 50) newErrors.description = 'Describe your needs in at least 50 characters';
+    else if (form.description.length > 2000) newErrors.description = 'Description must be under 2000 characters';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }
 
-  const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const handlePhotoSelect = useCallback((file: File | null) => {
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      setFormData((prev) => ({ ...prev, photo: file }));
-    } else {
-      setPreview(null);
-      setFormData((prev) => ({ ...prev, photo: null }));
-    }
-    if (errors.photo) {
-      setErrors((prev) => ({ ...prev, photo: undefined }));
-    }
-  }, [errors]);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitStatus(null);
+    if (!validate()) return;
 
-    if (!validateForm()) {
-      return;
-    }
+    setStatus('submitting');
+    setErrorMessage('');
 
-    setIsLoading(true);
+    const formData = new FormData();
+    formData.append('provider_id', providerId);
+    formData.append('procedure_id', form.procedureId || 'general');
+    formData.append('description', form.description.trim());
+    formData.append('name', form.name.trim());
+    formData.append('email', form.email.trim());
+    formData.append('phone', form.phone.trim());
+    if (form.photo) formData.append('photo', form.photo);
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('provider_id', formData.provider);
-      formDataToSend.append('procedure_id', formData.procedure);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('phone', formData.phone);
-
-      if (formData.photo) {
-        formDataToSend.append('photo', formData.photo);
-      }
-
       const response = await fetch('/api/quotes', {
         method: 'POST',
-        body: formDataToSend,
+        body: formData,
       });
 
       const data = await response.json();
@@ -160,240 +83,249 @@ export function QuoteForm({
         throw new Error(data.error || 'Failed to submit quote request');
       }
 
-      setSubmitStatus({
-        type: 'success',
-        message: `Quote request submitted successfully! Check your email for updates. Quote ID: ${data.id}`,
-      });
-
-      // Reset form
-      setFormData({
-        provider: preselectedProviderId || '',
-        procedure: '',
-        description: '',
-        photo: null,
-        name: '',
-        email: '',
-        phone: '',
-      });
-      setPreview(null);
-
-      // Scroll to success message
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }, 100);
-    } catch (error) {
-      setSubmitStatus({
-        type: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'An error occurred while submitting your quote request',
-      });
-    } finally {
-      setIsLoading(false);
+      setQuoteId(data.id);
+      setStatus('success');
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setStatus('error');
     }
-  };
+  }
 
-  return (
-    <div className="w-full">
-      {submitStatus && (
-        <div
-          className={cn(
-            'mb-6 p-4 rounded-lg border flex gap-3',
-            submitStatus.type === 'success'
-              ? 'bg-green-50 border-green-200'
-              : 'bg-red-50 border-red-200'
-          )}
-        >
-          {submitStatus.type === 'success' ? (
-            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-          ) : (
-            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-          )}
-          <p
-            className={cn(
-              'text-sm',
-              submitStatus.type === 'success'
-                ? 'text-green-800'
-                : 'text-red-800'
-            )}
-          >
-            {submitStatus.message}
-          </p>
-        </div>
-      )}
+  function resetForm() {
+    setForm({
+      procedureId: '',
+      description: '',
+      name: '',
+      email: '',
+      phone: '',
+      photo: null,
+    });
+    setStatus('idle');
+    setQuoteId('');
+    setErrorMessage('');
+    setErrors({});
+  }
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Provider Selection */}
-        <div>
-          <label
-            htmlFor="provider"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Provider <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="provider"
-            name="provider"
-            value={formData.provider}
-            onChange={handleInputChange}
-            className={cn(
-              'w-full px-4 py-2.5 rounded-lg border transition-colors duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-offset-0',
-              errors.provider
-                ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                : 'border-neutral-300 focus:border-brand-blue focus:ring-brand-blue'
-            )}
-          >
-            <option value="">Select a provider...</option>
-            {providers.map((provider) => (
-              <option key={provider.id} value={provider.id}>
-                {provider.name} {provider.verified ? '✓' : ''}
-              </option>
-            ))}
-          </select>
-          {errors.provider && (
-            <p className="text-xs text-red-600 mt-1">{errors.provider}</p>
-          )}
-        </div>
-
-        {/* Procedure Selection */}
-        <div>
-          <label
-            htmlFor="procedure"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Procedure <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="procedure"
-            name="procedure"
-            value={formData.procedure}
-            onChange={handleInputChange}
-            disabled={!formData.provider}
-            className={cn(
-              'w-full px-4 py-2.5 rounded-lg border transition-colors duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-offset-0',
-              !formData.provider ? 'bg-neutral-50 opacity-50 cursor-not-allowed' : '',
-              errors.procedure
-                ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                : 'border-neutral-300 focus:border-brand-blue focus:ring-brand-blue'
-            )}
-          >
-            <option value="">
-              {!formData.provider
-                ? 'Select a provider first'
-                : 'Select a procedure...'}
-            </option>
-            {filteredProcedures.map((procedure) => (
-              <option key={procedure.id} value={procedure.id}>
-                {procedure.name}
-              </option>
-            ))}
-          </select>
-          {errors.procedure && (
-            <p className="text-xs text-red-600 mt-1">{errors.procedure}</p>
-          )}
-        </div>
-
-        {/* Description */}
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            placeholder="Describe your needs in detail (minimum 50 characters)..."
-            rows={5}
-            className={cn(
-              'w-full px-4 py-2.5 rounded-lg border transition-colors duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-offset-0',
-              'placeholder:text-neutral-400 resize-none',
-              errors.description
-                ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                : 'border-neutral-300 focus:border-brand-blue focus:ring-brand-blue'
-            )}
-          />
-          <div className="flex items-center justify-between mt-1">
-            <p className="text-xs text-neutral-500">
-              {formData.description.length > 0 && (
-                <span>
-                  {formData.description.length} / 2000 characters
-                </span>
-              )}
+  // Success state
+  if (status === 'success') {
+    return (
+      <Card id="quote-form" className="sticky top-6 overflow-hidden">
+        <div className="bg-gradient-to-br from-brand-green to-brand-green/80 text-white p-6">
+          <div className="text-center py-4">
+            <CheckCircle className="w-16 h-16 mx-auto mb-4 text-white" />
+            <h3 className="text-xl font-bold mb-2">Quote Request Submitted!</h3>
+            <p className="text-green-100 text-sm mb-4">
+              {providerName} will review your request and send a guaranteed price quote within 2 hours.
             </p>
-            {errors.description && (
-              <p className="text-xs text-red-600">{errors.description}</p>
-            )}
+            <div className="bg-white/10 rounded-lg p-3 mb-4">
+              <p className="text-xs text-green-100">
+                <strong>Reference ID:</strong> {quoteId}
+              </p>
+            </div>
+            <p className="text-sm text-green-100 mb-4">
+              Check your email for confirmation and next steps. No commitment required.
+            </p>
+            <button
+              onClick={resetForm}
+              className="w-full px-4 py-3 bg-white text-brand-green font-bold rounded-lg hover:bg-green-50 transition-colors shadow-sm"
+            >
+              Submit Another Request
+            </button>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-white/20 space-y-3">
+            <div className="flex items-center gap-2.5 text-sm">
+              <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+              <span>Written price guarantee</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-sm">
+              <Clock className="w-4 h-4 flex-shrink-0" />
+              <span>Average response: &lt;2 hours</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-sm">
+              <Star className="w-4 h-4 flex-shrink-0" />
+              <span>No commitment required</span>
+            </div>
           </div>
         </div>
+      </Card>
+    );
+  }
 
-        {/* Photo Upload */}
-        <PhotoUpload onFileSelect={handlePhotoSelect} preview={preview} />
-
-        {/* Name */}
-        <Input
-          id="name"
-          type="text"
-          name="name"
-          label="Full Name"
-          value={formData.name}
-          onChange={handleInputChange}
-          placeholder="John Doe"
-          error={!!errors.name}
-          errorMessage={errors.name}
-          required
-        />
-
-        {/* Email */}
-        <Input
-          id="email"
-          type="email"
-          name="email"
-          label="Email Address"
-          value={formData.email}
-          onChange={handleInputChange}
-          placeholder="john@example.com"
-          error={!!errors.email}
-          errorMessage={errors.email}
-          required
-        />
-
-        {/* Phone */}
-        <Input
-          id="phone"
-          type="tel"
-          name="phone"
-          label="Phone Number"
-          value={formData.phone}
-          onChange={handleInputChange}
-          placeholder="+1 (555) 123-4567"
-          error={!!errors.phone}
-          errorMessage={errors.phone}
-          required
-        />
-
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          disabled={isLoading}
-          loading={isLoading}
-          size="lg"
-          className="w-full"
-        >
-          Request Quote
-        </Button>
-
-        <p className="text-xs text-neutral-500 text-center">
-          We'll send your request to the provider and notify you when they respond.
+  return (
+    <Card id="quote-form" className="sticky top-6 overflow-hidden">
+      <div className="bg-gradient-to-br from-brand-blue to-brand-navy text-white p-6">
+        <h3 className="text-xl font-bold mb-1">Get a Quote</h3>
+        <p className="text-blue-200/70 text-sm mb-5">
+          Free, no commitment — most providers respond within 2 hours
         </p>
-      </form>
-    </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Procedure Select */}
+          {hasProcedures && (
+            <div>
+              <label htmlFor="procedure" className="block text-sm font-medium mb-1.5">
+                Procedure
+              </label>
+              <select
+                id="procedure"
+                value={form.procedureId}
+                onChange={(e) => setForm({ ...form, procedureId: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"
+              >
+                <option value="">Select a procedure (optional)</option>
+                {procedures.map(({ id, name }) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Description */}
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium mb-1.5">
+              What do you need?
+            </label>
+            <textarea
+              id="description"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={3}
+              placeholder="Describe what you're looking for..."
+              className={`w-full px-3 py-2.5 rounded-lg bg-white/10 border text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm resize-none ${
+                errors.description ? 'border-red-400' : 'border-white/30'
+              }`}
+            />
+            {errors.description && (
+              <p className="text-red-300 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.description}
+              </p>
+            )}
+            <p className="text-xs text-blue-200/50 mt-1">
+              {form.description.length}/2000 characters
+            </p>
+          </div>
+
+          {/* Contact Fields */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium mb-1.5">
+              Your Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="John Smith"
+              className={`w-full px-3 py-2.5 rounded-lg bg-white/10 border text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm ${
+                errors.name ? 'border-red-400' : 'border-white/30'
+              }`}
+            />
+            {errors.name && (
+              <p className="text-red-300 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.name}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium mb-1.5">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="john@example.com"
+              className={`w-full px-3 py-2.5 rounded-lg bg-white/10 border text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm ${
+                errors.email ? 'border-red-400' : 'border-white/30'
+              }`}
+            />
+            {errors.email && (
+              <p className="text-red-300 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.email}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium mb-1.5">
+              Phone
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              placeholder="(956) 123-4567"
+              className={`w-full px-3 py-2.5 rounded-lg bg-white/10 border text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm ${
+                errors.phone ? 'border-red-400' : 'border-white/30'
+              }`}
+            />
+            {errors.phone && (
+              <p className="text-red-300 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.phone}
+              </p>
+            )}
+          </div>
+
+          {/* Photo Upload */}
+          <div>
+            <label htmlFor="photo" className="block text-sm font-medium mb-1.5">
+              Upload Photo <span className="text-blue-200/50">(optional)</span>
+            </label>
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/20 text-xs text-blue-200/60">
+              <Camera className="w-4 h-4 flex-shrink-0" />
+              <input
+                type="file"
+                id="photo"
+                accept="image/*"
+                onChange={(e) => setForm({ ...form, photo: e.target.files?.[0] || null })}
+                className="w-full text-xs file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:bg-white/20 file:text-white hover:file:bg-white/30"
+              />
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {status === 'error' && (
+            <div className="p-3 bg-red-500/20 border border-red-400 rounded-lg text-sm text-red-200">
+              {errorMessage}
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isPending}
+            className={`w-full px-4 py-3 bg-white text-brand-blue font-bold rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2 ${
+              isPending ? 'opacity-70 cursor-not-allowed' : 'hover:bg-neutral-light'
+            }`}
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <MessageSquare className="w-4 h-4" />
+                Request Quote
+              </>
+            )}
+          </button>
+        </form>
+
+        <p className="text-xs text-blue-200/50 mt-4 text-center">
+          Your information is private and only shared with this provider
+        </p>
+      </div>
+    </Card>
   );
 }

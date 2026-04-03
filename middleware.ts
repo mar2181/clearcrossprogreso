@@ -7,6 +7,20 @@ const publicPaths = ['/', '/auth', '/blog'];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Skip static assets and API routes
+  if (
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    /\.(png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|css|js|map)$/.test(pathname)
+  ) {
+    return NextResponse.next();
+  }
+
+  // Allow /es/... routes to pass through
+  if (pathname.startsWith('/es')) {
+    return NextResponse.next();
+  }
+
   // Allow public paths
   if (publicPaths.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();

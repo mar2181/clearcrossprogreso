@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import {
   FileCheck,
@@ -6,6 +8,7 @@ import {
   Clock,
   ArrowRight,
 } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 
 interface TrustSignal {
   icon: React.ReactNode;
@@ -17,56 +20,59 @@ interface TrustSignal {
   bgColor: string;
 }
 
-const trustSignals: TrustSignal[] = [
-  {
-    icon: <FileCheck className="w-7 h-7" />,
-    label: 'Written Price Quotes',
-    description: 'No surprise fees — ever',
-    detail: 'Every quote is itemized and locked in before your visit. The price you see is the price you pay.',
-    link: '/how-it-works',
-    color: 'text-brand-blue',
-    bgColor: 'bg-brand-blue/10',
-  },
-  {
-    icon: <ShieldCheck className="w-7 h-7" />,
-    label: 'Credentials Verified',
-    description: 'By our team, on-site',
-    detail: 'We verify every provider\'s professional license (Cedula Profesional), clinic conditions, and sterilization protocols.',
-    link: '/safety',
-    color: 'text-brand-green',
-    bgColor: 'bg-brand-green/10',
-  },
-  {
-    icon: <Star className="w-7 h-7" />,
-    label: 'Real Patient Reviews',
-    description: 'From verified visitors',
-    detail: 'Every review comes from a real patient who received care. No fake reviews, no paid placements.',
-    link: '/how-it-works',
-    color: 'text-amber',
-    bgColor: 'bg-amber/10',
-  },
-  {
-    icon: <Clock className="w-7 h-7" />,
-    label: 'Quotes in Hours',
-    description: 'Average response: <2hrs',
-    detail: 'Request a quote and most providers respond the same day. No waiting days or weeks for answers.',
-    link: '/quote',
-    color: 'text-brand-navy',
-    bgColor: 'bg-brand-navy/10',
-  },
-];
-
 export default function TrustBar() {
+  const { dict } = useI18n();
+  const d = dict.trustBar;
+
+  const trustSignals: TrustSignal[] = [
+    {
+      icon: <FileCheck className="w-7 h-7" />,
+      label: d.writtenQuotesTitle,
+      description: d.writtenQuotesDesc,
+      detail: d.writtenQuotesDetail,
+      link: '/how-it-works',
+      color: 'text-brand-blue',
+      bgColor: 'bg-brand-blue/10',
+    },
+    {
+      icon: <ShieldCheck className="w-7 h-7" />,
+      label: d.credentialsTitle,
+      description: d.credentialsDesc,
+      detail: d.credentialsDetail,
+      link: '/safety',
+      color: 'text-brand-green',
+      bgColor: 'bg-brand-green/10',
+    },
+    {
+      icon: <Star className="w-7 h-7" />,
+      label: d.reviewsTitle,
+      description: d.reviewsDesc,
+      detail: d.reviewsDetail,
+      link: '/how-it-works',
+      color: 'text-amber',
+      bgColor: 'bg-amber/10',
+    },
+    {
+      icon: <Clock className="w-7 h-7" />,
+      label: d.quotesTitle,
+      description: d.quotesDesc,
+      detail: d.quotesDetail,
+      link: '/quote',
+      color: 'text-brand-navy',
+      bgColor: 'bg-brand-navy/10',
+    },
+  ];
+
   return (
     <section className="w-full py-14 sm:py-18 px-4 sm:px-6 lg:px-8 bg-white border-y border-neutral-100">
       <div className="max-w-6xl mx-auto">
         {/* Section header */}
         <div className="text-center mb-10">
           <p className="text-xs font-bold tracking-[0.2em] uppercase text-brand-blue mb-2">
-            Why Patients Trust Us
+            {d.sectionLabel}
           </p>
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-neutral-dark">
-            Your Protection, Built In
+            {d.headline}
           </h2>
         </div>
 
@@ -100,7 +106,7 @@ export default function TrustBar() {
 
               {/* Learn more link */}
               <span className={`inline-flex items-center gap-1 text-xs font-semibold ${signal.color} group-hover:gap-2 transition-all`}>
-                Learn more
+                {d.learnMore}
                 <ArrowRight className="w-3 h-3" />
               </span>
             </Link>

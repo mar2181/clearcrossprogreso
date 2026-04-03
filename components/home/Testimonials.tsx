@@ -2,6 +2,7 @@
 
 import { Star, Quote, MapPin } from 'lucide-react';
 import AnimateIn, { StaggerContainer, StaggerItem } from '@/components/ui/AnimateIn';
+import { useI18n } from '@/lib/i18n';
 
 interface Testimonial {
   name: string;
@@ -14,50 +15,53 @@ interface Testimonial {
   color: string;
 }
 
-const testimonials: Testimonial[] = [
-  {
-    name: 'Robert M.',
-    location: 'San Antonio, TX',
-    procedure: 'Dental Implant',
-    savings: 'Saved $3,200',
-    rating: 5,
-    text: 'I was quoted $5,500 for an implant in San Antonio. Found a verified dentist on ClearCross for $1,050. Same quality materials, the dentist had 20+ years of experience, and the price was locked in before I crossed. Incredible.',
-    initial: 'R',
-    color: 'bg-brand-blue',
-  },
-  {
-    name: 'Linda & Dave K.',
-    location: 'McAllen, TX',
-    procedure: 'Prescriptions',
-    savings: 'Saving $400/month',
-    rating: 5,
-    text: 'We drive down once a month for our medications. Ozempic, blood pressure meds, and insulin — all a fraction of what we pay in the US. ClearCross made it easy to compare pharmacy prices before we went.',
-    initial: 'L',
-    color: 'bg-brand-green',
-  },
-  {
-    name: 'Maria G.',
-    location: 'Houston, TX',
-    procedure: 'Full Dental Restoration',
-    savings: 'Saved $12,000+',
-    rating: 5,
-    text: 'I needed crowns on 8 teeth. US quotes ranged from $16,000-$20,000. Through ClearCross I found a dentist with 29 years experience who did everything for $5,800. I was terrified at first but the experience was completely professional.',
-    initial: 'M',
-    color: 'bg-amber',
-  },
-  {
-    name: 'James T.',
-    location: 'Corpus Christi, TX',
-    procedure: 'Dental Cleaning + Crown',
-    savings: 'Saved $1,800',
-    rating: 5,
-    text: 'First time crossing for dental work. The safety guide on ClearCross answered all my questions. Parked in Progreso, walked across, and was in the chair within 15 minutes. Already have my next appointment scheduled.',
-    initial: 'J',
-    color: 'bg-brand-navy',
-  },
-];
-
 export default function Testimonials() {
+  const { dict } = useI18n();
+  const d = dict.testimonials;
+
+  const testimonials: Testimonial[] = [
+    {
+      name: d.t1Name,
+      location: d.t1Location,
+      procedure: d.t1Procedure,
+      savings: d.t1Savings,
+      rating: 5,
+      text: d.t1Text,
+      initial: d.t1Name.charAt(0),
+      color: 'bg-brand-blue',
+    },
+    {
+      name: d.t2Name,
+      location: d.t2Location,
+      procedure: d.t2Procedure,
+      savings: d.t2Savings,
+      rating: 5,
+      text: d.t2Text,
+      initial: d.t2Name.charAt(0),
+      color: 'bg-brand-green',
+    },
+    {
+      name: d.t3Name,
+      location: d.t3Location,
+      procedure: d.t3Procedure,
+      savings: d.t3Savings,
+      rating: 5,
+      text: d.t3Text,
+      initial: d.t3Name.charAt(0),
+      color: 'bg-amber',
+    },
+    {
+      name: d.t4Name,
+      location: d.t4Location,
+      procedure: d.t4Procedure,
+      savings: d.t4Savings,
+      rating: 5,
+      text: d.t4Text,
+      initial: d.t4Name.charAt(0),
+      color: 'bg-brand-navy',
+    },
+  ];
+
   return (
     <section className="w-full py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-neutral-light">
       <div className="max-w-6xl mx-auto">
@@ -65,13 +69,13 @@ export default function Testimonials() {
         <AnimateIn>
           <div className="text-center mb-12 sm:mb-14">
             <p className="text-xs font-bold tracking-[0.2em] uppercase text-brand-green mb-2">
-              Real Stories, Real Savings
+              {d.sectionLabel}
             </p>
             <h2 className="font-display text-4xl sm:text-5xl font-bold text-neutral-dark mb-4">
-              What Our Users Say
+              {d.headline}
             </h2>
             <p className="font-sans text-neutral-mid text-lg max-w-2xl mx-auto">
-              Thousands of Americans trust ClearCross to find affordable, quality healthcare in Nuevo Progreso.
+              {d.subtitle}
             </p>
           </div>
         </AnimateIn>
@@ -131,7 +135,7 @@ export default function Testimonials() {
               {/* Procedure tag */}
               <div className="flex items-center gap-2">
                 <span className="text-xs text-neutral-400 font-medium">
-                  Procedure:
+                  {d.procedure}
                 </span>
                 <span className="inline-flex items-center px-2.5 py-0.5 bg-brand-blue/10 text-brand-blue text-xs font-semibold rounded-full">
                   {t.procedure}
@@ -144,7 +148,7 @@ export default function Testimonials() {
 
         {/* Disclaimer */}
         <p className="text-center text-xs text-neutral-400 mt-8 max-w-2xl mx-auto">
-          Names and identifying details have been changed to protect privacy. Savings figures are representative examples based on typical price differences between US and Nuevo Progreso providers. Individual results may vary.
+          {d.disclaimer}
         </p>
       </div>
     </section>

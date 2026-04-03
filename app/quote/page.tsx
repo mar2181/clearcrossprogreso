@@ -1,58 +1,25 @@
 export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { Provider, Procedure } from '@/lib/types';
-import { QuoteForm } from '@/components/quotes/QuoteForm';
+import Link from 'next/link';
+import { providers as mockProviders } from '@/lib/mock-data';
+import { en } from '@/lib/i18n/dictionaries/en';
 
 export const metadata: Metadata = {
   title: 'Get a Quote | ClearCross Progreso',
   description: 'Get a guaranteed price before you cross the border. Request a quote from our vetted providers in Nuevo Progreso, Mexico.',
 };
 
-async function getProvidersAndProcedures(preselectedProviderId?: string) {
-  const supabase = createServerSupabaseClient();
-
-  // Fetch all providers
-  const { data: providersData, error: providersError } = await supabase
-    .from('providers')
-    .select('*')
-    .eq('active', true)
-    .order('featured', { ascending: false })
-    .order('name', { ascending: true });
-
-  if (providersError) {
-    console.error('Error fetching providers:', providersError);
-    throw new Error('Failed to load providers');
-  }
-
-  // Fetch all procedures
-  const { data: proceduresData, error: proceduresError } = await supabase
-    .from('procedures')
-    .select('*')
-    .order('sort_order', { ascending: true });
-
-  if (proceduresError) {
-    console.error('Error fetching procedures:', proceduresError);
-    throw new Error('Failed to load procedures');
-  }
-
-  return {
-    providers: (providersData || []) as Provider[],
-    procedures: (proceduresData || []) as Procedure[],
-    preselectedProviderId,
-  };
-}
-
-interface QuotePageProps {
-  searchParams: { provider?: string };
-}
-
-export default async function QuotePage({
-  searchParams,
-}: QuotePageProps) {
-  const { providers, procedures, preselectedProviderId } =
-    await getProvidersAndProcedures(searchParams.provider);
+export default async function QuotePage() {
+  const d = en.quote;
+  // Sort by featured first, then by name
+  const featuredProviders = mockProviders
+    .filter((p) => p.verified)
+    .sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 20);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white">
@@ -60,21 +27,21 @@ export default async function QuotePage({
       <div className="bg-brand-blue text-white py-12 md:py-16">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            Get a Price Quote
+            {d.title}
           </h1>
           <p className="text-lg text-blue-100">
-            Know the price before you cross the border. Submit your details and our providers will send you a guaranteed quote.
+            {d.subtitle}
           </p>
         </div>
       </div>
 
-      {/* Form Section */}
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+      {/* How It Works Section */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-8">
           {/* How It Works */}
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-neutral-900 mb-4">
-              The Quote Process
+              {d.processTitle}
             </h2>
             <div className="space-y-3">
               <div className="flex gap-3">
@@ -83,10 +50,10 @@ export default async function QuotePage({
                 </div>
                 <div>
                   <p className="font-medium text-neutral-900">
-                    Submit Your Details
+                    {d.step1Title}
                   </p>
                   <p className="text-sm text-neutral-600">
-                    Tell us about your procedure and upload a photo if needed
+                    {d.step1Desc}
                   </p>
                 </div>
               </div>
@@ -96,10 +63,10 @@ export default async function QuotePage({
                 </div>
                 <div>
                   <p className="font-medium text-neutral-900">
-                    Provider Responds
+                    {d.step2Title}
                   </p>
                   <p className="text-sm text-neutral-600">
-                    We'll send your request to the provider. You'll receive a guaranteed price quote
+                    {d.step2Desc}
                   </p>
                 </div>
               </div>
@@ -109,10 +76,10 @@ export default async function QuotePage({
                 </div>
                 <div>
                   <p className="font-medium text-neutral-900">
-                    Accept or Decline
+                    {d.step3Title}
                   </p>
                   <p className="text-sm text-neutral-600">
-                    Review the quote and decide. Accepted quotes lock in the price
+                    {d.step3Desc}
                   </p>
                 </div>
               </div>
@@ -122,10 +89,10 @@ export default async function QuotePage({
                 </div>
                 <div>
                   <p className="font-medium text-neutral-900">
-                    Visit & Review
+                    {d.step4Title}
                   </p>
                   <p className="text-sm text-neutral-600">
-                    Complete your procedure and leave a review to help others
+                    {d.step4Desc}
                   </p>
                 </div>
               </div>
@@ -134,23 +101,45 @@ export default async function QuotePage({
 
           <div className="h-px bg-neutral-200 my-8"></div>
 
-          {/* Form */}
-          <Suspense fallback={<div className="text-center py-8">Loading...</div>}>
-            <QuoteForm
-              providers={providers}
-              procedures={procedures}
-              preselectedProviderId={preselectedProviderId}
-            />
-          </Suspense>
+          {/* Provider Selection */}
+          <div>
+            <h3 className="text-lg font-semibold text-neutral-900 mb-4">
+              Select a Provider to Get a Quote
+            </h3>
+            <p className="text-sm text-neutral-600 mb-6">
+              Browse our verified providers and click on one to request a personalized price quote.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {featuredProviders.map((provider) => (
+                <Link
+                  key={provider.id}
+                  href={`/${provider.category_id === 'cat-dentists' ? 'dentists' : 'dentists'}/${provider.slug}`}
+                  className="p-4 border border-neutral-200 rounded-lg hover:border-brand-blue hover:shadow-md transition-all group"
+                >
+                  <p className="font-semibold text-neutral-900 group-hover:text-brand-blue">
+                    {provider.name}
+                  </p>
+                  <p className="text-xs text-neutral-500 mt-1">{provider.address}</p>
+                  {provider.avg_rating && (
+                    <div className="flex items-center gap-1 mt-2 text-xs text-amber">
+                      <span>★</span>
+                      <span>{provider.avg_rating.toFixed(1)}</span>
+                      <span className="text-neutral-400">({provider.review_count})</span>
+                    </div>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Info Box */}
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="font-semibold text-neutral-900 mb-2">
-            Questions?
+            {d.questionsTitle}
           </h3>
           <p className="text-sm text-neutral-700">
-            Our quotes are guaranteed and binding once accepted. We recommend uploading a clear photo of your concern to help providers give you the most accurate quote possible.
+            {d.questionsDesc}
           </p>
         </div>
       </div>

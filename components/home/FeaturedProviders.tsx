@@ -1,7 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star, Sparkles, Award, ArrowRight } from 'lucide-react';
 import { formatUSD } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 
 // Category images for fallback thumbnails
 const CATEGORY_IMAGES: Record<string, string> = {
@@ -41,6 +44,9 @@ function getYearsExperience(graduationYear: number | null): number | null {
 }
 
 export default function FeaturedProviders({ providers }: { providers: FeaturedProviderData[] }) {
+  const { dict } = useI18n();
+  const d = dict.featuredProviders;
+
   if (!providers || providers.length === 0) return null;
 
   return (
@@ -49,10 +55,10 @@ export default function FeaturedProviders({ providers }: { providers: FeaturedPr
         {/* Section Title */}
         <div className="text-center mb-12 sm:mb-16">
           <h2 className="font-display text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-            Featured Providers
+            {d.headline}
           </h2>
           <p className="font-sans text-gray-600 text-lg max-w-2xl mx-auto">
-            Highly-rated clinics and pharmacies in Nuevo Progreso with verified, transparent pricing.
+            {d.subtitle}
           </p>
         </div>
 
@@ -93,7 +99,7 @@ export default function FeaturedProviders({ providers }: { providers: FeaturedPr
                     <div className="absolute top-3 left-3">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber/90 text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-sm">
                         <Sparkles className="w-3 h-3" />
-                        Featured
+                        {d.featured}
                       </span>
                     </div>
 
@@ -101,7 +107,7 @@ export default function FeaturedProviders({ providers }: { providers: FeaturedPr
                     {lowestPrice && lowestPrice.price_usd && (
                       <div className="absolute bottom-3 right-3">
                         <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg">
-                          <p className="text-[10px] font-medium text-neutral-mid leading-tight">from</p>
+                          <p className="text-[10px] font-medium text-neutral-mid leading-tight">{d.from}</p>
                           <p className="text-lg font-bold text-brand-green leading-tight">
                             {formatUSD(lowestPrice.price_usd)}
                           </p>
@@ -120,7 +126,7 @@ export default function FeaturedProviders({ providers }: { providers: FeaturedPr
                     </span>
                     {provider.verified && (
                       <span className="inline-block px-2.5 py-0.5 bg-brand-green/10 text-brand-green text-xs font-semibold rounded-full border border-brand-green/20">
-                        Verified
+                        {d.verified}
                       </span>
                     )}
                     {yearsExp && yearsExp > 0 && (
@@ -160,7 +166,7 @@ export default function FeaturedProviders({ providers }: { providers: FeaturedPr
                       </span>
                     </div>
                   ) : (
-                    <p className="text-xs text-neutral-400 mb-3">No reviews yet</p>
+                    <p className="text-xs text-neutral-400 mb-3">{d.noReviews}</p>
                   )}
 
                   {/* Top procedure pills */}
@@ -179,7 +185,7 @@ export default function FeaturedProviders({ providers }: { providers: FeaturedPr
                       ))}
                       {pricesWithValues.length > 2 && (
                         <span className="text-xs text-neutral-400 px-2 py-1">
-                          +{pricesWithValues.length - 2} more
+                          +{pricesWithValues.length - 2} {d.more}
                         </span>
                       )}
                     </div>
@@ -189,7 +195,7 @@ export default function FeaturedProviders({ providers }: { providers: FeaturedPr
                 {/* CTA footer */}
                 <div className="px-5 pb-4">
                   <div className="flex items-center justify-center gap-2 py-2.5 bg-brand-blue text-white font-sans font-semibold rounded-lg group-hover:bg-brand-navy transition-colors text-sm">
-                    View Profile
+                    {d.viewProfile}
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>

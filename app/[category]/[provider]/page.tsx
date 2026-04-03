@@ -14,14 +14,15 @@ import {
   ShieldCheck,
   Sparkles,
   Clock,
-  MessageSquare,
   Camera,
   TrendingDown,
+  MessageSquare,
 } from 'lucide-react';
 import PriceTable from '@/components/providers/PriceTable';
 import ProviderMap from '@/components/providers/ProviderMap';
 import ReviewList from '@/components/providers/ReviewList';
 import ProviderCard from '@/components/providers/ProviderCard';
+import QuoteForm from '@/components/quotes/QuoteForm';
 import Badge from '@/components/ui/Badge';
 import StarRating from '@/components/ui/StarRating';
 import { Card } from '@/components/ui/Card';
@@ -245,7 +246,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                       <div className="mt-3 flex items-center gap-2 p-3 bg-brand-green/5 rounded-lg border border-brand-green/20">
                         <TrendingDown className="w-4 h-4 text-brand-green flex-shrink-0" />
                         <p className="text-sm text-brand-green font-semibold">
-                          Save up to {maxSav.percentSaved}% vs US prices at this provider
+                          US charges up to {Math.round((maxSav.percentSaved / (100 - maxSav.percentSaved)) * 100)}% more for this procedure at comparable providers
                         </p>
                       </div>
                     );
@@ -479,109 +480,21 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
 
           {/* ── Sidebar ── */}
           <div>
-            <Card id="quote-form" className="sticky top-6 overflow-hidden">
-              <div className="bg-gradient-to-br from-brand-blue to-brand-navy text-white p-6">
-                <h3 className="text-xl font-bold mb-1">Get a Quote</h3>
-                <p className="text-blue-200/70 text-sm mb-5">
-                  Free, no commitment — most providers respond within 2 hours
-                </p>
-
-                <form
-                  action={`/quote?provider=${providerData.id}`}
-                  method="GET"
-                  className="space-y-4"
-                >
-                  {/* Procedure Select */}
-                  {hasPrices && (
-                    <div>
-                      <label htmlFor="procedure" className="block text-sm font-medium mb-1.5">
-                        Procedure
-                      </label>
-                      <select
-                        id="procedure"
-                        name="procedure"
-                        className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"
-                      >
-                        <option value="">Select a procedure (optional)</option>
-                        {Array.from(
-                          new Map(
-                            (providerPrices as any[]).map((p: any) => [
-                              p.procedure?.id,
-                              p.procedure?.name,
-                            ])
-                          ).entries()
-                        ).map(([id, name]) => (
-                          <option key={id} value={id}>
-                            {name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Description */}
-                  <div>
-                    <label htmlFor="description" className="block text-sm font-medium mb-1.5">
-                      What do you need?
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      rows={3}
-                      placeholder="Describe what you're looking for..."
-                      className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm resize-none"
-                    />
-                  </div>
-
-                  {/* Photo Upload */}
-                  <div>
-                    <label htmlFor="photo" className="block text-sm font-medium mb-1.5">
-                      Upload Photo <span className="text-blue-200/50">(optional)</span>
-                    </label>
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/20 text-xs text-blue-200/60">
-                      <Camera className="w-4 h-4" />
-                      <input
-                        type="file"
-                        id="photo"
-                        name="photo"
-                        accept="image/*"
-                        className="w-full text-xs file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:bg-white/20 file:text-white hover:file:bg-white/30"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    className="w-full px-4 py-3 bg-white text-brand-blue font-bold rounded-lg hover:bg-neutral-light transition-colors shadow-sm"
-                  >
-                    Request Quote
-                  </button>
-                </form>
-
-                <p className="text-xs text-blue-200/50 mt-4 text-center">
-                  Your information is private and only shared with this provider
-                </p>
-              </div>
-            </Card>
-
-            {/* Trust signal under quote form */}
-            <div className="mt-4 p-4 bg-white rounded-xl border border-neutral-200 shadow-sm">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2.5 text-sm">
-                  <ShieldCheck className="w-4 h-4 text-brand-green flex-shrink-0" />
-                  <span className="text-neutral-mid">Written price guarantee</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-sm">
-                  <Clock className="w-4 h-4 text-amber flex-shrink-0" />
-                  <span className="text-neutral-mid">Average response: &lt;2 hours</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-sm">
-                  <Star className="w-4 h-4 text-brand-blue flex-shrink-0" />
-                  <span className="text-neutral-mid">No commitment required</span>
-                </div>
-              </div>
-            </div>
+            <QuoteForm
+              providerId={providerData.id}
+              providerName={providerData.name}
+              procedures={hasPrices
+                ? Array.from(
+                    new Map(
+                      (providerPrices as any[]).map((p: any) => [
+                        p.procedure?.id,
+                        { id: p.procedure?.id, name: p.procedure?.name },
+                      ])
+                    ).values()
+                  )
+                : []}
+              hasProcedures={hasPrices}
+            />
           </div>
         </div>
       </div>

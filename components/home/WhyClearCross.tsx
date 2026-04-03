@@ -4,43 +4,43 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, DollarSign, FileText, MapPin, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-const advantages = [
-  {
-    icon: <DollarSign className="w-6 h-6" />,
-    title: 'Save Up to 96% Across All Healthcare',
-    description:
-      'Braces: $6,000 → $250. Dental implants: $3,500 → $790. Botox: $17 → $2/unit. Eye exams: $200 → $20. Same quality, a fraction of the price.',
-    color: 'text-brand-green',
-    bg: 'bg-brand-green/10',
-  },
-  {
-    icon: <FileText className="w-6 h-6" />,
-    title: 'You Get the Price Upfront',
-    description:
-      'No insurance games. No surprise bills weeks later. Every provider gives you a written, itemized quote before you commit — and that price is locked in.',
-    color: 'text-brand-blue',
-    bg: 'bg-brand-blue/10',
-  },
-  {
-    icon: <Shield className="w-6 h-6" />,
-    title: 'Verified, Licensed Providers',
-    description:
-      'Every provider on ClearCross is verified with a valid Cedula Profesional (Mexico\'s medical license). We check credentials, clinic conditions, and sterilization protocols.',
-    color: 'text-amber',
-    bg: 'bg-amber/10',
-  },
-  {
-    icon: <MapPin className="w-6 h-6" />,
-    title: '5 Minutes From the US Border',
-    description:
-      'Nuevo Progreso is a walkable border town in Tamaulipas, Mexico — just across the bridge from Progreso, TX. Park your car on the US side and walk across.',
-    color: 'text-brand-navy',
-    bg: 'bg-brand-navy/10',
-  },
-];
+import { useI18n } from '@/lib/i18n';
 
 export default function WhyClearCross() {
+  const { dict } = useI18n();
+  const d = dict.whyClearCross;
+
+  const advantages = [
+    {
+      icon: <DollarSign className="w-6 h-6" />,
+      title: d.adv1Title,
+      description: d.adv1Desc,
+      color: 'text-brand-green',
+      bg: 'bg-brand-green/10',
+    },
+    {
+      icon: <FileText className="w-6 h-6" />,
+      title: d.adv2Title,
+      description: d.adv2Desc,
+      color: 'text-brand-blue',
+      bg: 'bg-brand-blue/10',
+    },
+    {
+      icon: <Shield className="w-6 h-6" />,
+      title: d.adv3Title,
+      description: d.adv3Desc,
+      color: 'text-amber',
+      bg: 'bg-amber/10',
+    },
+    {
+      icon: <MapPin className="w-6 h-6" />,
+      title: d.adv4Title,
+      description: d.adv4Desc,
+      color: 'text-brand-navy',
+      bg: 'bg-brand-navy/10',
+    },
+  ];
+
   return (
     <section className="w-full py-20 sm:py-28 px-4 sm:px-6 lg:px-8 bg-white">
       <div className="max-w-7xl mx-auto">
@@ -54,36 +54,24 @@ export default function WhyClearCross() {
             transition={{ duration: 0.6 }}
           >
             <p className="text-xs font-bold tracking-[0.2em] uppercase text-brand-blue mb-3">
-              Why ClearCross Exists
+              {d.sectionLabel}
             </p>
             <h2 className="font-display text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-neutral-dark leading-tight mb-6">
-              Americans are paying too much for healthcare.{' '}
-              <span className="text-brand-blue">There&apos;s a better option 5 minutes south.</span>
+              {d.headline}{' '}
+              <span className="text-brand-blue">{d.headlineAccent}</span>
             </h2>
 
             <div className="space-y-4 text-neutral-mid leading-relaxed">
-              <p>
-                Every year, thousands of Americans from Texas and across the US walk
-                across the international bridge to Nuevo Progreso, Mexico — a safe,
-                walkable border town where dental work, prescriptions, eye care, and
-                spa treatments cost a fraction of US prices.
-              </p>
-              <p>
-                The problem? Until now, there was no way to compare prices or verify
-                providers before you crossed. You had to walk door-to-door, haggle,
-                and hope for the best.
-              </p>
-              <p className="font-semibold text-neutral-dark">
-                ClearCross changes that. We give you verified prices, real reviews,
-                and written quotes — before you leave your house.
-              </p>
+              <p>{d.paragraph1}</p>
+              <p>{d.paragraph2}</p>
+              <p className="font-semibold text-neutral-dark">{d.paragraph3}</p>
             </div>
 
             {/* Image accent */}
             <div className="mt-8 relative rounded-2xl overflow-hidden aspect-[16/9]">
               <Image
                 src="/images/general/main-avenue-dental.jpg"
-                alt="Main avenue in Nuevo Progreso — dental clinics, pharmacies, and shops"
+                alt={d.imageCaption}
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
@@ -91,7 +79,7 @@ export default function WhyClearCross() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
                 <p className="text-white text-sm font-medium drop-shadow-lg">
-                  Main avenue in Nuevo Progreso — walkable, safe, and lined with clinics
+                  {d.imageCaption}
                 </p>
               </div>
             </div>
@@ -106,7 +94,7 @@ export default function WhyClearCross() {
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
             >
-              Your Advantages
+              {d.yourAdvantages}
             </motion.p>
 
             {advantages.map((adv, i) => (
@@ -148,7 +136,7 @@ export default function WhyClearCross() {
                 href="/how-it-works"
                 className="inline-flex items-center gap-2 text-brand-blue font-semibold hover:gap-3 transition-all duration-200"
               >
-                See how it works
+                {d.seeHowItWorks}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </motion.div>

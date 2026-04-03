@@ -3,6 +3,7 @@ import { searchAll, type SearchResult } from '@/lib/data';
 import SearchResultsClient from '@/components/search/SearchResultsClient';
 import SearchBar from '@/components/search/SearchBar';
 import { Search } from 'lucide-react';
+import { en } from '@/lib/i18n/dictionaries/en';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,7 @@ interface SearchPageProps {
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q } = await searchParams;
   const query = q?.trim() || '';
+  const d = en.searchPage;
 
   let results: SearchResult[] = [];
   if (query.length >= 2) {
@@ -30,11 +32,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-white font-display">
-                Search Results
+                {d.title}
               </h1>
               {query && (
                 <p className="text-blue-200/70 text-sm">
-                  {results.length} {results.length === 1 ? 'result' : 'results'} for &ldquo;{query}&rdquo;
+                  {results.length} {results.length === 1 ? d.result : d.resultsFor} &ldquo;{query}&rdquo;
                 </p>
               )}
             </div>
@@ -48,7 +50,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <Suspense fallback={
           <div className="flex items-center justify-center py-16 gap-3">
             <div className="w-5 h-5 border-2 border-brand-blue/30 border-t-brand-blue rounded-full animate-spin" />
-            <span className="text-neutral-400">Searching...</span>
+            <span className="text-neutral-400">{d.searching}</span>
           </div>
         }>
           <SearchResultsClient results={results} query={query} />

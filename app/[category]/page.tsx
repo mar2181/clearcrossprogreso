@@ -46,12 +46,12 @@ const CATEGORY_HEROES: Record<string, string> = {
 };
 
 const CATEGORY_TAGLINES: Record<string, string> = {
-  dentists: 'Save up to 96% on dental work — implants, crowns, veneers, braces and more',
-  pharmacies: 'Save up to 99% on prescriptions — Ozempic, insulin, antibiotics, Eliquis',
-  spas: 'Save up to 90% on facials, massages, body sculpting, and beauty treatments',
-  doctors: 'Save up to 90% on doctor visits, blood work, and checkups',
-  optometrists: 'Save up to 90% on eye exams, prescription glasses, and contact lenses',
-  'cosmetic-surgery': 'Save up to 100% on Botox, fillers, liposuction, and cosmetic procedures',
+  dentists: 'US charges up to 2,400% more for dental work — implants, crowns, veneers, braces',
+  pharmacies: 'US charges up to 9,900% more for prescriptions — Ozempic, insulin, antibiotics, Eliquis',
+  spas: 'US charges up to 900% more for facials, massages, body sculpting, and beauty treatments',
+  doctors: 'US charges up to 900% more for doctor visits, blood work, and checkups',
+  optometrists: 'US charges up to 900% more for eye exams, prescription glasses, and contact lenses',
+  'cosmetic-surgery': 'US charges up to 9,900% more for Botox, fillers, liposuction, and cosmetic procedures',
   liquor: 'Spirits, wine, and beer from Nuevo Progreso shops',
   vets: 'Affordable veterinary care for your pets',
 };

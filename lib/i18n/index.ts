@@ -1,7 +1,5 @@
-import { en } from './dictionaries/en';
-
-type Dictionary = typeof en;
-
-export function useI18n(): { dict: Dictionary; locale: string } {
-  return { dict: en, locale: 'en' };
-}
+export { I18nProvider, useI18n } from './context';
+export type { Locale, Dictionary } from './context';
+export { getLocaleFromPath, localizedPath, stripLocale } from './get-locale';
+export { en } from './dictionaries/en';
+export { es } from './dictionaries/es';

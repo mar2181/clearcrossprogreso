@@ -1,20 +1,19 @@
-import { Metadata } from 'next';
-import Link from 'next/link';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy - ClearCross Progreso',
-  description:
-    'Privacy policy for ClearCross Progreso. Learn how we collect, use, and protect your personal information.',
-};
+import Link from 'next/link';
+import { useI18n } from '@/lib/i18n';
 
 export default function PrivacyPage() {
+  const { dict } = useI18n();
+  const d = dict.privacy;
+
   return (
     <main className="w-full">
       {/* Header */}
       <section className="bg-brand-navy text-white py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
-          <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2">Privacy Policy</h1>
-          <p className="text-white/60 text-sm">Last updated: March 2026</p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2">{d.title}</h1>
+          <p className="text-white/60 text-sm">{d.lastUpdated}</p>
         </div>
       </section>
 
@@ -94,7 +93,7 @@ export default function PrivacyPage() {
 
           <div className="mt-12 pt-8 border-t border-neutral-200">
             <Link href="/" className="text-brand-blue hover:underline text-sm font-medium">
-              &larr; Back to ClearCross Progreso
+              {d.backToSite}
             </Link>
           </div>
         </div>

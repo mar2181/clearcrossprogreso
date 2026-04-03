@@ -95,8 +95,8 @@ export default function SocialProofBar() {
     },
     {
       icon: <TrendingDown className="w-5 h-5" />,
-      value: '80–500',
-      numericValue: 300,
+      value: '400–2,400',
+      numericValue: 1400,
       suffix: '%',
       label: dict.socialProof.avgSavings,
     },
