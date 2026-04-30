@@ -1,17 +1,18 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Provider, Procedure } from '@/lib/types';
+import { Provider, Procedure, FlashDiscount } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import ProviderCard from '@/components/providers/ProviderCard';
 import Button from '@/components/ui/Button';
-import { ChevronDown, Award, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronDown, Award, SlidersHorizontal, X, Zap } from 'lucide-react';
 
 interface CategoryListingClientProps {
   providers: Provider[];
   procedures: Procedure[];
   categoryName: string;
   categorySlug: string;
+  flashDiscounts?: FlashDiscount[];
 }
 
 type SortOption = 'rating' | 'price-low' | 'price-high' | 'reviewed';
@@ -21,6 +22,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
   procedures,
   categoryName,
   categorySlug,
+  flashDiscounts = [],
 }) => {
   // Draft selection (what user is picking)
   const [selectedProcedures, setSelectedProcedures] = useState<string[]>([]);
@@ -28,6 +30,21 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
   const [appliedProcedures, setAppliedProcedures] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('rating');
   const [minExperience, setMinExperience] = useState<number>(0);
+  const [flashDealsOnly, setFlashDealsOnly] = useState(false);
+
+  // Build a map of provider_id → flash discount for quick lookup
+  const flashDiscountMap = useMemo(() => {
+    const map = new Map<string, FlashDiscount>();
+    const now = Date.now();
+    for (const fd of flashDiscounts) {
+      if (fd.is_active && new Date(fd.expires_at).getTime() > now) {
+        map.set(fd.provider_id, fd);
+      }
+    }
+    return map;
+  }, [flashDiscounts]);
+
+  const flashDealCount = flashDiscountMap.size;
 
   const currentYear = new Date().getFullYear();
 
@@ -47,9 +64,14 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
     setMinExperience(0);
   };
 
-  // Filter providers by APPLIED procedures and experience
+  // Filter providers by APPLIED procedures, experience, and flash deals
   const filteredProviders = useMemo(() => {
     let filtered = providers;
+
+    // Flash deals filter
+    if (flashDealsOnly) {
+      filtered = filtered.filter((provider) => flashDiscountMap.has(provider.id));
+    }
 
     if (appliedProcedures.length > 0) {
       filtered = filtered.filter((provider) => {
@@ -73,7 +95,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
     }
 
     return filtered;
-  }, [providers, appliedProcedures, minExperience, currentYear]);
+  }, [providers, appliedProcedures, minExperience, currentYear, flashDealsOnly, flashDiscountMap]);
 
   // Sort providers — use filtered procedure price when sorting by price
   const sortedProviders = useMemo(() => {
@@ -129,6 +151,35 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
 
   return (
     <div className="space-y-8">
+      {/* Flash Deals Toggle */}
+      {flashDealCount > 0 && (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setFlashDealsOnly(!flashDealsOnly)}
+            className={cn(
+              'inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 border-2',
+              flashDealsOnly
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white border-transparent shadow-lg shadow-orange-500/25'
+                : 'bg-white text-orange-600 border-orange-300 hover:border-orange-500 hover:shadow-md'
+            )}
+          >
+            <Zap className={cn('w-4 h-4', flashDealsOnly && 'fill-current')} />
+            Flash Deals Only
+            <span className={cn(
+              'inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold',
+              flashDealsOnly ? 'bg-white/25 text-white' : 'bg-orange-100 text-orange-700'
+            )}>
+              {flashDealCount}
+            </span>
+          </button>
+          {flashDealsOnly && (
+            <span className="text-sm text-neutral-500">
+              {flashDealCount} provider{flashDealCount !== 1 ? 's' : ''} with active deals right now
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Procedure Filter Pills */}
       {procedures.length > 0 && (
         <div>
@@ -278,6 +329,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
                 },
               }}
               filteredProcedureIds={appliedProcedures}
+              flashDiscount={flashDiscountMap.get(provider.id) || null}
             />
           ))}
         </div>

@@ -11,6 +11,8 @@ import {
   getProvidersByCategory,
   getProceduresByCategory,
   getReviewsByProvider,
+  getActiveFlashDiscountsMock,
+  getFlashDiscountForProviderMock,
 } from './mock-data';
 
 export interface SearchResult {
@@ -47,6 +49,21 @@ function shouldUseMock(): boolean {
   if (process.env.USE_MOCK_DATA === 'mock') return true;
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return true;
   return false;
+}
+
+export async function getAllCategories() {
+  if (shouldUseMock()) {
+    return mockCategories.filter((c) => c.active);
+  }
+
+  const { createServerSupabaseClient } = await import('./supabase/server');
+  const supabase = createServerSupabaseClient();
+  const { data } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('active', true)
+    .order('sort_order', { ascending: true });
+  return data || [];
 }
 
 export async function getCategory(slug: string) {
@@ -266,7 +283,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
     `)
     .ilike('name', `%${q}%`)
     .eq('verified', true)
-    .limit(20);
+    .limit(100);
 
   // Search procedures by name, then find providers with those procedures
   const { data: procedureMatches } = await supabase
@@ -444,6 +461,119 @@ export async function getCategoryCounts(): Promise<Record<string, number>> {
     }
   }
   return counts;
+}
+
+// =====================================================================
+// FLASH DISCOUNTS
+// =====================================================================
+
+export async function getActiveFlashDiscounts(categorySlug?: string) {
+  if (shouldUseMock()) {
+    return getActiveFlashDiscountsMock(categorySlug);
+  }
+
+  const { createServerSupabaseClient } = await import('./supabase/server');
+  const supabase = createServerSupabaseClient();
+
+  let query = supabase
+    .from('flash_discounts')
+    .select('*, provider:provider_id(*)')
+    .eq('is_active', true)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false });
+
+  if (categorySlug) {
+    // Filter by category through provider join
+    const categoryData = await getCategory(categorySlug);
+    if (categoryData) {
+      query = query.eq('provider.category_id', categoryData.id);
+    }
+  }
+
+  const { data } = await query;
+  return data || [];
+}
+
+export async function getFlashDiscountForProvider(providerId: string) {
+  if (shouldUseMock()) {
+    return getFlashDiscountForProviderMock(providerId);
+  }
+
+  const { createServerSupabaseClient } = await import('./supabase/server');
+  const supabase = createServerSupabaseClient();
+  const { data } = await supabase
+    .from('flash_discounts')
+    .select('*')
+    .eq('provider_id', providerId)
+    .eq('is_active', true)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  return data || null;
+}
+
+export async function deactivateExpiredDiscounts() {
+  if (shouldUseMock()) {
+    return { count: 0 };
+  }
+
+  const { createServerSupabaseClient } = await import('./supabase/server');
+  const supabase = createServerSupabaseClient();
+  const { data } = await supabase
+    .from('flash_discounts')
+    .update({ is_active: false })
+    .eq('is_active', true)
+    .lt('expires_at', new Date().toISOString())
+    .select('id');
+
+  return { count: data?.length || 0 };
+}
+
+// =====================================================================
+// USER SEARCH TRACKING (for targeted flash discount notifications)
+// =====================================================================
+
+export async function logUserSearch(
+  userId: string,
+  categoryId?: string,
+  procedureIds?: string[],
+  searchQuery?: string
+) {
+  if (shouldUseMock()) {
+    return; // No-op in mock mode
+  }
+
+  const { createServerSupabaseClient } = await import('./supabase/server');
+  const supabase = createServerSupabaseClient();
+  await supabase.from('user_searches').insert({
+    user_id: userId,
+    category_id: categoryId || null,
+    procedure_ids: procedureIds || [],
+    search_query: searchQuery || null,
+  });
+}
+
+export async function getUsersInterestedInProcedures(procedureIds: string[]) {
+  if (shouldUseMock()) {
+    return [];
+  }
+
+  const { createServerSupabaseClient } = await import('./supabase/server');
+  const supabase = createServerSupabaseClient();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data } = await supabase
+    .from('user_searches')
+    .select('user_id')
+    .gt('searched_at', thirtyDaysAgo)
+    .overlaps('procedure_ids', procedureIds);
+
+  // Deduplicate user IDs
+  const userIds = (data || []).map((d: any) => d.user_id as string);
+  const uniqueUserIds = Array.from(new Set(userIds));
+  return uniqueUserIds;
 }
 
 // Search across mock data

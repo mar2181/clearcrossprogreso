@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Star, Award } from 'lucide-react';
-import { Provider, ProviderPrice } from '@/lib/types';
+import { MapPin, Star, Award, Zap } from 'lucide-react';
+import { Provider, ProviderPrice, FlashDiscount } from '@/lib/types';
 import { cn, formatUSD } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import StarRating from '@/components/ui/StarRating';
+import CountdownTimer from '@/components/ui/CountdownTimer';
 
 interface ProviderCardProps {
   provider: Provider & {
@@ -20,6 +21,7 @@ interface ProviderCardProps {
     };
   };
   filteredProcedureIds?: string[];
+  flashDiscount?: FlashDiscount | null;
 }
 
 function getYearsExperience(graduationYear: number | null): number | null {
@@ -27,10 +29,12 @@ function getYearsExperience(graduationYear: number | null): number | null {
   return new Date().getFullYear() - graduationYear;
 }
 
-const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedureIds = [] }) => {
+const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedureIds = [], flashDiscount }) => {
   const categoryName = provider.category?.name || 'Medical';
   const categorySlug = provider.category?.slug || 'dentists';
   const yearsExp = getYearsExperience(provider.graduation_year);
+  const [isFlashExpired, setIsFlashExpired] = React.useState(false);
+  const activeFlash = flashDiscount && !isFlashExpired ? flashDiscount : null;
 
   // Get price list (check both 'prices' and 'provider_prices' keys)
   const priceList = provider.prices || (provider as any).provider_prices || [];
@@ -63,8 +67,40 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+              {/* Flash Discount Badge */}
+              {activeFlash && (
+                <div className="absolute top-2 right-2 z-10">
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-full shadow-lg animate-pulse">
+                      <Zap className="w-3 h-3 fill-current" />
+                      FLASH DEAL
+                    </span>
+                    <CountdownTimer
+                      expiresAt={activeFlash.expires_at}
+                      onExpire={() => setIsFlashExpired(true)}
+                      className="bg-black/70 text-white px-2 py-0.5 rounded-full backdrop-blur-sm"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </Link>
+        )}
+
+        {/* Flash badge when no photo */}
+        {!provider.photo_url && activeFlash && (
+          <div className="px-4 pt-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-full shadow-sm animate-pulse">
+                <Zap className="w-3 h-3 fill-current" />
+                FLASH DEAL
+              </span>
+              <CountdownTimer
+                expiresAt={activeFlash.expires_at}
+                onExpire={() => setIsFlashExpired(true)}
+              />
+            </div>
+          </div>
         )}
 
         {/* Header with badges */}
@@ -133,15 +169,31 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
           </div>
         </div>
 
-        {/* Price section — shows filtered procedure price when filters active */}
+        {/* Price section — shows filtered procedure price when filters active, with flash discount */}
         {displayPrice && displayPrice.price_usd ? (
           <div className="px-4 py-3 border-b border-neutral-100">
             <p className="text-xs text-neutral-500 mb-1">
               {displayPrice.procedure?.name || 'Starting price'}
             </p>
-            <p className="price-display text-xl">
-              {formatUSD(displayPrice.price_usd)}
-            </p>
+            {activeFlash && isFlashApplicable(activeFlash, displayPrice) ? (
+              <div>
+                <p className="text-sm text-neutral-400 line-through">
+                  {formatUSD(displayPrice.price_usd)}
+                </p>
+                <p className="price-display text-xl text-brand-green font-bold">
+                  {formatUSD(calcDiscountedPrice(displayPrice.price_usd, activeFlash))}
+                </p>
+                {activeFlash.message && (
+                  <p className="text-xs text-orange-600 mt-1 line-clamp-1">
+                    {activeFlash.message}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="price-display text-xl">
+                {formatUSD(displayPrice.price_usd)}
+              </p>
+            )}
           </div>
         ) : hasActiveFilter ? (
           <div className="px-4 py-3 border-b border-neutral-100">
@@ -195,5 +247,21 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
     </Card>
   );
 };
+
+// Check if a flash discount applies to a specific price entry
+function isFlashApplicable(flash: FlashDiscount, price: any): boolean {
+  // If no procedure_ids specified, discount applies to everything
+  if (!flash.procedure_ids || flash.procedure_ids.length === 0) return true;
+  const procId = price.procedure_id || price.procedure?.id;
+  return procId ? flash.procedure_ids.includes(procId) : false;
+}
+
+// Calculate the discounted price
+function calcDiscountedPrice(originalPrice: number, flash: FlashDiscount): number {
+  if (flash.discount_type === 'percentage') {
+    return Math.round(originalPrice * (1 - flash.discount_value / 100) * 100) / 100;
+  }
+  return Math.max(0, originalPrice - flash.discount_value);
+}
 
 export default ProviderCard;

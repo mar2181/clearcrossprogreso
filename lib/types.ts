@@ -97,3 +97,27 @@ export interface QuoteRequestWithDetails extends QuoteRequest {
   procedure: Procedure | null;
   user: User;
 }
+
+export interface FlashDiscount {
+  id: string;
+  provider_id: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  procedure_ids: string[];
+  starts_at: string;
+  expires_at: string;
+  message?: string;
+  is_active: boolean;
+  created_at?: string;
+  // Joined fields (populated when fetched with provider data)
+  provider?: Provider;
+}
+
+export interface UserSearch {
+  id: string;
+  user_id: string;
+  category_id?: string;
+  procedure_ids: string[];
+  search_query?: string;
+  searched_at: string;
+}

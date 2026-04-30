@@ -74,8 +74,8 @@ export function QuoteForm({
     }
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
-    } else if (formData.description.length < 50) {
-      newErrors.description = 'Description must be at least 50 characters';
+    } else if (formData.description.length < 20) {
+      newErrors.description = 'Description must be at least 20 characters';
     } else if (formData.description.length > 2000) {
       newErrors.description = 'Description must not exceed 2000 characters';
     }
@@ -309,7 +309,7 @@ export function QuoteForm({
             name="description"
             value={formData.description}
             onChange={handleInputChange}
-            placeholder="Describe your needs in detail (minimum 50 characters)..."
+            placeholder="Describe your needs in detail (minimum 20 characters)..."
             rows={5}
             className={cn(
               'w-full px-4 py-2.5 rounded-lg border transition-colors duration-200',

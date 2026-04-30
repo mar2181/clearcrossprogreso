@@ -18,6 +18,7 @@ import {
   Camera,
 } from 'lucide-react';
 import PriceTable from '@/components/providers/PriceTable';
+import MapView from '@/components/MapView';
 import ReviewList from '@/components/providers/ReviewList';
 import ProviderCard from '@/components/providers/ProviderCard';
 import Badge from '@/components/ui/Badge';
@@ -30,28 +31,13 @@ import {
   getProviderReviews,
   getRelatedProviders,
   getAllProviderSlugs,
+  getFlashDiscountForProvider,
 } from '@/lib/data';
+import FlashDiscountBanner from '@/components/providers/FlashDiscountBanner';
 
-const CATEGORY_SLUGS = [
-  'dentists',
-  'pharmacies',
-  'spas',
-  'optometrists',
-  'cosmetic-surgery',
-  'liquor',
-  'vets',
-];
-
-const CATEGORY_LABELS: Record<string, string> = {
-  dentists: 'Dentists',
-  pharmacies: 'Pharmacies',
-  spas: 'Spas',
-  optometrists: 'Eye Care',
-  'cosmetic-surgery': 'Cosmetic Surgery',
-  doctors: 'Doctors',
-  liquor: 'Liquor',
-  vets: 'Veterinary',
-};
+// Category labels are now pulled from the database via categoryData.name
+// This empty map is kept only as a fallback for edge cases
+const CATEGORY_LABELS: Record<string, string> = {};
 
 interface ProviderPageProps {
   params: Promise<{ category: string; provider: string }>;
@@ -105,6 +91,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
   const hasGallery = galleryImages.length > 0;
   const providerPrices = (providerData as any).provider_prices || [];
   const hasPrices = providerPrices.length > 0;
+  const flashDiscount = await getFlashDiscountForProvider(providerData.id);
 
   // Structured data
   const structuredData = {
@@ -156,6 +143,16 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
           </ol>
         </div>
       </nav>
+
+      {/* ── Flash Discount Banner ── */}
+      {flashDiscount && (
+        <FlashDiscountBanner
+          flashDiscount={flashDiscount}
+          providerName={providerData.name}
+          providerId={providerData.id}
+          categorySlug={category}
+        />
+      )}
 
       {/* ── Header ── */}
       <div className="bg-white border-b border-neutral-200">
@@ -376,6 +373,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                   prices={providerPrices}
                   providerName={providerData.name}
                   providerId={providerData.id}
+                  flashDiscount={flashDiscount}
                 />
                 <div className="mt-4 p-3 bg-brand-green/5 rounded-lg border border-brand-green/20">
                   <p className="text-xs text-brand-green font-medium flex items-center gap-2">
@@ -415,28 +413,23 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                 <MapPin className="w-5 h-5 text-brand-blue" />
                 Location
               </h2>
-              <div
-                className="w-full h-72 bg-neutral-100 border border-neutral-200 rounded-lg flex items-center justify-center"
-                data-lat={providerData.lat}
-                data-lng={providerData.lng}
-              >
-                <div className="text-center">
-                  <MapPin className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
-                  <p className="text-sm text-neutral-500">{providerData.address}</p>
-                  <p className="text-xs text-neutral-400 mt-1">Nuevo Progreso, Tamaulipas, Mexico</p>
-                  {providerData.lat && providerData.lng && (
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${providerData.lat},${providerData.lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 mt-3 text-sm text-brand-blue font-semibold hover:underline"
-                    >
-                      Open in Google Maps
-                      <Globe className="w-3.5 h-3.5" />
-                    </a>
-                  )}
+              {providerData.lat && providerData.lng ? (
+                <MapView
+                  lat={providerData.lat}
+                  lng={providerData.lng}
+                  name={providerData.name}
+                  address={providerData.address}
+                  className="w-full h-72"
+                />
+              ) : (
+                <div className="w-full h-72 bg-neutral-100 border border-neutral-200 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <MapPin className="w-8 h-8 text-neutral-300 mx-auto mb-2" />
+                    <p className="text-sm text-neutral-500">{providerData.address}</p>
+                    <p className="text-xs text-neutral-400 mt-1">Nuevo Progreso, Tamaulipas, Mexico</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </section>
 
             {/* Related Providers */}

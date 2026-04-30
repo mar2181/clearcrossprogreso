@@ -3,9 +3,24 @@ import { createServerClient } from '@supabase/ssr';
 
 const protectedPaths = ['/dashboard', '/provider', '/quote'];
 const publicPaths = ['/', '/auth', '/blog'];
+const passwordExemptPaths = ['/auth/password', '/api/auth/password', '/_next', '/favicon.ico'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Allow static assets and password page
+  if (passwordExemptPaths.some((path) => pathname.startsWith(path))) {
+    return NextResponse.next();
+  }
+
+  // Check if site-wide password protection is enabled
+  const hasPassword = process.env.PROTECTION_PASSWORD;
+  if (hasPassword) {
+    const authCookie = request.cookies.get('clearCross_auth');
+    if (!authCookie) {
+      return NextResponse.redirect(new URL('/auth/password', request.url));
+    }
+  }
 
   // Allow public paths
   if (publicPaths.some((path) => pathname.startsWith(path))) {

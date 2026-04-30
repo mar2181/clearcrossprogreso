@@ -17,7 +17,7 @@ async function getProvidersAndProcedures(preselectedProviderId?: string) {
   const { data: providersData, error: providersError } = await supabase
     .from('providers')
     .select('*')
-    .eq('active', true)
+    .eq('verified', true)
     .order('featured', { ascending: false })
     .order('name', { ascending: true });
 

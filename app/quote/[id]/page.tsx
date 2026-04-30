@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { QuoteRequestWithDetails } from '@/lib/types';
 import { formatUSD, getStatusColor, getStatusLabel } from '@/lib/utils';
 import { QuoteActions } from './QuoteActions';
+import ReviewForm from '@/components/reviews/ReviewForm';
 
 export const metadata: Metadata = {
   title: 'Quote Details | ClearCross Progreso',
@@ -56,6 +57,18 @@ export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) 
 
   if (!quote) {
     notFound();
+  }
+
+  // Check if a review already exists for this quote
+  let hasReview = false;
+  if (quote.status === 'completed') {
+    const supabase = createServerSupabaseClient();
+    const { data: existingReview } = await supabase
+      .from('reviews')
+      .select('id')
+      .eq('quote_id', quote.id)
+      .single();
+    hasReview = !!existingReview;
   }
 
   const shortId = generateShortId(quote.id);
@@ -327,6 +340,25 @@ export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) 
             )}
           </div>
         </div>
+
+        {/* Review Section — shown for completed quotes without a review */}
+        {quote.status === 'completed' && !hasReview && (
+          <div className="mt-8">
+            <ReviewForm
+              quoteId={quote.id}
+              providerName={quote.provider.name}
+              procedureName={quote.procedure?.name || 'your procedure'}
+            />
+          </div>
+        )}
+
+        {quote.status === 'completed' && hasReview && (
+          <div className="mt-8 bg-green-50 border border-green-200 rounded-xl p-5 text-center">
+            <p className="text-sm font-medium text-green-700">
+              You&apos;ve already reviewed this visit. Thank you!
+            </p>
+          </div>
+        )}
 
         {/* Actions Section */}
         <div className="mt-8">
