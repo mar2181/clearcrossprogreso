@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Users, Building2, TrendingDown, Star } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 
 interface StatItem {
   icon: React.ReactNode;
@@ -10,37 +11,6 @@ interface StatItem {
   suffix: string;
   label: string;
 }
-
-const stats: StatItem[] = [
-  {
-    icon: <Users className="w-5 h-5" />,
-    value: '10,000',
-    numericValue: 10000,
-    suffix: '+',
-    label: 'Americans served',
-  },
-  {
-    icon: <Building2 className="w-5 h-5" />,
-    value: '60',
-    numericValue: 60,
-    suffix: '+',
-    label: 'Verified providers',
-  },
-  {
-    icon: <TrendingDown className="w-5 h-5" />,
-    value: '40-70',
-    numericValue: 70,
-    suffix: '%',
-    label: 'Average savings',
-  },
-  {
-    icon: <Star className="w-5 h-5" />,
-    value: '4.5',
-    numericValue: 4.5,
-    suffix: '+',
-    label: 'Avg provider rating',
-  },
-];
 
 function AnimatedNumber({ value, suffix }: { value: string; suffix: string }) {
   const [display, setDisplay] = useState('0');
@@ -106,6 +76,39 @@ function AnimatedNumber({ value, suffix }: { value: string; suffix: string }) {
 }
 
 export default function SocialProofBar() {
+  const { dict } = useI18n();
+
+  const stats: StatItem[] = [
+    {
+      icon: <Users className="w-5 h-5" />,
+      value: '10,000',
+      numericValue: 10000,
+      suffix: '+',
+      label: dict.socialProof.americansServed,
+    },
+    {
+      icon: <Building2 className="w-5 h-5" />,
+      value: '60',
+      numericValue: 60,
+      suffix: '+',
+      label: dict.socialProof.verifiedProviders,
+    },
+    {
+      icon: <TrendingDown className="w-5 h-5" />,
+      value: '400–2,400',
+      numericValue: 1400,
+      suffix: '%',
+      label: dict.socialProof.avgSavings,
+    },
+    {
+      icon: <Star className="w-5 h-5" />,
+      value: '4.5',
+      numericValue: 4.5,
+      suffix: '+',
+      label: dict.socialProof.avgRating,
+    },
+  ];
+
   return (
     <section className="w-full bg-brand-navy py-10 sm:py-12 px-4 sm:px-6 lg:px-8 border-b border-white/10">
       <div className="max-w-5xl mx-auto">
@@ -116,7 +119,7 @@ export default function SocialProofBar() {
                 {stat.icon}
               </div>
               <AnimatedNumber value={stat.value} suffix={stat.suffix} />
-              <p className="text-blue-200/70 text-sm mt-1 font-medium">
+              <p className="text-blue-200 text-sm mt-1 font-medium">
                 {stat.label}
               </p>
             </div>

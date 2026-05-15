@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Zap } from 'lucide-react';
 import { ProviderPrice, FlashDiscount } from '@/lib/types';
@@ -43,6 +43,18 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
     );
   }
 
+  // Calculate total potential savings
+  let totalSaved = 0;
+  let savingsCount = 0;
+  sortedPrices.forEach(item => {
+    const slug = item.procedure?.slug || '';
+    const usPrice = US_BENCHMARKS[slug];
+    if (usPrice && item.price_usd && item.price_usd > 0) {
+      totalSaved += usPrice - item.price_usd;
+      savingsCount++;
+    }
+  });
+
   return (
     <div className="space-y-4">
       {/* Banner */}
@@ -50,6 +62,21 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
         <p className="text-sm text-brand-green font-medium">
           Prices listed here are final and guaranteed. Providers agree that quoted prices will not change upon arrival.
         </p>
+      </div>
+
+      {/* Toggle for US comparison */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setShowComparison(!showComparison)}
+          className={cn(
+            'text-sm font-medium px-3 py-1.5 rounded-full transition-colors',
+            showComparison
+              ? 'bg-brand-green/10 text-brand-green border border-brand-green/30'
+              : 'bg-neutral-100 text-neutral-500 border border-neutral-200'
+          )}
+        >
+          {showComparison ? '🇺🇸 US comparison ON' : '🇺🇸 Show US prices'}
+        </button>
       </div>
 
       {/* Table */}
@@ -60,33 +87,40 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
               <th className="text-left py-3 px-4 font-semibold text-neutral-dark">
                 Procedure
               </th>
-              <th className="text-right py-3 px-4 font-semibold text-neutral-dark">
-                Price (USD)
+              <th className="text-right py-3 px-4 font-semibold text-brand-green">
+                Progreso Price
               </th>
+              {showComparison && (
+                <>
+                  <th className="text-right py-3 px-4 font-semibold text-neutral-400">
+                    US Price
+                  </th>
+                  <th className="text-right py-3 px-4 font-semibold text-brand-green">
+                    You Save
+                  </th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
-            {sortedPrices.map((item, index) => (
-              <tr
-                key={item.id}
-                className={cn(
-                  'border-b border-neutral-100 transition-colors hover:bg-neutral-50',
-                  index % 2 === 1 && 'bg-neutral-50'
-                )}
-              >
-                <td className="py-3 px-4 text-neutral-dark">
-                  <span>{item.procedure?.name || 'Procedure'}</span>
-                  {item.price_notes && (
-                    <span className="block text-xs text-neutral-500 mt-0.5">
-                      {item.price_notes}
-                    </span>
+            {sortedPrices.map((item, index) => {
+              const procedureSlug = item.procedure?.slug || '';
+              const usPrice = US_BENCHMARKS[procedureSlug] || null;
+              const dollarSaved = usPrice && item.price_usd ? usPrice - item.price_usd : null;
+
+              return (
+                <tr
+                  key={item.id}
+                  className={cn(
+                    'border-b border-neutral-100 transition-colors hover:bg-neutral-50',
+                    index % 2 === 1 && 'bg-neutral-50'
                   )}
-                </td>
-                <td className="py-3 px-4 text-right">
-                  {item.price_usd !== null && item.price_usd !== undefined ? (
-                    item.price_usd === 0 ? (
-                      <span className="font-semibold text-brand-green">
-                        Free
+                >
+                  <td className="py-3 px-4 text-neutral-dark">
+                    <span>{item.procedure?.name || 'Procedure'}</span>
+                    {item.price_notes && (
+                      <span className="block text-xs text-neutral-500 mt-0.5">
+                        {item.price_notes}
                       </span>
                     ) : flashDiscount && isProcedureDiscounted(item.procedure_id || item.procedure?.id, flashDiscount) ? (
                       <div className="flex flex-col items-end gap-0.5">
@@ -99,24 +133,50 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
                         </span>
                       </div>
                     ) : (
-                      <span className="font-semibold text-brand-green">
-                        {formatUSD(item.price_usd)}
-                      </span>
-                    )
-                  ) : (
-                    <Link
-                      href={`/quote?provider=${providerId}`}
-                      className="text-brand-blue hover:underline font-medium"
-                    >
-                      Request Quote
-                    </Link>
+                      <Link
+                        href={`/quote?provider=${providerId}`}
+                        className="text-brand-blue hover:underline font-medium"
+                      >
+                        Request Quote
+                      </Link>
+                    )}
+                  </td>
+                  {showComparison && (
+                    <>
+                      <td className="py-3 px-4 text-right text-neutral-400">
+                        {usPrice ? (
+                          <span className="line-through">{formatUSD(usPrice)}</span>
+                        ) : (
+                          <span className="text-neutral-300">—</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        {dollarSaved && dollarSaved > 0 ? (
+                          <span className="inline-flex items-center gap-1 bg-brand-green/10 text-brand-green font-bold text-xs px-2 py-1 rounded-full">
+                            Save ${dollarSaved.toLocaleString()}
+                          </span>
+                        ) : (
+                          <span className="text-neutral-300">—</span>
+                        )}
+                      </td>
+                    </>
                   )}
-                </td>
-              </tr>
-            ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+
+      {/* Bottom savings summary */}
+      {showComparison && savingsCount > 0 && (
+        <div className="bg-gradient-to-r from-brand-green/5 to-brand-blue/5 border border-brand-green/20 rounded-lg p-4">
+          <p className="text-sm text-neutral-dark">
+            <span className="font-bold text-brand-green">💰 Save ${totalSaved.toLocaleString()}</span> on these {savingsCount} procedures compared to US prices. 
+            All procedures at {providerName} are performed by licensed professionals using the same quality materials.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

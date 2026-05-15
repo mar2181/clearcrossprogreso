@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { Provider, Procedure, FlashDiscount } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import ProviderCard from '@/components/providers/ProviderCard';
+import { CompareDrawer, useCompare, CompareProvider } from '@/components/compare/CompareDrawer';
 import Button from '@/components/ui/Button';
 import { ChevronDown, Award, SlidersHorizontal, X, Zap } from 'lucide-react';
 
@@ -47,6 +48,37 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
   const flashDealCount = flashDiscountMap.size;
 
   const currentYear = new Date().getFullYear();
+
+  // Compare feature
+  const {
+    compareList,
+    addToCompare,
+    removeFromCompare,
+    clearCompare,
+    isInCompare,
+    canAddMore,
+  } = useCompare();
+
+  function providerToCompare(provider: any): CompareProvider {
+    const prices = (provider.provider_prices || provider.prices || [])
+      .filter((p: any) => p.price_usd && p.price_usd > 0)
+      .map((p: any) => ({
+        procedureName: p.procedure?.name || '',
+        procedureSlug: p.procedure?.slug || p.procedure_id || '',
+        priceUsd: p.price_usd,
+      }));
+    return {
+      id: provider.id,
+      name: provider.name,
+      slug: provider.slug,
+      address: provider.address,
+      verified: provider.verified,
+      avg_rating: provider.avg_rating,
+      review_count: provider.review_count,
+      categorySlug,
+      prices,
+    };
+  }
 
   // Detect if user has changed filters but not applied yet
   const hasUnappliedChanges = useMemo(() => {
@@ -346,6 +378,12 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
           </button>
         </div>
       )}
+      {/* Compare Drawer */}
+      <CompareDrawer
+        providers={compareList}
+        onRemove={removeFromCompare}
+        onClear={clearCompare}
+      />
     </div>
   );
 };

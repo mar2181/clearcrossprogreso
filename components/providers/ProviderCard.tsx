@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { MapPin, Star, Award, Zap } from 'lucide-react';
 import { Provider, ProviderPrice, FlashDiscount } from '@/lib/types';
 import { cn, formatUSD } from '@/lib/utils';
+import { getSavings } from '@/lib/us-benchmarks';
 import { Card, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -14,7 +15,7 @@ import CountdownTimer from '@/components/ui/CountdownTimer';
 
 interface ProviderCardProps {
   provider: Provider & {
-    prices?: (ProviderPrice & { procedure?: { name: string; id?: string } })[];
+    prices?: (ProviderPrice & { procedure?: { name: string; id?: string; slug?: string } })[];
     category?: {
       name: string;
       slug: string;
@@ -219,6 +220,23 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
 
       {/* Action buttons */}
       <div className="p-4 flex gap-2">
+        {onCompare && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onCompare();
+            }}
+            className={cn(
+              'px-3 py-2 rounded-lg text-sm font-medium transition-all border',
+              isInCompare
+                ? 'bg-brand-blue/10 text-brand-blue border-brand-blue/30'
+                : 'bg-white text-neutral-500 border-neutral-200 hover:border-brand-blue hover:text-brand-blue'
+            )}
+            title={isInCompare ? 'Remove from compare' : 'Add to compare'}
+          >
+            {isInCompare ? <Check className="w-4 h-4" /> : <GitCompareArrows className="w-4 h-4" />}
+          </button>
+        )}
         <Link
           href={`/${categorySlug}/${provider.slug}`}
           className="flex-1"

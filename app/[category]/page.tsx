@@ -3,8 +3,10 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronRight, ShieldCheck, ArrowRight, TrendingDown } from 'lucide-react';
+import { ChevronRight, ShieldCheck, ArrowRight, TrendingDown, DollarSign } from 'lucide-react';
 import CategoryListingClient from '@/components/category/CategoryListingClient';
+import SavingsBanner from '@/components/category/SavingsBanner';
+import CategoryMap from '@/components/category/CategoryMap';
 import {
   getCategory,
   getCategoryBySlug,
@@ -51,11 +53,11 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${categoryData.name} in Nuevo Progreso Mexico — Compare Prices | ClearCross`,
-    description: `Find and compare prices for ${categoryData.name.toLowerCase()} in Nuevo Progreso, Mexico. View verified providers, prices, and patient reviews.`,
+    title: `${categoryData.name} in Nuevo Progreso Mexico — Compare Prices & Save | ClearCross`,
+    description: `Find verified ${categoryData.name.toLowerCase()} in Nuevo Progreso, Mexico. Compare prices, read reviews, and save big vs US costs. Get written quotes before you cross.`,
     openGraph: {
       title: `${categoryData.name} in Nuevo Progreso Mexico | ClearCross`,
-      description: `Find and compare prices for ${categoryData.name.toLowerCase()} in Nuevo Progreso, Mexico.`,
+      description: `Compare prices and save on ${categoryData.name.toLowerCase()} in Nuevo Progreso, Mexico.`,
       type: 'website',
     },
   };
@@ -134,7 +136,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               </div>
               <div className="flex items-center gap-2 text-white">
                 <TrendingDown className="w-4 h-4 text-amber" />
-                <span>Save <strong>40-70%</strong> vs US prices</span>
+                <span>Save <strong>$100s–$1000s</strong> vs US prices</span>
               </div>
             </div>
           </div>
@@ -143,9 +145,27 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
       {/* Content */}
       <div className="container-page py-10 sm:py-14">
+        {/* Savings Comparison Banner */}
+        {['dentists', 'cosmetic-surgery', 'optometrists', 'doctors', 'pharmacies', 'spas'].includes(category) && (
+          <div className="mb-10">
+            <SavingsBanner
+              providers={providersList}
+              categoryName={categoryData.name}
+              categorySlug={category}
+            />
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
           <div className="lg:col-span-2">
+            {/* Map toggle */}
+            <CategoryMap
+              providers={providersList}
+              categoryName={categoryData.name}
+              categorySlug={category}
+            />
+
             <CategoryListingClient
               providers={providersList}
               procedures={procedures}

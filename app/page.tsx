@@ -10,9 +10,9 @@ import RecentBlogPosts from '@/components/home/RecentBlogPosts';
 import { getFeaturedProviders, getCategoryCounts } from '@/lib/data';
 
 export const metadata = {
-  title: 'ClearCross Progreso - Medical Price Transparency for Nuevo Progreso, Mexico',
+  title: 'ClearCross Progreso — The US Charges Up to 2,400% More for Healthcare',
   description:
-    'Compare prices for dental work, prescriptions, spa treatments and more in Nuevo Progreso, Mexico. Get firm quotes before you leave the US.',
+    'Compare real prices for dental implants, Botox, Ozempic, eye exams and more in Nuevo Progreso, Mexico. The US charges 400–2,400% more for the same care. Get written quotes before you cross the border.',
 };
 
 export default async function Home() {

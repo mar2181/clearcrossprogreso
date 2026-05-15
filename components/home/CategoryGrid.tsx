@@ -3,44 +3,49 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import AnimateIn, { StaggerContainer, StaggerItem } from '@/components/ui/AnimateIn';
+import { useI18n } from '@/lib/i18n';
 
 interface Category {
   id: string;
   name: string;
   slug: string;
   image: string;
+  savings: string;
 }
-
-const categories: Category[] = [
-  { id: 'dentists', name: 'Dental Work', slug: 'dentists', image: '/images/categories/dental.jpg' },
-  { id: 'pharmacies', name: 'Pharmacies', slug: 'pharmacies', image: '/images/categories/pharmacies.jpg' },
-  { id: 'spas', name: 'Spa & Wellness', slug: 'spas', image: '/images/categories/spa.jpg' },
-  { id: 'doctors', name: 'Doctors', slug: 'doctors', image: '/images/providers/doctor-consultation-room.jpg' },
-  { id: 'optometrists', name: 'Eye Care', slug: 'optometrists', image: '/images/categories/eye-care.jpg' },
-  { id: 'cosmetic-surgery', name: 'Cosmetic Surgery', slug: 'cosmetic-surgery', image: '/images/categories/cosmetic-surgery.jpg' },
-  { id: 'liquor', name: 'Liquor & Spirits', slug: 'liquor', image: '/images/categories/wellness.jpg' },
-  { id: 'vets', name: 'Veterinary', slug: 'vets', image: '/images/categories/veterinary.jpg' },
-];
 
 interface CategoryGridProps {
   counts?: Record<string, number>;
 }
 
 export default function CategoryGrid({ counts = {} }: CategoryGridProps) {
+  const { dict } = useI18n();
+  const dc = dict.categoryGrid;
+
+  const categories: Category[] = [
+    { id: 'dentists', name: dc.categories.dentists.name, slug: 'dentists', image: '/images/categories/dental.jpg', savings: dc.categories.dentists.savings },
+    { id: 'pharmacies', name: dc.categories.pharmacies.name, slug: 'pharmacies', image: '/images/categories/pharmacies.jpg', savings: dc.categories.pharmacies.savings },
+    { id: 'spas', name: dc.categories.spas.name, slug: 'spas', image: '/images/categories/spa.jpg', savings: dc.categories.spas.savings },
+    { id: 'doctors', name: dc.categories.doctors.name, slug: 'doctors', image: '/images/providers/doctor-consultation-room.jpg', savings: dc.categories.doctors.savings },
+    { id: 'optometrists', name: dc.categories.optometrists.name, slug: 'optometrists', image: '/images/categories/eye-care.jpg', savings: dc.categories.optometrists.savings },
+    { id: 'cosmetic-surgery', name: dc.categories.cosmeticSurgery.name, slug: 'cosmetic-surgery', image: '/images/categories/cosmetic-surgery.jpg', savings: dc.categories.cosmeticSurgery.savings },
+    { id: 'liquor', name: dc.categories.liquor.name, slug: 'liquor', image: '/images/categories/wellness.jpg', savings: dc.categories.liquor.savings },
+    { id: 'vets', name: dc.categories.vets.name, slug: 'vets', image: '/images/categories/veterinary.jpg', savings: dc.categories.vets.savings },
+  ];
+
   return (
     <section id="categories" className="w-full py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-neutral-light">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Section Title */}
         <AnimateIn>
           <div className="text-center mb-12 sm:mb-16">
-            <p className="text-xs font-bold tracking-[0.2em] uppercase text-brand-green mb-2">
-              Browse by Category
+            <p className="text-xs font-bold tracking-[0.2em] uppercase text-brand-green mb-4">
+              {dc.sectionLabel}
             </p>
-            <h2 className="font-display text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-              What are you looking for?
+            <h2 className="font-display text-4xl sm:text-5xl font-bold text-neutral-dark mb-4">
+              {dc.headline}
             </h2>
-            <p className="font-sans text-gray-600 text-lg max-w-2xl mx-auto">
-              Browse our extensive network of verified providers across multiple categories.
+            <p className="font-sans text-neutral-mid text-lg max-w-2xl mx-auto">
+              {dc.subtitle}
             </p>
           </div>
         </AnimateIn>
@@ -72,7 +77,7 @@ export default function CategoryGrid({ counts = {} }: CategoryGridProps) {
                       {isComingSoon && (
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                           <span className="px-3 py-1 bg-white/90 text-neutral-dark text-xs font-semibold rounded-full">
-                            Coming Soon
+                            {dc.comingSoon}
                           </span>
                         </div>
                       )}
@@ -83,11 +88,18 @@ export default function CategoryGrid({ counts = {} }: CategoryGridProps) {
                       <h3 className="font-display font-semibold text-gray-900 mb-1 text-sm sm:text-base group-hover:text-brand-blue transition-colors">
                         {category.name}
                       </h3>
-                      <p className="font-sans text-xs sm:text-sm text-gray-500">
-                        {providerCount > 0
-                          ? `${providerCount} providers`
-                          : 'Coming soon'}
-                      </p>
+                      <div className="flex items-center justify-center gap-2">
+                        <p className="font-sans text-xs sm:text-sm text-gray-500">
+                          {providerCount > 0
+                            ? `${providerCount} ${dc.providers}`
+                            : dc.comingSoonText}
+                        </p>
+                        {category.savings && (
+                          <span className="inline-flex items-center text-xs font-bold text-brand-green bg-brand-green/10 px-2 py-0.5 rounded-full">
+                            {category.savings}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Link>

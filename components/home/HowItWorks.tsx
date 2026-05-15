@@ -3,6 +3,7 @@
 import { Search, BarChart3, ShieldCheck, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import AnimateIn, { StaggerContainer, StaggerItem } from '@/components/ui/AnimateIn';
+import { useI18n } from '@/lib/i18n';
 
 interface Step {
   number: number;
@@ -12,31 +13,34 @@ interface Step {
   detail: string;
 }
 
-const steps: Step[] = [
-  {
-    number: 1,
-    title: 'Pick a Procedure',
-    description: 'Browse categories and find the treatment you need.',
-    detail: 'See every provider\'s price instantly — no accounts, no hidden fees.',
-    icon: <Search className="w-8 h-8" />,
-  },
-  {
-    number: 2,
-    title: 'Compare Prices',
-    description: 'View real prices from real clinics side by side.',
-    detail: 'Filter by rating, experience, and procedure to find your best match.',
-    icon: <BarChart3 className="w-8 h-8" />,
-  },
-  {
-    number: 3,
-    title: 'Get a Locked Quote',
-    description: 'Receive a firm written quote before you visit.',
-    detail: 'Upload a photo, describe your needs — price is guaranteed and cannot change.',
-    icon: <ShieldCheck className="w-8 h-8" />,
-  },
-];
-
 export default function HowItWorks() {
+  const { dict } = useI18n();
+  const d = dict.howItWorks;
+
+  const steps: Step[] = [
+    {
+      number: 1,
+      title: d.step1Title,
+      description: d.step1Desc,
+      detail: d.step1Detail,
+      icon: <Search className="w-8 h-8" />,
+    },
+    {
+      number: 2,
+      title: d.step2Title,
+      description: d.step2Desc,
+      detail: d.step2Detail,
+      icon: <BarChart3 className="w-8 h-8" />,
+    },
+    {
+      number: 3,
+      title: d.step3Title,
+      description: d.step3Desc,
+      detail: d.step3Detail,
+      icon: <ShieldCheck className="w-8 h-8" />,
+    },
+  ];
+
   return (
     <section className="w-full py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-neutral-light">
       <div className="max-w-5xl mx-auto">
@@ -44,13 +48,13 @@ export default function HowItWorks() {
         <AnimateIn>
           <div className="text-center mb-12 sm:mb-16">
             <p className="text-xs font-bold tracking-[0.2em] uppercase text-brand-blue mb-2">
-              Simple & Transparent
+              {d.sectionLabel}
             </p>
             <h2 className="font-display text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-              How ClearCross Works
+              {d.headline}
             </h2>
             <p className="font-sans text-gray-600 text-lg max-w-2xl mx-auto">
-              Three steps to savings. No accounts needed, no hidden fees.
+              {d.subtitle}
             </p>
           </div>
         </AnimateIn>
@@ -104,7 +108,7 @@ export default function HowItWorks() {
               href="/how-it-works"
               className="inline-flex items-center gap-2 text-sm text-brand-blue font-semibold hover:text-brand-navy hover:gap-3 transition-all"
             >
-              Learn more about how it works
+              {d.learnMore}
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

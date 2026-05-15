@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchBar from '@/components/search/SearchBar';
+import { useI18n } from '@/lib/i18n';
 
 const searchSuggestions = [
   'dental implant',
@@ -21,6 +22,7 @@ const searchSuggestions = [
 ];
 
 export default function Hero() {
+  const { dict } = useI18n();
   const [currentSuggestion, setCurrentSuggestion] = useState(0);
 
   useEffect(() => {
@@ -29,6 +31,13 @@ export default function Hero() {
     }, 3000);
     return () => clearInterval(timer);
   }, []);
+
+  const pills = [
+    dict.hero.pillSavings,
+    dict.hero.pillLocked,
+    dict.hero.pillProviders,
+    dict.hero.pillWalk,
+  ];
 
   return (
     <section className="relative w-full overflow-hidden">
@@ -82,7 +91,7 @@ export default function Hero() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
           >
-            Know the Price Before You Cross
+            {dict.hero.tagline}
           </motion.p>
 
           <motion.p
@@ -91,11 +100,20 @@ export default function Hero() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            Compare prices for dental work, prescriptions, spa treatments and more in Nuevo Progreso, Mexico. Get firm quotes before you leave the US.
+            {dict.hero.subtitle}
           </motion.p>
 
           <motion.div
-            className="flex gap-3 mt-6"
+            className="mt-5 relative z-20"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+          >
+            <SearchBar variant="compact" placeholder={dict.hero.trySearching + ' "dental implant"'} />
+          </motion.div>
+
+          <motion.div
+            className="flex gap-3 mt-5"
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8 }}
@@ -104,13 +122,13 @@ export default function Hero() {
               href="/dentists"
               className="flex-1 text-center px-5 py-3 rounded-full border-2 border-amber text-amber font-semibold text-sm hover:bg-amber hover:text-brand-navy transition-all duration-300 hover:shadow-lg hover:shadow-amber/20"
             >
-              Browse Services
+              {dict.hero.browseServices}
             </Link>
             <Link
               href="/quote"
               className="flex-1 text-center px-5 py-3 rounded-full border-2 border-white/40 text-white font-semibold text-sm hover:bg-white/10 transition-all duration-300"
             >
-              Get a Quote
+              {dict.hero.getQuote}
             </Link>
           </motion.div>
         </div>
@@ -132,38 +150,31 @@ export default function Hero() {
         {/* Content */}
         <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
           <motion.h1
-            className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-5 tracking-tight drop-shadow-lg"
+            className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-lg"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
           >
-            Know the price{' '}
-            <span className="text-amber">before</span>{' '}
-            you cross.
+            {dict.hero.taglineDesktop}
           </motion.h1>
 
           <motion.p
-            className="font-sans text-lg sm:text-xl text-white/80 max-w-2xl mx-auto mb-3 drop-shadow-md"
+            className="font-sans text-xl text-white/80 max-w-2xl mx-auto mb-8 drop-shadow-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            Compare prices for dental work, prescriptions, and more in Nuevo Progreso, Mexico. Get written quotes before you leave home.
+            {dict.hero.subtitleDesktop}
           </motion.p>
 
           {/* Value prop pills */}
           <motion.div
-            className="flex flex-wrap justify-center gap-3 mb-8"
+            className="flex flex-wrap justify-center gap-3 mb-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
-            {[
-              'Save 40–70%',
-              'Upfront pricing',
-              'Verified providers',
-              '5 min from the US border',
-            ].map((pill) => (
+            {pills.map((pill) => (
               <span
                 key={pill}
                 className="px-4 py-1.5 bg-white/10 backdrop-blur-sm text-white text-sm font-medium rounded-full border border-white/20"
@@ -175,12 +186,12 @@ export default function Hero() {
 
           {/* Rotating search suggestion */}
           <motion.div
-            className="mb-6 text-sm text-white/50"
+            className="mb-8 text-sm text-white/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.0 }}
           >
-            <span>Try searching: </span>
+            <span>{dict.hero.trySearching} </span>
             <AnimatePresence mode="wait">
               <motion.span
                 key={currentSuggestion}
@@ -197,7 +208,7 @@ export default function Hero() {
 
           {/* Search Bar */}
           <motion.div
-            className="mb-8 relative z-20 max-w-2xl mx-auto"
+            className="mb-12 relative z-20 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
@@ -216,13 +227,13 @@ export default function Hero() {
               href="/dentists"
               className="px-10 py-3.5 bg-brand-blue text-white font-semibold rounded-lg hover:bg-brand-navy hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 shadow-lg text-base"
             >
-              Browse Services
+              {dict.hero.browseServices}
             </Link>
             <Link
               href="/quote"
               className="px-10 py-3.5 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white font-semibold rounded-lg hover:bg-white/20 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 text-base"
             >
-              Get a Free Quote
+              {dict.hero.getFreeQuote}
             </Link>
           </motion.div>
         </div>

@@ -1,20 +1,19 @@
-import { Metadata } from 'next';
-import Link from 'next/link';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Terms of Service - ClearCross Progreso',
-  description:
-    'Terms of service for ClearCross Progreso. Please review before using our medical price comparison platform.',
-};
+import Link from 'next/link';
+import { useI18n } from '@/lib/i18n';
 
 export default function TermsPage() {
+  const { dict } = useI18n();
+  const d = dict.terms;
+
   return (
     <main className="w-full">
       {/* Header */}
       <section className="bg-brand-navy text-white py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
-          <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2">Terms of Service</h1>
-          <p className="text-white/60 text-sm">Last updated: March 2026</p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold mb-2">{d.title}</h1>
+          <p className="text-white/60 text-sm">{d.lastUpdated}</p>
         </div>
       </section>
 
@@ -23,7 +22,7 @@ export default function TermsPage() {
         <div className="max-w-3xl mx-auto prose prose-neutral">
           <h2 className="font-display text-xl font-bold text-neutral-dark mt-8 mb-3">1. Acceptance of Terms</h2>
           <p className="text-neutral-mid leading-relaxed mb-6">
-            By accessing or using ClearCross Progreso ("the Platform"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Platform.
+            By accessing or using ClearCross Progreso (&quot;the Platform&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Platform.
           </p>
 
           <h2 className="font-display text-xl font-bold text-neutral-dark mt-8 mb-3">2. Description of Service</h2>
@@ -58,7 +57,7 @@ export default function TermsPage() {
 
           <h2 className="font-display text-xl font-bold text-neutral-dark mt-8 mb-3">8. Limitation of Liability</h2>
           <p className="text-neutral-mid leading-relaxed mb-6">
-            ClearCross Progreso is provided "as is" without warranties of any kind. To the maximum extent permitted by law, ClearCross shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from your use of the Platform, reliance on any information provided, or any interaction with providers listed on the Platform.
+            ClearCross Progreso is provided &quot;as is&quot; without warranties of any kind. To the maximum extent permitted by law, ClearCross shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from your use of the Platform, reliance on any information provided, or any interaction with providers listed on the Platform.
           </p>
 
           <h2 className="font-display text-xl font-bold text-neutral-dark mt-8 mb-3">9. User Conduct</h2>
@@ -88,7 +87,7 @@ export default function TermsPage() {
 
           <div className="mt-12 pt-8 border-t border-neutral-200">
             <Link href="/" className="text-brand-blue hover:underline text-sm font-medium">
-              &larr; Back to ClearCross Progreso
+              {d.backToSite}
             </Link>
           </div>
         </div>

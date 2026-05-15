@@ -1,51 +1,46 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { Mail } from 'lucide-react'
-
-interface FooterLink {
-  label: string
-  href: string
-}
-
-interface FooterSection {
-  title: string
-  links: FooterLink[]
-}
-
-const footerSections: FooterSection[] = [
-  {
-    title: 'Categories',
-    links: [
-      { label: 'Dentists', href: '/dentists' },
-      { label: 'Pharmacies', href: '/pharmacies' },
-      { label: 'Spas', href: '/spas' },
-      { label: 'Optometrists', href: '/optometrists' },
-      { label: 'Cosmetic Surgery', href: '/cosmetic-surgery' }
-    ]
-  },
-  {
-    title: 'Resources',
-    links: [
-      { label: 'Blog', href: '/blog' },
-      { label: 'How It Works', href: '/how-it-works' },
-      { label: 'Safety Guide', href: '/safety' },
-      { label: 'About Us', href: '/about' },
-      { label: 'List Your Business', href: '/quote' }
-    ]
-  }
-]
+import { useI18n } from '@/lib/i18n'
+import { localizedPath } from '@/lib/i18n/get-locale'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
+  const { dict, locale } = useI18n()
+  const d = dict.footer
+
+  const footerSections = [
+    {
+      title: d.categories,
+      links: [
+        { label: d.dentists, href: '/dentists' },
+        { label: d.pharmacies, href: '/pharmacies' },
+        { label: d.spas, href: '/spas' },
+        { label: d.optometrists, href: '/optometrists' },
+        { label: d.cosmeticSurgery, href: '/cosmetic-surgery' },
+      ],
+    },
+    {
+      title: d.resources,
+      links: [
+        { label: d.blog, href: '/blog' },
+        { label: d.howItWorks, href: '/how-it-works' },
+        { label: d.safetyGuide, href: '/safety' },
+        { label: d.aboutUs, href: '/about' },
+        { label: d.listBusiness, href: '/quote' },
+      ],
+    },
+  ]
 
   return (
     <footer className="bg-brand-navy text-neutral-light">
-      {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Column 1: Logo & Tagline */}
           <div className="flex flex-col space-y-4">
-            <Link href="/" className="flex items-start">
+            <Link href={localizedPath('/', locale)} className="flex items-start">
               <Image
                 src="/images/clearcross-logo.png"
                 alt="ClearCross Progreso"
@@ -55,8 +50,8 @@ export function Footer() {
               />
             </Link>
             <div className="space-y-2 text-sm">
-              <p className="text-neutral-light font-medium">Know the price before you cross.</p>
-              <p className="text-neutral-light/80 text-xs">Conozca el precio antes de cruzar.</p>
+              <p className="text-neutral-light font-medium">{d.tagline}</p>
+              <p className="text-neutral-light/80 text-xs">{d.taglineEs}</p>
             </div>
           </div>
 
@@ -69,7 +64,7 @@ export function Footer() {
               {footerSections[0].links.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    href={localizedPath(link.href, locale)}
                     className="text-neutral-light hover:text-white transition-colors text-sm"
                   >
                     {link.label}
@@ -88,7 +83,7 @@ export function Footer() {
               {footerSections[1].links.map((link) => (
                 <li key={link.href}>
                   <Link
-                    href={link.href}
+                    href={localizedPath(link.href, locale)}
                     className="text-neutral-light hover:text-white transition-colors text-sm"
                   >
                     {link.label}
@@ -100,7 +95,7 @@ export function Footer() {
 
           {/* Column 4: Contact */}
           <div>
-            <h3 className="text-white font-display font-bold text-lg mb-4">Contact</h3>
+            <h3 className="text-white font-display font-bold text-lg mb-4">{d.contact}</h3>
             <div className="space-y-4">
               <a
                 href="mailto:info@clearcrossprogreso.com"
@@ -111,10 +106,10 @@ export function Footer() {
               </a>
               <div>
                 <Link
-                  href="/quote"
+                  href={localizedPath('/quote', locale)}
                   className="text-neutral-light hover:text-white transition-colors text-sm font-medium"
                 >
-                  For Providers
+                  {d.listBusiness}
                 </Link>
               </div>
             </div>
@@ -127,20 +122,20 @@ export function Footer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <p className="text-neutral-light/80 text-xs sm:text-sm">
-              &copy; {currentYear} ClearCross Progreso. All rights reserved.
+              &copy; {currentYear} {d.copyright}
             </p>
             <div className="flex items-center gap-6">
               <Link
-                href="/privacy"
+                href={localizedPath('/privacy', locale)}
                 className="text-neutral-light/80 hover:text-white transition-colors text-xs sm:text-sm"
               >
-                Privacy Policy
+                {d.privacyPolicy}
               </Link>
               <Link
-                href="/terms"
+                href={localizedPath('/terms', locale)}
                 className="text-neutral-light/80 hover:text-white transition-colors text-xs sm:text-sm"
               >
-                Terms of Service
+                {d.termsOfService}
               </Link>
             </div>
           </div>
