@@ -2,19 +2,33 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ProviderPrice } from '@/lib/types';
+import { Zap } from 'lucide-react';
+import { ProviderPrice, FlashDiscount } from '@/lib/types';
 import { cn, formatUSD } from '@/lib/utils';
-import { US_BENCHMARKS } from '@/lib/us-benchmarks';
+import CountdownTimer from '@/components/ui/CountdownTimer';
 
 interface PriceTableProps {
-  prices: (ProviderPrice & { procedure?: { name: string; sort_order: number; slug?: string } })[];
+  prices: (ProviderPrice & { procedure?: { name: string; sort_order: number; id?: string } })[];
   providerName: string;
   providerId?: string;
+  flashDiscount?: FlashDiscount | null;
 }
 
-const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerId }) => {
-  const [showComparison, setShowComparison] = useState(true);
+function getDiscountedPrice(price: number, flash: FlashDiscount): number {
+  if (flash.discount_type === 'percentage') {
+    return Math.round(price * (1 - flash.discount_value / 100) * 100) / 100;
+  }
+  return Math.max(0, price - flash.discount_value);
+}
 
+function isProcedureDiscounted(procId: string | undefined, flash: FlashDiscount): boolean {
+  if (!procId) return false;
+  if (!flash.procedure_ids || flash.procedure_ids.length === 0) return true;
+  return flash.procedure_ids.includes(procId);
+}
+
+const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerId, flashDiscount }) => {
+  // Sort by procedure sort_order
   const sortedPrices = [...prices].sort((a, b) => {
     const orderA = a.procedure?.sort_order ?? 999;
     const orderB = b.procedure?.sort_order ?? 999;
@@ -108,17 +122,16 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
                       <span className="block text-xs text-neutral-500 mt-0.5">
                         {item.price_notes}
                       </span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    {item.price_usd !== null && item.price_usd !== undefined ? (
-                      item.price_usd === 0 ? (
-                        <span className="font-semibold text-brand-green">Free</span>
-                      ) : (
-                        <span className="font-semibold text-brand-green">
+                    ) : flashDiscount && isProcedureDiscounted(item.procedure_id || item.procedure?.id, flashDiscount) ? (
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span className="text-xs text-neutral-400 line-through">
                           {formatUSD(item.price_usd)}
                         </span>
-                      )
+                        <span className="font-bold text-brand-green flex items-center gap-1">
+                          <Zap className="w-3 h-3 text-orange-500 fill-orange-500" />
+                          {formatUSD(getDiscountedPrice(item.price_usd, flashDiscount))}
+                        </span>
+                      </div>
                     ) : (
                       <Link
                         href={`/quote?provider=${providerId}`}

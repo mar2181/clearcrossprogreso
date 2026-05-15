@@ -16,10 +16,19 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const [featuredProviders, categoryCounts] = await Promise.all([
-    getFeaturedProviders(),
-    getCategoryCounts(),
-  ]);
+  let featuredProviders: Awaited<ReturnType<typeof getFeaturedProviders>> = [];
+  let categoryCounts: Awaited<ReturnType<typeof getCategoryCounts>> = {};
+
+  try {
+    const [fp, cc] = await Promise.all([
+      getFeaturedProviders().catch(() => []),
+      getCategoryCounts().catch(() => ({})),
+    ]);
+    featuredProviders = fp;
+    categoryCounts = cc;
+  } catch (error) {
+    console.error('Home page data fetch failed:', error);
+  }
 
   return (
     <main className="w-full">

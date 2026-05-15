@@ -10,32 +10,14 @@ import CategoryMap from '@/components/category/CategoryMap';
 import {
   getCategory,
   getCategoryBySlug,
+  getAllCategories,
   getProvidersForCategory,
   getProceduresForCategory,
+  getActiveFlashDiscounts,
 } from '@/lib/data';
 
-const CATEGORY_SLUGS = [
-  'dentists',
-  'pharmacies',
-  'spas',
-  'doctors',
-  'optometrists',
-  'cosmetic-surgery',
-  'liquor',
-  'vets',
-];
-
-const CATEGORY_LABELS: Record<string, string> = {
-  dentists: 'Dentists',
-  pharmacies: 'Pharmacies',
-  spas: 'Spas',
-  optometrists: 'Eye Care',
-  'cosmetic-surgery': 'Cosmetic Surgery',
-  doctors: 'Doctors',
-  liquor: 'Liquor',
-  vets: 'Veterinary',
-};
-
+// Hero and fallback images keyed by slug — new categories without
+// an entry here will simply use the gradient background.
 const CATEGORY_HEROES: Record<string, string> = {
   dentists: '/images/heroes/dentists-hero.jpg',
   pharmacies: '/images/heroes/pharmacies-hero.jpg',
@@ -45,18 +27,6 @@ const CATEGORY_HEROES: Record<string, string> = {
   'cosmetic-surgery': '/images/heroes/cosmetic-surgery-hero.jpg',
 };
 
-const CATEGORY_TAGLINES: Record<string, string> = {
-  dentists: 'US charges up to 2,400% more for dental work — implants, crowns, veneers, braces',
-  pharmacies: 'US charges up to 9,900% more for prescriptions — Ozempic, insulin, antibiotics, Eliquis',
-  spas: 'US charges up to 900% more for facials, massages, body sculpting, and beauty treatments',
-  doctors: 'US charges up to 900% more for doctor visits, blood work, and checkups',
-  optometrists: 'US charges up to 900% more for eye exams, prescription glasses, and contact lenses',
-  'cosmetic-surgery': 'US charges up to 9,900% more for Botox, fillers, liposuction, and cosmetic procedures',
-  liquor: 'Spirits, wine, and beer from Nuevo Progreso shops',
-  vets: 'Affordable veterinary care for your pets',
-};
-
-// Fallback images if hero doesn't exist
 const CATEGORY_FALLBACKS: Record<string, string> = {
   dentists: '/images/categories/dental.jpg',
   pharmacies: '/images/categories/pharmacies.jpg',
@@ -94,7 +64,8 @@ export async function generateMetadata({
 }
 
 export async function generateStaticParams() {
-  return CATEGORY_SLUGS.map((slug) => ({ category: slug }));
+  const categories = await getAllCategories();
+  return categories.map((cat) => ({ category: cat.slug }));
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
@@ -105,9 +76,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   const providersList = await getProvidersForCategory(categoryData.id, categoryData.slug);
   const procedures = await getProceduresForCategory(categoryData.id, categoryData.slug);
+  const flashDiscounts = await getActiveFlashDiscounts(categoryData.slug);
 
-  const heroImage = CATEGORY_HEROES[category] || CATEGORY_FALLBACKS[category];
-  const tagline = CATEGORY_TAGLINES[category] || categoryData.description;
+  const heroImage = CATEGORY_HEROES[category] || CATEGORY_FALLBACKS[category] || null;
+  const tagline = categoryData.description;
 
   return (
     <main className="min-h-screen bg-neutral-50">
@@ -120,7 +92,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             </li>
             <li><ChevronRight className="w-3.5 h-3.5" /></li>
             <li className="text-neutral-dark font-medium">
-              {CATEGORY_LABELS[category] || categoryData.name}
+              {categoryData.name}
             </li>
           </ol>
         </div>
@@ -199,6 +171,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               procedures={procedures}
               categoryName={categoryData.name}
               categorySlug={categoryData.slug}
+              flashDiscounts={flashDiscounts}
             />
           </div>
 

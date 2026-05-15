@@ -6,6 +6,9 @@ import Image from 'next/image';
 import { MapPin, Star, Search, ArrowRight, Sparkles, SearchX, TrendingUp, Award } from 'lucide-react';
 import { formatUSD } from '@/lib/utils';
 import type { SearchResult } from '@/lib/data';
+import Pagination from '@/components/ui/Pagination';
+
+const RESULTS_PER_PAGE = 10;
 
 // Map category slugs to their thumbnail images
 const CATEGORY_IMAGES: Record<string, string> = {
@@ -38,6 +41,7 @@ const POPULAR_SEARCHES = [
 
 export default function SearchResultsClient({ results, query }: SearchResultsClientProps) {
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   if (!query || query.length < 2) {
     return (
@@ -113,10 +117,29 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
 
   const categoryNames = Object.keys(grouped);
 
-  // Filter results if a category filter is active
-  const filteredGrouped = activeFilter
-    ? { [activeFilter]: grouped[activeFilter] }
-    : grouped;
+  // Flat filtered list for pagination
+  const filteredResults = activeFilter
+    ? (grouped[activeFilter] || [])
+    : results;
+
+  const totalPages = Math.ceil(filteredResults.length / RESULTS_PER_PAGE);
+  const paginatedResults = filteredResults.slice(
+    (currentPage - 1) * RESULTS_PER_PAGE,
+    currentPage * RESULTS_PER_PAGE
+  );
+
+  // Re-group the paginated slice
+  const filteredGrouped = paginatedResults.reduce<Record<string, SearchResult[]>>((acc, result) => {
+    const catName = result.category.name || 'Other';
+    if (!acc[catName]) acc[catName] = [];
+    acc[catName].push(result);
+    return acc;
+  }, {});
+
+  const handleFilterChange = (filter: string | null) => {
+    setActiveFilter(filter);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="space-y-6">
@@ -124,7 +147,7 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
       {categoryNames.length > 1 && (
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => setActiveFilter(null)}
+            onClick={() => handleFilterChange(null)}
             className={`px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
               activeFilter === null
                 ? 'bg-brand-blue text-white shadow-sm'
@@ -139,7 +162,7 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
             return (
               <button
                 key={catName}
-                onClick={() => setActiveFilter(activeFilter === catName ? null : catName)}
+                onClick={() => handleFilterChange(activeFilter === catName ? null : catName)}
                 className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all ${
                   activeFilter === catName
                     ? 'bg-brand-blue text-white shadow-sm'
@@ -338,10 +361,20 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
         );
       })}
 
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => {
+          setCurrentPage(page);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
+
       {/* Results footer */}
       <div className="text-center pt-4 pb-2">
         <p className="text-sm text-neutral-400">
-          Showing {results.length} {results.length === 1 ? 'result' : 'results'} for &ldquo;{query}&rdquo;
+          Showing {(currentPage - 1) * RESULTS_PER_PAGE + 1}–{Math.min(currentPage * RESULTS_PER_PAGE, filteredResults.length)} of {filteredResults.length} {filteredResults.length === 1 ? 'result' : 'results'} for &ldquo;{query}&rdquo;
         </p>
         <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-neutral-300">
           <TrendingUp className="w-3 h-3" />

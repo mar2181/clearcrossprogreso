@@ -5,7 +5,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
-import { BarChart3, Eye, FileText, TrendingUp } from 'lucide-react';
+import { BarChart3, Eye, FileText, TrendingUp, Zap } from 'lucide-react';
 
 export const metadata = {
   title: 'Provider Dashboard - ClearCross Progreso',
@@ -42,7 +42,13 @@ export default async function ProviderDashboardPage() {
     .eq('id', userData.provider_id)
     .single();
 
-  // Fetch quote requests
+  // Fetch ALL quote requests for accurate stats (not just 10)
+  const { data: allQuoteRequests, count: totalQuoteCount } = await supabase
+    .from('quote_requests')
+    .select('id, status', { count: 'exact' })
+    .eq('provider_id', userData.provider_id);
+
+  // Fetch recent 10 for the list display
   const { data: quoteRequests } = await supabase
     .from('quote_requests')
     .select(
@@ -57,15 +63,19 @@ export default async function ProviderDashboardPage() {
     .limit(10);
 
   const quotes = quoteRequests || [];
+  const allQuotes = allQuoteRequests || [];
 
-  // Calculate stats
+  // Calculate stats from ALL quotes, not just the 10 displayed
+  const totalRequests = totalQuoteCount ?? allQuotes.length;
+  const acceptedQuotes = allQuotes.filter((q) => q.status === 'accepted').length;
+
   const stats = {
-    profileViews: 142, // Placeholder
-    totalRequests: quotes.length,
-    acceptedQuotes: quotes.filter((q) => q.status === 'accepted').length,
+    totalRequests,
+    acceptedQuotes,
+    completedVisits: allQuotes.filter((q) => q.status === 'completed').length,
     conversionRate:
-      quotes.length > 0
-        ? Math.round((quotes.filter((q) => q.status === 'accepted').length / quotes.length) * 100)
+      totalRequests > 0
+        ? Math.round((acceptedQuotes / totalRequests) * 100)
         : 0,
   };
 
@@ -111,26 +121,12 @@ export default async function ProviderDashboardPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm font-medium">Profile Views</p>
-                  <p className="text-3xl font-bold text-neutral-900 mt-2">
-                    {stats.profileViews}
-                  </p>
-                </div>
-                <Eye className="w-8 h-8 text-brand-blue opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
                   <p className="text-gray-500 text-sm font-medium">Quote Requests</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-2">
                     {stats.totalRequests}
                   </p>
                 </div>
-                <FileText className="w-8 h-8 text-brand-green opacity-20" />
+                <FileText className="w-8 h-8 text-brand-blue opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -144,7 +140,21 @@ export default async function ProviderDashboardPage() {
                     {stats.acceptedQuotes}
                   </p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-brand-navy opacity-20" />
+                <TrendingUp className="w-8 h-8 text-brand-green opacity-20" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-500 text-sm font-medium">Completed Visits</p>
+                  <p className="text-3xl font-bold text-neutral-900 mt-2">
+                    {stats.completedVisits}
+                  </p>
+                </div>
+                <Eye className="w-8 h-8 text-brand-navy opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -223,9 +233,20 @@ export default async function ProviderDashboardPage() {
                 <h3 className="font-bold text-neutral-900">Quick Actions</h3>
               </CardHeader>
               <CardContent className="pt-6 space-y-3">
+                <Link href="/provider/flash-discount">
+                  <Button variant="primary" size="lg" className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 border-none">
+                    <Zap className="w-4 h-4 mr-2 fill-current" />
+                    Flash Discount
+                  </Button>
+                </Link>
                 <Link href="/provider/prices">
                   <Button variant="primary" size="lg" className="w-full">
                     Manage Prices
+                  </Button>
+                </Link>
+                <Link href="/provider/profile">
+                  <Button variant="outline" size="lg" className="w-full">
+                    Edit Profile
                   </Button>
                 </Link>
                 <Link href="/provider/quotes">

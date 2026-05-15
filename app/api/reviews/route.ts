@@ -31,6 +31,15 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServerSupabaseClient();
 
+    // ── Auth check ──────────────────────────────────────────────────
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (!authUser) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     // Verify quote exists and is completed
     const { data: quote, error: quoteError } = await supabase
       .from('quote_requests')
@@ -52,6 +61,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verify the caller is the patient who owns this quote
+    if (quote.user_id !== authUser.id) {
+      return NextResponse.json(
+        { error: 'You can only review your own completed visits' },
+        { status: 403 }
+      );
+    }
+
     // Check if review already exists
     const { data: existingReview } = await supabase
       .from('reviews')
@@ -61,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     if (existingReview) {
       return NextResponse.json(
-        { error: 'Review already exists for this quote' },
+        { error: 'You have already reviewed this visit' },
         { status: 400 }
       );
     }
@@ -88,7 +105,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Update provider's average rating
+    // Recalculate provider's average rating
+    const { data: allReviews } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('provider_id', quote.provider_id)
+      .eq('verified', true);
+
+    if (allReviews && allReviews.length > 0) {
+      const avgRating =
+        allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+
+      await supabase
+        .from('providers')
+        .update({
+          avg_rating: Math.round(avgRating * 10) / 10,
+          review_count: allReviews.length,
+        })
+        .eq('id', quote.provider_id);
+    }
 
     return NextResponse.json({ id: review.id }, { status: 201 });
   } catch (error) {

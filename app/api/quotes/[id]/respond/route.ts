@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { sendQuoteStatusUpdate } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
@@ -19,10 +20,27 @@ export async function POST(
 
     const supabase = createServerSupabaseClient();
 
-    // Verify quote exists
+    // ── Auth check: verify the caller is logged in ──────────────────
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (!authUser) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // ── Verify quote exists and fetch full details for email ────────
     const { data: quote, error: quoteError } = await supabase
       .from('quote_requests')
-      .select('id, status')
+      .select(`
+        id, status, quoted_price, provider_id,
+        provider:providers(id, name),
+        procedure:procedures(name),
+        user:users(email, full_name)
+      `)
       .eq('id', params.id)
       .single();
 
@@ -33,6 +51,32 @@ export async function POST(
       );
     }
 
+    // ── Authorization: verify caller is the patient who owns this quote
+    const { data: callerData } = await supabase
+      .from('users')
+      .select('id, role, provider_id')
+      .eq('id', authUser.id)
+      .single();
+
+    if (!callerData) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Patients can accept/decline their own quotes
+    const isQuoteOwner = callerData.role === 'patient' && callerData.id === (quote.user as any)?.id;
+    // Admins can act on any quote
+    const isAdmin = callerData.role === 'admin';
+
+    if (!isQuoteOwner && !isAdmin) {
+      return NextResponse.json(
+        { error: 'You are not authorized to respond to this quote' },
+        { status: 403 }
+      );
+    }
+
     if (quote.status !== 'quoted') {
       return NextResponse.json(
         { error: `Cannot ${action} a quote with status: ${quote.status}` },
@@ -40,9 +84,12 @@ export async function POST(
       );
     }
 
-    // Update quote status
+    // ── Update quote status ─────────────────────────────────────────
     const newStatus = action === 'accept' ? 'accepted' : 'rejected';
-    const updateData: Record<string, any> = { status: newStatus };
+    const updateData: Record<string, unknown> = {
+      status: newStatus,
+      responded_at: new Date().toISOString(),
+    };
 
     if (action === 'accept') {
       updateData.price_locked = true;
@@ -61,7 +108,22 @@ export async function POST(
       );
     }
 
-    // TODO: Send notification email to user and provider
+    // ── Send email notification (non-blocking) ──────────────────────
+    const patient = quote.user as any;
+    const provider = quote.provider as any;
+    const procedure = quote.procedure as any;
+
+    if (patient?.email) {
+      sendQuoteStatusUpdate({
+        patientEmail: patient.email,
+        patientName: patient.full_name || 'Patient',
+        providerName: provider?.name || 'Provider',
+        procedureName: procedure?.name || 'Procedure',
+        status: newStatus as 'accepted' | 'rejected',
+        quotedPrice: quote.quoted_price,
+        quoteId: params.id,
+      }).catch((err) => console.error('[Email] Status update failed:', err));
+    }
 
     return NextResponse.json(
       {

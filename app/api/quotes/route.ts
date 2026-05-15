@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { sendQuoteConfirmation, sendProviderQuoteAlert } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,14 +23,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (description.length < 50 || description.length > 2000) {
+    if (description.length < 20 || description.length > 2000) {
       return NextResponse.json(
-        { error: 'Description must be between 50 and 2000 characters' },
+        { error: 'Description must be between 20 and 2000 characters' },
         { status: 400 }
       );
     }
 
     const supabase = createServerSupabaseClient();
+
+    // Verify the provider exists
+    const { data: provider, error: providerError } = await supabase
+      .from('providers')
+      .select('id, name')
+      .eq('id', providerId)
+      .single();
+
+    if (providerError || !provider) {
+      return NextResponse.json(
+        { error: 'Provider not found' },
+        { status: 404 }
+      );
+    }
+
+    // Fetch the procedure name for emails
+    const { data: procedure } = await supabase
+      .from('procedures')
+      .select('name')
+      .eq('id', procedureId)
+      .single();
 
     // Get or create user
     const { data: existingUser } = await supabase
@@ -106,8 +128,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Send notification email to provider
-    // TODO: Send confirmation email to user
+    const procedureName = procedure?.name || 'Custom Procedure';
+
+    // Send email notifications (non-blocking — don't fail the request if emails fail)
+    await Promise.allSettled([
+      sendQuoteConfirmation({
+        patientEmail: email,
+        patientName: name,
+        providerName: provider.name,
+        procedureName,
+        quoteId: quoteRequest.id,
+      }),
+      // Fetch provider's user email for the alert
+      (async () => {
+        const { data: providerUser } = await supabase
+          .from('users')
+          .select('email, full_name')
+          .eq('provider_id', providerId)
+          .eq('role', 'provider')
+          .single();
+
+        if (providerUser?.email) {
+          await sendProviderQuoteAlert({
+            providerEmail: providerUser.email,
+            providerName: provider.name,
+            patientName: name,
+            procedureName,
+            description,
+            quoteId: quoteRequest.id,
+          });
+        }
+      })(),
+    ]);
 
     return NextResponse.json({ id: quoteRequest.id }, { status: 201 });
   } catch (error) {

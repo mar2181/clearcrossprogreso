@@ -3367,6 +3367,92 @@ export const reviews = [
   { id: 'rev-43', provider_id: 'prov-farmacia-centro-medico', user_id: 'user-43', quote_id: null, rating: 4, comment: 'Convenient setup — see the doctor and fill your prescription right there. The doctor had great bedside manner. Prices are very reasonable for a walk-in visit.', verified: true, created_at: '2026-03-28T00:00:00Z' },
 ];
 
+// =====================================================================
+// FLASH DISCOUNTS — mock data for development
+// =====================================================================
+
+export const flashDiscounts = [
+  {
+    id: 'flash-1',
+    provider_id: 'prov-progreso-smile',
+    discount_type: 'percentage' as const,
+    discount_value: 25,
+    procedure_ids: ['proc-crown-zirconia', 'proc-crown-emax'],
+    starts_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+    message: 'Open slot this afternoon — 25% off crowns!',
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'flash-2',
+    provider_id: 'prov-yomis-spa',
+    discount_type: 'fixed' as const,
+    discount_value: 15,
+    procedure_ids: ['spa-massage', 'spa-facial'],
+    starts_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+    message: 'Last-minute openings — $15 off massage & facials!',
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'flash-3',
+    provider_id: 'prov-fernando-rodriguez',
+    discount_type: 'percentage' as const,
+    discount_value: 20,
+    procedure_ids: ['proc-whitening', 'proc-cleaning'],
+    starts_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+    message: 'Morning special — 20% off cleanings & whitening today!',
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'flash-4',
+    provider_id: 'prov-el-disco',
+    discount_type: 'percentage' as const,
+    discount_value: 15,
+    procedure_ids: ['pharm-weight-loss'],
+    starts_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+    message: '15% off Ozempic — limited supply!',
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+];
+
+// Helper to get active flash discounts
+export function getActiveFlashDiscountsMock(categorySlug?: string) {
+  const now = new Date().getTime();
+  let active = flashDiscounts.filter(
+    (fd) => fd.is_active && new Date(fd.expires_at).getTime() > now
+  );
+
+  if (categorySlug) {
+    const category = categories.find((c) => c.slug === categorySlug);
+    if (category) {
+      const categoryProviderIds = providers
+        .filter((p) => p.category_id === category.id)
+        .map((p) => p.id);
+      active = active.filter((fd) => categoryProviderIds.includes(fd.provider_id));
+    }
+  }
+
+  return active;
+}
+
+// Helper to get flash discount for a specific provider
+export function getFlashDiscountForProviderMock(providerId: string) {
+  const now = new Date().getTime();
+  return flashDiscounts.find(
+    (fd) =>
+      fd.provider_id === providerId &&
+      fd.is_active &&
+      new Date(fd.expires_at).getTime() > now
+  ) || null;
+}
+
 // Helper to get prices with procedure details for a provider
 export function getProviderPricesWithProcedures(providerId: string) {
   return providerPrices
