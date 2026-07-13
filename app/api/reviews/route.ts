@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     // Verify quote exists and is completed
     const { data: quote, error: quoteError } = await supabase
-      .from('quote_requests')
+      .from('clearcross_quote_requests')
       .select('id, user_id, provider_id, status')
       .eq('id', quote_id)
       .single();
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Check if review already exists
     const { data: existingReview } = await supabase
-      .from('reviews')
+      .from('clearcross_reviews')
       .select('id')
       .eq('quote_id', quote_id)
       .single();
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     // Create review
     const { data: review, error: reviewError } = await supabase
-      .from('reviews')
+      .from('clearcross_reviews')
       .insert({
         provider_id: quote.provider_id,
         user_id: quote.user_id,
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     // Recalculate provider's average rating
     const { data: allReviews } = await supabase
-      .from('reviews')
+      .from('clearcross_reviews')
       .select('rating')
       .eq('provider_id', quote.provider_id)
       .eq('verified', true);
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
         allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
 
       await supabase
-        .from('providers')
+        .from('clearcross_providers')
         .update({
           avg_rating: Math.round(avgRating * 10) / 10,
           review_count: allReviews.length,

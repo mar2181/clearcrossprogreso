@@ -61,7 +61,7 @@ export default function RegisterPage() {
       }
 
       // Step 2: Create user record
-      const { error: userError } = await supabase.from('users').insert({
+      const { error: userError } = await supabase.from('clearcross_users').insert({
         id: data.user.id,
         email,
         full_name: fullName,
@@ -78,7 +78,7 @@ export default function RegisterPage() {
       // Step 3: If provider, create provider record
       if (role === 'provider') {
         const { data: providerData, error: providerError } = await supabase
-          .from('providers')
+          .from('clearcross_providers')
           .insert({
             name: clinicName,
             slug: clinicName
@@ -102,7 +102,7 @@ export default function RegisterPage() {
 
         // Update user with provider_id
         await supabase
-          .from('users')
+          .from('clearcross_users')
           .update({ provider_id: providerData.id })
           .eq('id', data.user.id);
       }

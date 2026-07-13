@@ -17,13 +17,13 @@ async function getQuoteWithDetails(id: string) {
   const supabase = createServerSupabaseClient();
 
   const { data, error } = await supabase
-    .from('quote_requests')
+    .from('clearcross_quote_requests')
     .select(
       `
       *,
-      provider:providers(*),
-      procedure:procedures(*),
-      user:users(*)
+      provider:clearcross_providers(*),
+      procedure:clearcross_procedures(*),
+      user:clearcross_users(*)
     `
     )
     .eq('id', id)
@@ -69,7 +69,7 @@ export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) 
   if (quote.status === 'completed') {
     const supabase = createServerSupabaseClient();
     const { data: existingReview } = await supabase
-      .from('reviews')
+      .from('clearcross_reviews')
       .select('id')
       .eq('quote_id', quote.id)
       .single();

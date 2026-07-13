@@ -21,7 +21,7 @@ export async function PATCH(
 
     // Verify the caller owns this provider
     const { data: callerData } = await supabase
-      .from('users')
+      .from('clearcross_users')
       .select('id, role, provider_id')
       .eq('id', authUser.id)
       .single();
@@ -62,7 +62,7 @@ export async function PATCH(
 
     // ── Update ──────────────────────────────────────────────────────
     const { data, error } = await supabase
-      .from('providers')
+      .from('clearcross_providers')
       .update(updateData)
       .eq('id', paramId)
       .select()

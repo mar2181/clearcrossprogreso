@@ -24,7 +24,7 @@ export default async function DashboardPage() {
 
   // Fetch user data
   const { data: userData } = await supabase
-    .from('users')
+    .from('clearcross_users')
     .select('*')
     .eq('id', user.id)
     .single();
@@ -35,13 +35,13 @@ export default async function DashboardPage() {
 
   // Fetch quote requests with joins
   const { data: quoteRequests } = await supabase
-    .from('quote_requests')
+    .from('clearcross_quote_requests')
     .select(
       `
       *,
-      provider:providers(*),
-      procedure:procedures(*),
-      user:users(*)
+      provider:clearcross_providers(*),
+      procedure:clearcross_procedures(*),
+      user:clearcross_users(*)
     `
     )
     .eq('user_id', user.id)

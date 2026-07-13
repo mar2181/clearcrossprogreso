@@ -26,7 +26,7 @@ export default async function ProviderDashboardPage() {
 
   // Fetch user data
   const { data: userData } = await supabase
-    .from('users')
+    .from('clearcross_users')
     .select('*')
     .eq('id', user.id)
     .single();
@@ -37,25 +37,25 @@ export default async function ProviderDashboardPage() {
 
   // Fetch provider data
   const { data: providerData } = await supabase
-    .from('providers')
+    .from('clearcross_providers')
     .select('*')
     .eq('id', userData.provider_id)
     .single();
 
   // Fetch ALL quote requests for accurate stats (not just 10)
   const { data: allQuoteRequests, count: totalQuoteCount } = await supabase
-    .from('quote_requests')
+    .from('clearcross_quote_requests')
     .select('id, status', { count: 'exact' })
     .eq('provider_id', userData.provider_id);
 
   // Fetch recent 10 for the list display
   const { data: quoteRequests } = await supabase
-    .from('quote_requests')
+    .from('clearcross_quote_requests')
     .select(
       `
       *,
-      user:users(*),
-      procedure:procedures(*)
+      user:clearcross_users(*),
+      procedure:clearcross_procedures(*)
     `
     )
     .eq('provider_id', userData.provider_id)

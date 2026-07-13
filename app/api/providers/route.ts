@@ -13,11 +13,11 @@ export async function GET(request: NextRequest) {
   const featured = searchParams.get('featured');
 
   let query = supabase
-    .from('providers')
+    .from('clearcross_providers')
     .select(`
       *,
-      category:categories(*),
-      prices:provider_prices(*, procedure:procedures(*))
+      category:clearcross_categories(*),
+      prices:clearcross_provider_prices(*, procedure:clearcross_procedures(*))
     `);
 
   if (category) {
@@ -79,7 +79,7 @@ export async function PUT(request: NextRequest) {
 
   // Get user's provider_id
   const { data: userData } = await supabase
-    .from('users')
+    .from('clearcross_users')
     .select('provider_id, role')
     .eq('id', user.id)
     .single();
@@ -97,7 +97,7 @@ export async function PUT(request: NextRequest) {
 
   // Upsert the price
   const { error } = await supabase
-    .from('provider_prices')
+    .from('clearcross_provider_prices')
     .upsert(
       {
         provider_id: userData.provider_id,

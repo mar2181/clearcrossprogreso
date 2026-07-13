@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch user role to determine redirect
     const { data: userData } = await supabase
-      .from('users')
+      .from('clearcross_users')
       .select('role')
       .eq('id', user.id)
       .single();

@@ -36,12 +36,12 @@ export async function POST(
 
     // ── Verify quote exists and fetch full details for email ────────
     const { data: quote, error: quoteError } = await supabase
-      .from('quote_requests')
+      .from('clearcross_quote_requests')
       .select(`
         id, status, quoted_price, provider_id,
-        provider:providers(id, name),
-        procedure:procedures(name),
-        user:users(email, full_name)
+        provider:clearcross_providers(id, name),
+        procedure:clearcross_procedures(name),
+        user:clearcross_users(email, full_name)
       `)
       .eq('id', paramId)
       .single();
@@ -55,7 +55,7 @@ export async function POST(
 
     // ── Authorization: verify caller is the patient who owns this quote
     const { data: callerData } = await supabase
-      .from('users')
+      .from('clearcross_users')
       .select('id, role, provider_id')
       .eq('id', authUser.id)
       .single();
@@ -101,7 +101,7 @@ export async function POST(
     // have no RLS UPDATE policy, so the write goes through the service role.
     const writer = createAdminClient() ?? supabase;
     const { error: updateError } = await writer
-      .from('quote_requests')
+      .from('clearcross_quote_requests')
       .update(updateData)
       .eq('id', paramId);
 

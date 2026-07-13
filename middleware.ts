@@ -99,7 +99,7 @@ export async function middleware(request: NextRequest) {
   // Check role-based access for provider routes
   if (pathname.startsWith('/provider') && pathname !== '/provider') {
     const { data: userData } = await supabase
-      .from('users')
+      .from('clearcross_users')
       .select('role')
       .eq('id', user.id)
       .single();
@@ -112,7 +112,7 @@ export async function middleware(request: NextRequest) {
   // Check role-based access for dashboard (patients only)
   if (pathname.startsWith('/dashboard')) {
     const { data: userData } = await supabase
-      .from('users')
+      .from('clearcross_users')
       .select('role')
       .eq('id', user.id)
       .single();

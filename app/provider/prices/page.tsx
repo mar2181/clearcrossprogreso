@@ -50,7 +50,7 @@ export default function PricesPage() {
 
       // Get user data
       const { data: userData } = await supabase
-        .from('users')
+        .from('clearcross_users')
         .select('*')
         .eq('id', authUser.id)
         .single();
@@ -64,7 +64,7 @@ export default function PricesPage() {
 
       // Get provider data
       const { data: providerData } = await supabase
-        .from('providers')
+        .from('clearcross_providers')
         .select('*')
         .eq('id', userData.provider_id)
         .single();
@@ -74,14 +74,14 @@ export default function PricesPage() {
       // Get category for provider to fetch procedures
       if (providerData?.category_id) {
         const { data: procData } = await supabase
-          .from('procedures')
+          .from('clearcross_procedures')
           .select('*')
           .eq('category_id', providerData.category_id)
           .order('sort_order');
 
         // Get current prices
         const { data: priceData } = await supabase
-          .from('provider_prices')
+          .from('clearcross_provider_prices')
           .select('*')
           .eq('provider_id', userData.provider_id);
 
@@ -130,7 +130,7 @@ export default function PricesPage() {
       if (existingProc?.id.startsWith('new_')) {
         // Insert new price
         if (price !== null) {
-          const { error: insertError } = await supabase.from('provider_prices').insert({
+          const { error: insertError } = await supabase.from('clearcross_provider_prices').insert({
             provider_id: provider.id,
             procedure_id: procedureId,
             price_usd: price,
@@ -142,7 +142,7 @@ export default function PricesPage() {
       } else {
         // Update existing price
         const { error: updateError } = await supabase
-          .from('provider_prices')
+          .from('clearcross_provider_prices')
           .update({
             price_usd: price,
             price_notes: priceValue.notes || null,

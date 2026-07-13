@@ -20,7 +20,7 @@ export default async function ProviderProfilePage() {
   }
 
   const { data: userData } = await supabase
-    .from('users')
+    .from('clearcross_users')
     .select('*')
     .eq('id', user.id)
     .single();
@@ -30,7 +30,7 @@ export default async function ProviderProfilePage() {
   }
 
   const { data: providerData } = await supabase
-    .from('providers')
+    .from('clearcross_providers')
     .select('*')
     .eq('id', userData.provider_id)
     .single();

@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
   // The photo belongs to exactly one quote — caller must be its patient or its provider
   const { data: quote } = await admin
-    .from('quote_requests')
+    .from('clearcross_quote_requests')
     .select('user_id, provider_id')
     .eq('photo_url', path)
     .single();
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { data: caller } = await admin
-    .from('users')
+    .from('clearcross_users')
     .select('id, role, provider_id')
     .eq('id', user.id)
     .single();

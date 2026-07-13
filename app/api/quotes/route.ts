@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     // Verify the provider exists
     const { data: provider, error: providerError } = await supabase
-      .from('providers')
+      .from('clearcross_providers')
       .select('id, name')
       .eq('id', providerId)
       .single();
@@ -99,14 +99,14 @@ export async function POST(request: NextRequest) {
 
     // Fetch the procedure name for emails
     const { data: procedure } = await supabase
-      .from('procedures')
+      .from('clearcross_procedures')
       .select('name')
       .eq('id', procedureId)
       .single();
 
     // Get or create user
     const { data: existingUser } = await db
-      .from('users')
+      .from('clearcross_users')
       .select('id')
       .eq('email', email)
       .single();
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId) {
       const { data: newUser, error: userError } = await db
-        .from('users')
+        .from('clearcross_users')
         .insert({
           email,
           full_name: name,
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
 
     // Create quote request
     const { data: quoteRequest, error: quoteError } = await db
-      .from('quote_requests')
+      .from('clearcross_quote_requests')
       .insert({
         provider_id: providerId,
         user_id: userId,
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
       // Fetch provider's user email for the alert
       (async () => {
         const { data: providerUser } = await db
-          .from('users')
+          .from('clearcross_users')
           .select('email, full_name')
           .eq('provider_id', providerId)
           .eq('role', 'provider')

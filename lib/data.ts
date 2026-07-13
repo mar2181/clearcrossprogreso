@@ -59,7 +59,7 @@ export async function getAllCategories() {
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
-    .from('categories')
+    .from('clearcross_categories')
     .select('*')
     .eq('active', true)
     .order('sort_order', { ascending: true });
@@ -74,7 +74,7 @@ export async function getCategory(slug: string) {
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
-    .from('categories')
+    .from('clearcross_categories')
     .select('*')
     .eq('slug', slug)
     .eq('active', true)
@@ -90,7 +90,7 @@ export async function getCategoryBySlug(slug: string) {
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
-    .from('categories')
+    .from('clearcross_categories')
     .select('*')
     .eq('slug', slug)
     .single();
@@ -105,11 +105,11 @@ export async function getProvidersForCategory(categoryId: string, categorySlug: 
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
-    .from('providers')
+    .from('clearcross_providers')
     .select(
       `
       *,
-      provider_prices:provider_prices(
+      provider_prices:clearcross_provider_prices(
         id,
         provider_id,
         price_usd,
@@ -134,7 +134,7 @@ export async function getProceduresForCategory(categoryId: string, categorySlug:
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
-    .from('procedures')
+    .from('clearcross_procedures')
     .select('*')
     .eq('category_id', categoryId)
     .order('sort_order', { ascending: true });
@@ -160,11 +160,11 @@ export async function getProviderBySlug(slug: string) {
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
-    .from('providers')
+    .from('clearcross_providers')
     .select(
       `
       *,
-      provider_prices:provider_prices(
+      provider_prices:clearcross_provider_prices(
         id,
         provider_id,
         price_usd,
@@ -189,7 +189,7 @@ export async function getProviderReviews(providerId: string) {
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
-    .from('reviews')
+    .from('clearcross_reviews')
     .select('*')
     .eq('provider_id', providerId)
     .eq('verified', true)
@@ -212,11 +212,11 @@ export async function getRelatedProviders(categoryId: string, excludeProviderId:
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
-    .from('providers')
+    .from('clearcross_providers')
     .select(
       `
       *,
-      provider_prices:provider_prices(
+      provider_prices:clearcross_provider_prices(
         id,
         price_usd,
         procedure:procedure_id(id, name)
@@ -246,8 +246,8 @@ export async function getAllProviderSlugs() {
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
-    .from('providers')
-    .select('slug, category_id, categories(slug)');
+    .from('clearcross_providers')
+    .select('slug, category_id, categories:clearcross_categories(slug)');
 
   if (!data) return [];
 
@@ -272,7 +272,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
 
   // Search providers by name
   const { data: providerResults } = await supabase
-    .from('providers')
+    .from('clearcross_providers')
     .select(`
       id, name, slug, address, verified, featured, avg_rating, review_count, description, photo_url, graduation_year,
       categories(name, slug),
@@ -287,7 +287,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
 
   // Search procedures by name, then find providers with those procedures
   const { data: procedureMatches } = await supabase
-    .from('procedures')
+    .from('clearcross_procedures')
     .select('id, name, category_id')
     .ilike('name', `%${q}%`);
 
@@ -296,7 +296,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
   let procedureProviderResults: any[] = [];
   if (procedureIds.length > 0) {
     const { data } = await supabase
-      .from('provider_prices')
+      .from('clearcross_provider_prices')
       .select(`
         price_usd, price_notes,
         procedure:procedure_id(id, name),
@@ -414,7 +414,7 @@ export async function getFeaturedProviders() {
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
-    .from('providers')
+    .from('clearcross_providers')
     .select(`
       id, name, slug, category_id, featured, verified, avg_rating, review_count, photo_url, graduation_year,
       categories(name, slug),
@@ -449,8 +449,8 @@ export async function getCategoryCounts(): Promise<Record<string, number>> {
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
-    .from('providers')
-    .select('category_id, categories(slug)')
+    .from('clearcross_providers')
+    .select('category_id, categories:clearcross_categories(slug)')
     .eq('verified', true);
 
   const counts: Record<string, number> = {};
@@ -476,7 +476,7 @@ export async function getActiveFlashDiscounts(categorySlug?: string) {
   const supabase = createServerSupabaseClient();
 
   let query = supabase
-    .from('flash_discounts')
+    .from('clearcross_flash_discounts')
     .select('*, provider:provider_id(*)')
     .eq('is_active', true)
     .gt('expires_at', new Date().toISOString())
@@ -502,7 +502,7 @@ export async function getFlashDiscountForProvider(providerId: string) {
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
   const { data } = await supabase
-    .from('flash_discounts')
+    .from('clearcross_flash_discounts')
     .select('*')
     .eq('provider_id', providerId)
     .eq('is_active', true)
@@ -523,7 +523,7 @@ export async function deactivateExpiredDiscounts() {
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createAdminClient() ?? createServerSupabaseClient();
   const { data } = await supabase
-    .from('flash_discounts')
+    .from('clearcross_flash_discounts')
     .update({ is_active: false })
     .eq('is_active', true)
     .lt('expires_at', new Date().toISOString())
@@ -548,7 +548,7 @@ export async function logUserSearch(
 
   const { createServerSupabaseClient } = await import('./supabase/server');
   const supabase = createServerSupabaseClient();
-  await supabase.from('user_searches').insert({
+  await supabase.from('clearcross_user_searches').insert({
     user_id: userId,
     category_id: categoryId || null,
     procedure_ids: procedureIds || [],
@@ -566,7 +566,7 @@ export async function getUsersInterestedInProcedures(procedureIds: string[]) {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const { data } = await supabase
-    .from('user_searches')
+    .from('clearcross_user_searches')
     .select('user_id')
     .gt('searched_at', thirtyDaysAgo)
     .overlaps('procedure_ids', procedureIds);

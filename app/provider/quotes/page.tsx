@@ -61,7 +61,7 @@ export default function QuotesPage() {
 
       // Get user data
       const { data: userData } = await supabase
-        .from('users')
+        .from('clearcross_users')
         .select('*')
         .eq('id', authUser.id)
         .single();
@@ -73,12 +73,12 @@ export default function QuotesPage() {
 
       // Get quote requests
       const { data: quoteData } = await supabase
-        .from('quote_requests')
+        .from('clearcross_quote_requests')
         .select(
           `
           *,
-          user:users(*),
-          procedure:procedures(*)
+          user:clearcross_users(*),
+          procedure:clearcross_procedures(*)
         `
         )
         .eq('provider_id', userData.provider_id)
@@ -107,7 +107,7 @@ export default function QuotesPage() {
       }
 
       const { error: updateError } = await supabase
-        .from('quote_requests')
+        .from('clearcross_quote_requests')
         .update({
           quoted_price: parseFloat(price),
           provider_notes: notes || null,

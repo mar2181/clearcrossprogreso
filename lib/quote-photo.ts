@@ -1,6 +1,6 @@
 import { createAdminClient } from './supabase/admin';
 
-export const QUOTE_PHOTO_BUCKET = 'quote_photos';
+export const QUOTE_PHOTO_BUCKET = 'clearcross_quote_photos';
 export const ALLOWED_PHOTO_TYPES: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',

@@ -58,7 +58,7 @@ let sql = `-- ============================================================
 // Categories
 sql += '-- Categories\n';
 for (const c of mock.categories) {
-  sql += `INSERT INTO public.categories (id, name, slug, icon, description, active, sort_order)
+  sql += `INSERT INTO public.clearcross_categories (id, name, slug, icon, description, active, sort_order)
 VALUES (${q(uuid5(c.id))}, ${q(c.name)}, ${q(c.slug)}, ${q(c.icon)}, ${q(c.description)}, ${q(c.active ?? true)}, ${q(c.sort_order ?? 0)})
 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, icon=EXCLUDED.icon, description=EXCLUDED.description, active=EXCLUDED.active, sort_order=EXCLUDED.sort_order;\n`;
 }
@@ -66,7 +66,7 @@ ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, icon=EXCLUDED.icon, descripti
 // Procedures
 sql += '\n-- Procedures\n';
 for (const p of mock.procedures) {
-  sql += `INSERT INTO public.procedures (id, category_id, name, slug, description, sort_order)
+  sql += `INSERT INTO public.clearcross_procedures (id, category_id, name, slug, description, sort_order)
 VALUES (${q(uuid5(p.id))}, ${q(uuid5(p.category_id))}, ${q(p.name)}, ${q(p.slug)}, ${q(p.description)}, ${q(p.sort_order ?? 0)})
 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, slug=EXCLUDED.slug, description=EXCLUDED.description, sort_order=EXCLUDED.sort_order;\n`;
 }
@@ -74,7 +74,7 @@ ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, slug=EXCLUDED.slug, descripti
 // Providers
 sql += '\n-- Providers\n';
 for (const p of mock.providers) {
-  sql += `INSERT INTO public.providers (id, category_id, name, slug, address, phone, whatsapp, website, description, logo_url, photo_url, graduation_year, verified, featured, plan, avg_rating, review_count, lat, lng)
+  sql += `INSERT INTO public.clearcross_providers (id, category_id, name, slug, address, phone, whatsapp, website, description, logo_url, photo_url, graduation_year, verified, featured, plan, avg_rating, review_count, lat, lng)
 VALUES (${q(uuid5(p.id))}, ${q(uuid5(p.category_id))}, ${q(p.name)}, ${q(p.slug)}, ${q(p.address)}, ${q(p.phone)}, ${q(p.whatsapp)}, ${q(p.website)}, ${q(p.description)}, ${q(p.logo_url)}, ${q(p.photo_url)}, ${q(p.graduation_year)}, ${q(p.verified ?? false)}, ${q(p.featured ?? false)}, ${q(p.plan ?? 'free')}, ${q(p.avg_rating ?? 0)}, ${q(p.review_count ?? 0)}, ${q(p.lat)}, ${q(p.lng)})
 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, address=EXCLUDED.address, phone=EXCLUDED.phone, whatsapp=EXCLUDED.whatsapp, website=EXCLUDED.website, description=EXCLUDED.description, logo_url=EXCLUDED.logo_url, photo_url=EXCLUDED.photo_url, graduation_year=EXCLUDED.graduation_year, verified=EXCLUDED.verified, featured=EXCLUDED.featured, plan=EXCLUDED.plan, avg_rating=EXCLUDED.avg_rating, review_count=EXCLUDED.review_count, lat=EXCLUDED.lat, lng=EXCLUDED.lng;\n`;
 }
@@ -82,7 +82,7 @@ ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, address=EXCLUDED.address, pho
 // Prices
 sql += '\n-- Provider prices\n';
 for (const pr of mock.providerPrices) {
-  sql += `INSERT INTO public.provider_prices (id, provider_id, procedure_id, price_usd, price_notes)
+  sql += `INSERT INTO public.clearcross_provider_prices (id, provider_id, procedure_id, price_usd, price_notes)
 VALUES (${q(uuid5(pr.id))}, ${q(uuid5(pr.provider_id))}, ${q(uuid5(pr.procedure_id))}, ${q(pr.price_usd)}, ${q(pr.price_notes)})
 ON CONFLICT (provider_id, procedure_id) DO UPDATE SET price_usd=EXCLUDED.price_usd, price_notes=EXCLUDED.price_notes;\n`;
 }
