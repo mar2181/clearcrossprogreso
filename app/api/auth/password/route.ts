@@ -74,4 +74,3 @@ export async function POST(request: NextRequest) {
 }
 
 /** Export the helper so middleware can import it without duplicating logic. */
-export { getExpectedCookieValue };

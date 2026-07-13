@@ -34,10 +34,8 @@ export async function GET(request: NextRequest) {
 
   switch (sort) {
     case 'price-low':
-      query = query.order('avg_rating', { ascending: true });
-      break;
     case 'price-high':
-      query = query.order('avg_rating', { ascending: false });
+      // no flat price column — sorted in JS after fetch using min listed price
       break;
     case 'reviews':
       query = query.order('review_count', { ascending: false });
@@ -54,7 +52,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ providers });
+  let result = providers || [];
+  if (sort === 'price-low' || sort === 'price-high') {
+    const minPrice = (p: any) => {
+      const listed = (p.prices || [])
+        .map((x: any) => x.price_usd)
+        .filter((v: any) => typeof v === 'number' && v > 0);
+      return listed.length ? Math.min(...listed) : Number.POSITIVE_INFINITY;
+    };
+    result = [...result].sort((a: any, b: any) =>
+      sort === 'price-low' ? minPrice(a) - minPrice(b) : minPrice(b) - minPrice(a)
+    );
+  }
+
+  return NextResponse.json({ providers: result });
 }
 
 // PUT /api/providers — update provider prices (authenticated provider only)

@@ -34,8 +34,8 @@ export const metadata: Metadata = {
 
 export default async function EsHome() {
   const [featuredProviders, categoryCounts] = await Promise.all([
-    getFeaturedProviders(),
-    getCategoryCounts(),
+    getFeaturedProviders().catch(() => []),
+    getCategoryCounts().catch(() => ({})),
   ]);
 
   return (

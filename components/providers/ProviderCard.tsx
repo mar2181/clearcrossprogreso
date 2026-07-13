@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Star, Award, Zap } from 'lucide-react';
+import { MapPin, Star, Award, Zap, GitCompareArrows, Check } from 'lucide-react';
 import { Provider, ProviderPrice, FlashDiscount } from '@/lib/types';
 import { cn, formatUSD } from '@/lib/utils';
 import { getSavings } from '@/lib/us-benchmarks';
@@ -23,6 +23,8 @@ interface ProviderCardProps {
   };
   filteredProcedureIds?: string[];
   flashDiscount?: FlashDiscount | null;
+  onCompare?: () => void;
+  isInCompare?: boolean;
 }
 
 function getYearsExperience(graduationYear: number | null): number | null {
@@ -30,7 +32,7 @@ function getYearsExperience(graduationYear: number | null): number | null {
   return new Date().getFullYear() - graduationYear;
 }
 
-const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedureIds = [], flashDiscount }) => {
+const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedureIds = [], flashDiscount, onCompare, isInCompare = false }) => {
   const categoryName = provider.category?.name || 'Medical';
   const categorySlug = provider.category?.slug || 'dentists';
   const yearsExp = getYearsExperience(provider.graduation_year);

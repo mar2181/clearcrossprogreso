@@ -519,8 +519,9 @@ export async function deactivateExpiredDiscounts() {
     return { count: 0 };
   }
 
+  const { createAdminClient } = await import('./supabase/admin');
   const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const supabase = createAdminClient() ?? createServerSupabaseClient();
   const { data } = await supabase
     .from('flash_discounts')
     .update({ is_active: false })

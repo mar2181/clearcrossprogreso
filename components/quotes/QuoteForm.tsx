@@ -43,35 +43,13 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
   function validate(): boolean {
     const newErrors: Partial<Record<keyof FormState, string>> = {};
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!formData.provider.trim()) {
-      newErrors.provider = 'Please select a provider';
-    }
-    if (!formData.procedure.trim()) {
-      newErrors.procedure = 'Please select a procedure';
-    }
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
-    } else if (formData.description.length < 20) {
-      newErrors.description = 'Description must be at least 20 characters';
-    } else if (formData.description.length > 2000) {
-      newErrors.description = 'Description must not exceed 2000 characters';
-    }
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^[\d\s\-\+\(\)]+$/.test(formData.phone) || formData.phone.replace(/\D/g, '').length < 10) {
-      newErrors.phone = 'Please enter a valid phone number';
-    }
+    if (!form.name.trim()) newErrors.name = 'Name is required';
+    if (!form.email.trim()) newErrors.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Enter a valid email';
+    if (!form.phone.trim()) newErrors.phone = 'Phone is required';
+    if (!form.description.trim()) newErrors.description = 'Description is required';
+    else if (form.description.length < 50) newErrors.description = 'Describe your needs in at least 50 characters';
+    else if (form.description.length > 2000) newErrors.description = 'Description must be under 2000 characters';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -205,28 +183,26 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
             </div>
           )}
 
-        {/* Description */}
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            placeholder="Describe your needs in detail (minimum 20 characters)..."
-            rows={5}
-            className={cn(
-              'w-full px-4 py-2.5 rounded-lg border transition-colors duration-200',
-              'focus:outline-none focus:ring-2 focus:ring-offset-0',
-              'placeholder:text-neutral-400 resize-none',
-              errors.description
-                ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                : 'border-neutral-300 focus:border-brand-blue focus:ring-brand-blue'
+          {/* Description */}
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium mb-1.5">
+              What do you need?
+            </label>
+            <textarea
+              id="description"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={3}
+              placeholder="Describe what you're looking for..."
+              className={`w-full px-3 py-2.5 rounded-lg bg-white/10 border text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm resize-none ${
+                errors.description ? 'border-red-400' : 'border-white/30'
+              }`}
+            />
+            {errors.description && (
+              <p className="text-red-300 text-xs mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {errors.description}
+              </p>
             )}
             <p className="text-xs text-blue-200/50 mt-1">
               {form.description.length}/2000 characters

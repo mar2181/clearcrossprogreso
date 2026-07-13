@@ -1,6 +1,24 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy singleton — Resend v4 throws if constructed without a key, which would
+// crash the build during page-data collection. Only construct when actually sending.
+
+/** Escape user-provided strings before interpolating into email HTML. */
+function esc(v: string | null | undefined): string {
+  return String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+let _resend: Resend | null = null;
+function getResend(): Resend | null {
+  const key = process.env.RESEND_API_KEY;
+  if (!key || key.startsWith('your_')) return null;
+  if (!_resend) _resend = new Resend(key);
+  return _resend;
+}
 
 const FROM_EMAIL = 'ClearCross Progreso <noreply@clearcrossprogreso.com>';
 
@@ -24,20 +42,20 @@ export async function sendQuoteConfirmation({
   }
 
   try {
-    await resend.emails.send({
+    await getResend()!.emails.send({
       from: FROM_EMAIL,
       to: patientEmail,
-      subject: `Quote Request Received — ${procedureName}`,
+      subject: `Quote Request Received — ${esc(procedureName)}`,
       html: `
         <div style="font-family: Inter, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px;">
           <div style="text-align: center; margin-bottom: 32px;">
             <h1 style="color: #1A5CB0; font-size: 24px; margin: 0;">ClearCross Progreso</h1>
             <p style="color: #5F5E5A; font-size: 14px;">Know the price before you cross.</p>
           </div>
-          <p style="color: #2C2C2A;">Hi ${patientName},</p>
+          <p style="color: #2C2C2A;">Hi ${esc(patientName)},</p>
           <p style="color: #2C2C2A;">
-            Your quote request for <strong>${procedureName}</strong> has been sent to
-            <strong>${providerName}</strong>. They typically respond within 24 hours.
+            Your quote request for <strong>${esc(procedureName)}</strong> has been sent to
+            <strong>${esc(providerName)}</strong>. They typically respond within 24 hours.
           </p>
           <div style="background: #F5F5F0; border-radius: 8px; padding: 20px; margin: 24px 0;">
             <p style="margin: 0 0 4px; color: #5F5E5A; font-size: 13px;">Quote ID</p>
@@ -80,19 +98,19 @@ export async function sendProviderQuoteAlert({
   }
 
   try {
-    await resend.emails.send({
+    await getResend()!.emails.send({
       from: FROM_EMAIL,
       to: providerEmail,
-      subject: `New Quote Request — ${procedureName}`,
+      subject: `New Quote Request — ${esc(procedureName)}`,
       html: `
         <div style="font-family: Inter, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px;">
           <div style="text-align: center; margin-bottom: 32px;">
             <h1 style="color: #1A5CB0; font-size: 24px; margin: 0;">ClearCross Progreso</h1>
             <p style="color: #5F5E5A; font-size: 14px;">New quote request for your clinic</p>
           </div>
-          <p style="color: #2C2C2A;">Hi ${providerName},</p>
+          <p style="color: #2C2C2A;">Hi ${esc(providerName)},</p>
           <p style="color: #2C2C2A;">
-            <strong>${patientName}</strong> has requested a quote for <strong>${procedureName}</strong>.
+            <strong>${esc(patientName)}</strong> has requested a quote for <strong>${esc(procedureName)}</strong>.
           </p>
           <div style="background: #F5F5F0; border-radius: 8px; padding: 20px; margin: 24px 0;">
             <p style="margin: 0 0 4px; color: #5F5E5A; font-size: 13px;">Patient Description</p>
@@ -135,16 +153,16 @@ export async function sendQuoteStatusUpdate({
 
   const statusMessages: Record<string, { subject: string; body: string }> = {
     quoted: {
-      subject: `You've Received a Quote — ${procedureName}`,
-      body: `<strong>${providerName}</strong> has quoted <strong>$${quotedPrice?.toFixed(2) ?? '—'}</strong> for your <strong>${procedureName}</strong> request. Log in to accept or decline.`,
+      subject: `You've Received a Quote — ${esc(procedureName)}`,
+      body: `<strong>${esc(providerName)}</strong> has quoted <strong>$${quotedPrice?.toFixed(2) ?? '—'}</strong> for your <strong>${esc(procedureName)}</strong> request. Log in to accept or decline.`,
     },
     accepted: {
-      subject: `Quote Accepted — ${procedureName}`,
-      body: `Your quote for <strong>${procedureName}</strong> with <strong>${providerName}</strong> has been accepted and the price is now locked at <strong>$${quotedPrice?.toFixed(2) ?? '—'}</strong>.`,
+      subject: `Quote Accepted — ${esc(procedureName)}`,
+      body: `Your quote for <strong>${esc(procedureName)}</strong> with <strong>${esc(providerName)}</strong> has been accepted and the price is now locked at <strong>$${quotedPrice?.toFixed(2) ?? '—'}</strong>.`,
     },
     rejected: {
-      subject: `Quote Update — ${procedureName}`,
-      body: `Your quote for <strong>${procedureName}</strong> with <strong>${providerName}</strong> was declined. You can request quotes from other providers anytime.`,
+      subject: `Quote Update — ${esc(procedureName)}`,
+      body: `Your quote for <strong>${esc(procedureName)}</strong> with <strong>${esc(providerName)}</strong> was declined. You can request quotes from other providers anytime.`,
     },
   };
 
@@ -152,7 +170,7 @@ export async function sendQuoteStatusUpdate({
   if (!msg) return;
 
   try {
-    await resend.emails.send({
+    await getResend()!.emails.send({
       from: FROM_EMAIL,
       to: patientEmail,
       subject: msg.subject,
@@ -161,7 +179,7 @@ export async function sendQuoteStatusUpdate({
           <div style="text-align: center; margin-bottom: 32px;">
             <h1 style="color: #1A5CB0; font-size: 24px; margin: 0;">ClearCross Progreso</h1>
           </div>
-          <p style="color: #2C2C2A;">Hi ${patientName},</p>
+          <p style="color: #2C2C2A;">Hi ${esc(patientName)},</p>
           <p style="color: #2C2C2A;">${msg.body}</p>
           <div style="margin-top: 24px;">
             <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://clearcrossprogreso.com'}/quote/${quoteId}"

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { resolveQuotePhotoUrl } from '@/lib/quote-photo';
 import { QuoteRequestWithDetails } from '@/lib/types';
 import { formatUSD, getStatusColor, getStatusLabel } from '@/lib/utils';
 import { QuoteActions } from './QuoteActions';
@@ -33,7 +34,10 @@ async function getQuoteWithDetails(id: string) {
     return null;
   }
 
-  return data as QuoteRequestWithDetails;
+  const quote = data as QuoteRequestWithDetails;
+  // Private-bucket photos are stored as storage paths — resolve to a signed URL
+  quote.photo_url = await resolveQuotePhotoUrl(quote.photo_url);
+  return quote;
 }
 
 function generateShortId(fullId: string): string {
@@ -49,11 +53,12 @@ function formatDate(dateString: string): string {
 }
 
 interface QuoteDetailPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function QuoteDetailPage({ params }: QuoteDetailPageProps) {
-  const quote = await getQuoteWithDetails(params.id);
+  const { id } = await params;
+  const quote = await getQuoteWithDetails(id);
 
   if (!quote) {
     notFound();

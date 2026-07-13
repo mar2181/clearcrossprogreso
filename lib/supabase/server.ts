@@ -19,14 +19,17 @@ export function createServerSupabaseClient() {
     );
   }
 
-  const cookieStore = cookies();
+  // Next 15: cookies() returns a Promise — await it inside the async cookie
+  // methods so this factory can stay synchronous for its many call sites.
+  const cookieStorePromise = cookies();
   return createServerClient(url, key, {
     cookies: {
-      getAll() {
-        return cookieStore.getAll();
+      async getAll() {
+        return (await cookieStorePromise).getAll();
       },
-      setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+      async setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
         try {
+          const cookieStore = await cookieStorePromise;
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
           );

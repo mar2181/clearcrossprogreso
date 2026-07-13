@@ -4,9 +4,10 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: paramId } = await params;
     const supabase = createServerSupabaseClient();
 
     // ── Auth check ──────────────────────────────────────────────────
@@ -25,7 +26,7 @@ export async function PATCH(
       .eq('id', authUser.id)
       .single();
 
-    const isOwner = callerData?.role === 'provider' && callerData?.provider_id === params.id;
+    const isOwner = callerData?.role === 'provider' && callerData?.provider_id === paramId;
     const isAdmin = callerData?.role === 'admin';
 
     if (!isOwner && !isAdmin) {
@@ -63,7 +64,7 @@ export async function PATCH(
     const { data, error } = await supabase
       .from('providers')
       .update(updateData)
-      .eq('id', params.id)
+      .eq('id', paramId)
       .select()
       .single();
 

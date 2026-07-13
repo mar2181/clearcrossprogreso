@@ -278,7 +278,9 @@ export default function QuotesPage() {
                               Reference Photo
                             </p>
                             <img
-                              src={quote.photo_url}
+                              src={quote.photo_url.startsWith('http')
+                                ? quote.photo_url
+                                : `/api/quotes/photo?path=${encodeURIComponent(quote.photo_url)}`}
                               alt="Patient reference"
                               className="max-w-xs rounded-lg"
                             />

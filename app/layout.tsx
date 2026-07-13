@@ -1,10 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
-import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
-import FlashNotificationBanner from '@/components/layout/FlashNotificationBanner'
-import ErrorBoundary from '@/components/ui/ErrorBoundary'
+import { I18nBody } from '@/components/layout/I18nBody'
 
 export const metadata: Metadata = {
   title: 'Best Dentists & Medical Services in Nuevo Progreso Mexico | ClearCross',
@@ -50,15 +46,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen flex flex-col bg-white">
-        <Navbar />
-        <FlashNotificationBanner />
-        <main className="flex-1 w-full">
-          <ErrorBoundary>
-            {children}
-          </ErrorBoundary>
-        </main>
-        <Footer />
-        <MobileBottomNav />
+        <I18nBody>{children}</I18nBody>
       </body>
     </html>
   )

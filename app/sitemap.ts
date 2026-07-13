@@ -1,17 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { MetadataRoute } from 'next';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getAllPosts } from '@/lib/blog';
-
-const CATEGORY_SLUGS = [
-  'dentists',
-  'pharmacies',
-  'spas',
-  'optometrists',
-  'cosmetic-surgery',
-  'liquor',
-  'vets',
-];
+import { getAllCategories, getAllProviderSlugs } from '@/lib/data';
 
 const BASE_URL = 'https://clearcrossprogreso.com';
 
@@ -26,15 +16,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 1.0,
   });
 
-  // Category pages
-  CATEGORY_SLUGS.forEach((slug) => {
-    entries.push({
-      url: `${BASE_URL}/${slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
+  // Category pages — from the data layer (works in mock and Supabase modes)
+  try {
+    const categories = await getAllCategories();
+    (categories || []).forEach((cat: any) => {
+      if (cat?.slug) {
+        entries.push({
+          url: `${BASE_URL}/${cat.slug}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.9,
+        });
+      }
     });
-  });
+  } catch (error) {
+    console.error('Error fetching categories for sitemap:', error);
+  }
 
   // Blog index
   entries.push({
@@ -59,28 +56,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Error fetching blog posts for sitemap:', error);
   }
 
-  // Provider pages - fetch from Supabase
+  // Provider pages — data layer handles mock vs Supabase
   try {
-    const supabase = createServerSupabaseClient();
-
-    // Get all providers with their category info
-    const { data: providers, error } = await supabase
-      .from('providers')
-      .select('slug, category:category_id(slug)');
-
-    if (!error && providers) {
-      providers.forEach((provider) => {
-        const categorySlug = (provider.category as any)?.slug;
-        if (categorySlug && provider.slug) {
-          entries.push({
-            url: `${BASE_URL}/${categorySlug}/${provider.slug}`,
-            lastModified: new Date(),
-            changeFrequency: 'weekly',
-            priority: 0.8,
-          });
-        }
-      });
-    }
+    const slugs = await getAllProviderSlugs();
+    slugs.forEach(({ category, provider }) => {
+      if (category && provider) {
+        entries.push({
+          url: `${BASE_URL}/${category}/${provider}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.8,
+        });
+      }
+    });
   } catch (error) {
     console.error('Error fetching providers for sitemap:', error);
   }

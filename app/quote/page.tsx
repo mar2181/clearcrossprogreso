@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { providers as mockProviders } from '@/lib/mock-data';
+import { providers as mockProviders, categories as mockCategories } from '@/lib/mock-data';
 import { en } from '@/lib/i18n/dictionaries/en';
 
 export const metadata: Metadata = {
@@ -9,49 +9,17 @@ export const metadata: Metadata = {
   description: 'Get a guaranteed price before you cross the border. Request a quote from our vetted providers in Nuevo Progreso, Mexico.',
 };
 
-async function getProvidersAndProcedures(preselectedProviderId?: string) {
-  const supabase = createServerSupabaseClient();
-
-  // Fetch all providers
-  const { data: providersData, error: providersError } = await supabase
-    .from('providers')
-    .select('*')
-    .eq('verified', true)
-    .order('featured', { ascending: false })
-    .order('name', { ascending: true });
-
-  if (providersError) {
-    console.error('Error fetching providers:', providersError);
-    throw new Error('Failed to load providers');
-  }
-
-  // Fetch all procedures
-  const { data: proceduresData, error: proceduresError } = await supabase
-    .from('procedures')
-    .select('*')
-    .order('sort_order', { ascending: true });
-
-  if (proceduresError) {
-    console.error('Error fetching procedures:', proceduresError);
-    throw new Error('Failed to load procedures');
-  }
-
-  return {
-    providers: (providersData || []) as Provider[],
-    procedures: (proceduresData || []) as Procedure[],
-    preselectedProviderId,
-  };
-}
-
-interface QuotePageProps {
-  searchParams: { provider?: string };
-}
-
-export default async function QuotePage({
-  searchParams,
-}: QuotePageProps) {
-  const { providers, procedures, preselectedProviderId } =
-    await getProvidersAndProcedures(searchParams.provider);
+export default async function QuotePage() {
+  const d = en.quote;
+  // Sort by featured first, then by name
+  const featuredProviders = mockProviders
+    .filter((p) => p.verified)
+    .sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 20);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white">
@@ -145,7 +113,7 @@ export default async function QuotePage({
               {featuredProviders.map((provider) => (
                 <Link
                   key={provider.id}
-                  href={`/${provider.category_id === 'cat-dentists' ? 'dentists' : 'dentists'}/${provider.slug}`}
+                  href={`/${mockCategories.find((c) => c.id === provider.category_id)?.slug || 'dentists'}/${provider.slug}`}
                   className="p-4 border border-neutral-200 rounded-lg hover:border-brand-blue hover:shadow-md transition-all group"
                 >
                   <p className="font-semibold text-neutral-900 group-hover:text-brand-blue">

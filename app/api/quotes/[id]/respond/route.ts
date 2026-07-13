@@ -1,13 +1,15 @@
 export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { sendQuoteStatusUpdate } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: paramId } = await params;
     const body = await request.json();
     const { action } = body;
 
@@ -41,7 +43,7 @@ export async function POST(
         procedure:procedures(name),
         user:users(email, full_name)
       `)
-      .eq('id', params.id)
+      .eq('id', paramId)
       .single();
 
     if (quoteError || !quote) {
@@ -95,10 +97,13 @@ export async function POST(
       updateData.price_locked = true;
     }
 
-    const { error: updateError } = await supabase
+    // Route-level authz above verified the caller owns this quote; patients
+    // have no RLS UPDATE policy, so the write goes through the service role.
+    const writer = createAdminClient() ?? supabase;
+    const { error: updateError } = await writer
       .from('quote_requests')
       .update(updateData)
-      .eq('id', params.id);
+      .eq('id', paramId);
 
     if (updateError) {
       console.error('Error updating quote:', updateError);
@@ -121,13 +126,13 @@ export async function POST(
         procedureName: procedure?.name || 'Procedure',
         status: newStatus as 'accepted' | 'rejected',
         quotedPrice: quote.quoted_price,
-        quoteId: params.id,
+        quoteId: paramId,
       }).catch((err) => console.error('[Email] Status update failed:', err));
     }
 
     return NextResponse.json(
       {
-        id: params.id,
+        id: paramId,
         status: newStatus,
         message: `Quote ${action === 'accept' ? 'accepted' : 'declined'} successfully`,
       },

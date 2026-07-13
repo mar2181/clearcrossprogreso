@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { Zap } from 'lucide-react';
 import { ProviderPrice, FlashDiscount } from '@/lib/types';
 import { cn, formatUSD } from '@/lib/utils';
-import CountdownTimer from '@/components/ui/CountdownTimer';
+import { US_BENCHMARKS } from '@/lib/us-benchmarks';
 
 interface PriceTableProps {
-  prices: (ProviderPrice & { procedure?: { name: string; sort_order: number; id?: string } })[];
+  prices: (ProviderPrice & { procedure?: { name: string; sort_order: number; slug?: string; id?: string } })[];
   providerName: string;
   providerId?: string;
   flashDiscount?: FlashDiscount | null;
@@ -28,6 +28,8 @@ function isProcedureDiscounted(procId: string | undefined, flash: FlashDiscount)
 }
 
 const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerId, flashDiscount }) => {
+  const [showComparison, setShowComparison] = useState(true);
+
   // Sort by procedure sort_order
   const sortedPrices = [...prices].sort((a, b) => {
     const orderA = a.procedure?.sort_order ?? 999;
@@ -122,16 +124,27 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
                       <span className="block text-xs text-neutral-500 mt-0.5">
                         {item.price_notes}
                       </span>
-                    ) : flashDiscount && isProcedureDiscounted(item.procedure_id || item.procedure?.id, flashDiscount) ? (
-                      <div className="flex flex-col items-end gap-0.5">
-                        <span className="text-xs text-neutral-400 line-through">
+                    )}
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    {item.price_usd !== null && item.price_usd !== undefined ? (
+                      item.price_usd === 0 ? (
+                        <span className="font-semibold text-brand-green">Free</span>
+                      ) : flashDiscount && isProcedureDiscounted(item.procedure_id || item.procedure?.id, flashDiscount) ? (
+                        <div className="flex flex-col items-end gap-0.5">
+                          <span className="text-xs text-neutral-400 line-through">
+                            {formatUSD(item.price_usd)}
+                          </span>
+                          <span className="font-bold text-brand-green flex items-center gap-1">
+                            <Zap className="w-3 h-3 text-orange-500 fill-orange-500" />
+                            {formatUSD(getDiscountedPrice(item.price_usd, flashDiscount))}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="font-semibold text-brand-green">
                           {formatUSD(item.price_usd)}
                         </span>
-                        <span className="font-bold text-brand-green flex items-center gap-1">
-                          <Zap className="w-3 h-3 text-orange-500 fill-orange-500" />
-                          {formatUSD(getDiscountedPrice(item.price_usd, flashDiscount))}
-                        </span>
-                      </div>
+                      )
                     ) : (
                       <Link
                         href={`/quote?provider=${providerId}`}
@@ -172,7 +185,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
       {showComparison && savingsCount > 0 && (
         <div className="bg-gradient-to-r from-brand-green/5 to-brand-blue/5 border border-brand-green/20 rounded-lg p-4">
           <p className="text-sm text-neutral-dark">
-            <span className="font-bold text-brand-green">💰 Save ${totalSaved.toLocaleString()}</span> on these {savingsCount} procedures compared to US prices. 
+            <span className="font-bold text-brand-green">💰 Save ${totalSaved.toLocaleString()}</span> on these {savingsCount} procedures compared to US prices.
             All procedures at {providerName} are performed by licensed professionals using the same quality materials.
           </p>
         </div>

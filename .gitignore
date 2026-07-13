@@ -23,8 +23,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# local env files — never commit any env file
+.env*
+
+# legacy second checkout (old working copy; canonical tree is the repo root)
+/clearcrossprogreso.com/
 
 # vercel
 .vercel
@@ -35,8 +38,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-scripts/
 CLAUDE.md
 IMAGE_PLAN.md
 
 .vercel
+
+# local-only audit report (contains security findings)
+AUDIT_*.md
