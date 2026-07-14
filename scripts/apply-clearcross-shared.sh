@@ -30,7 +30,7 @@ run_sql_file() {
 }
 
 run_sql_file supabase/migrations/001_clearcross_schema.sql "schema (9 tables + RLS + private bucket)"
-run_sql_file supabase/migrations/002_seed.sql "seed (8 categories / 83 procedures / 109 providers / 312 prices)"
+run_sql_file supabase/migrations/002_seed.sql "seed (8 categories / 83 procedures / 104 providers / 312 prices)"
 
 echo "→ Verifying row counts..."
 node -e "
@@ -46,4 +46,4 @@ node -e "
     \` }),
   }).then(async (r) => console.log(await r.text()));
 "
-echo "Done. Expected: categories 8, procedures 83, providers 109, prices 312, bucket 1."
+echo "Done. Expected: categories 8, procedures 83, providers 104, prices 312, bucket 1."

@@ -51,15 +51,21 @@ CREATE TABLE IF NOT EXISTS public.clearcross_procedures (
   sort_order integer DEFAULT 0
 );
 
+-- A provider lists one row per PRICED ITEM, not one row per procedure: a pharmacy
+-- carries 9 different GLP-1 pens under "weight loss", each its own strength/brand
+-- and price (price_notes names the item). So (provider_id, procedure_id) is
+-- deliberately NOT unique — a unique constraint here collapses those 9 rows into 1.
 CREATE TABLE IF NOT EXISTS public.clearcross_provider_prices (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   provider_id uuid NOT NULL REFERENCES public.clearcross_providers(id) ON DELETE CASCADE,
   procedure_id uuid NOT NULL REFERENCES public.clearcross_procedures(id) ON DELETE CASCADE,
   price_usd numeric(10,2),
   price_notes text,
-  updated_at timestamptz DEFAULT now(),
-  UNIQUE(provider_id, procedure_id)
+  updated_at timestamptz DEFAULT now()
 );
+-- Drop it where an earlier run of this migration already created it.
+ALTER TABLE public.clearcross_provider_prices
+  DROP CONSTRAINT IF EXISTS clearcross_provider_prices_provider_id_procedure_id_key;
 
 -- NOTE: no FK to auth.users — anonymous quote requesters get a row here too
 -- (created only by the service role). Registered users insert their own row

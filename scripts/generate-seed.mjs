@@ -40,6 +40,33 @@ function uuid5(id) {
   ].join('-');
 }
 
+// Fail LOUD here rather than emitting a seed that dies half-applied against the
+// live database (a duplicate provider slug did exactly that on 2026-07-13).
+function assertUnique(rows, key, label) {
+  const seen = new Map();
+  const dupes = [];
+  for (const r of rows) {
+    const v = r[key];
+    if (seen.has(v)) dupes.push(v);
+    else seen.set(v, true);
+  }
+  if (dupes.length) {
+    throw new Error(
+      `${label}: duplicate ${key} in lib/mock-data.ts — ${[...new Set(dupes)].join(', ')}. ` +
+        `Fix the source data; do not let this reach the database.`
+    );
+  }
+}
+assertUnique(mock.categories, 'id', 'categories');
+assertUnique(mock.categories, 'slug', 'categories');
+assertUnique(mock.procedures, 'id', 'procedures');
+assertUnique(mock.procedures, 'slug', 'procedures');
+assertUnique(mock.providers, 'id', 'providers');
+assertUnique(mock.providers, 'slug', 'providers');
+assertUnique(mock.providerPrices, 'id', 'providerPrices');
+// NOTE: (provider_id, procedure_id) is intentionally NOT unique — one provider
+// lists many priced items per procedure (9 GLP-1 pens under "weight loss").
+
 const q = (v) => {
   if (v === null || v === undefined || v === '') return 'NULL';
   if (typeof v === 'number') return String(v);
@@ -84,7 +111,7 @@ sql += '\n-- Provider prices\n';
 for (const pr of mock.providerPrices) {
   sql += `INSERT INTO public.clearcross_provider_prices (id, provider_id, procedure_id, price_usd, price_notes)
 VALUES (${q(uuid5(pr.id))}, ${q(uuid5(pr.provider_id))}, ${q(uuid5(pr.procedure_id))}, ${q(pr.price_usd)}, ${q(pr.price_notes)})
-ON CONFLICT (provider_id, procedure_id) DO UPDATE SET price_usd=EXCLUDED.price_usd, price_notes=EXCLUDED.price_notes;\n`;
+ON CONFLICT (id) DO UPDATE SET provider_id=EXCLUDED.provider_id, procedure_id=EXCLUDED.procedure_id, price_usd=EXCLUDED.price_usd, price_notes=EXCLUDED.price_notes;\n`;
 }
 
 const out = join(root, 'supabase', 'migrations', '002_seed.sql');

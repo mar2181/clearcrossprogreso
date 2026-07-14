@@ -89,25 +89,59 @@ export async function PUT(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { procedure_id, price_usd, price_notes } = body;
+  const { id, procedure_id, price_usd, price_notes } = body;
 
   if (!procedure_id || price_usd === undefined) {
     return NextResponse.json({ error: 'procedure_id and price_usd are required' }, { status: 400 });
   }
 
-  // Upsert the price
-  const { error } = await supabase
+  // A provider may list SEVERAL priced items under one procedure (e.g. 9 GLP-1
+  // pens under "weight loss"), so (provider_id, procedure_id) is not unique and
+  // we cannot blind-upsert on it. Target an explicit row when the caller names
+  // one; otherwise update the single existing row, or insert the first.
+  const { data: existing, error: lookupError } = await supabase
     .from('clearcross_provider_prices')
-    .upsert(
-      {
+    .select('id')
+    .eq('provider_id', userData.provider_id)
+    .eq('procedure_id', procedure_id)
+    .order('id', { ascending: true });
+
+  if (lookupError) {
+    return NextResponse.json({ error: lookupError.message }, { status: 500 });
+  }
+
+  const rows = existing || [];
+  if (!id && rows.length > 1) {
+    return NextResponse.json(
+      { error: 'Multiple prices exist for this procedure — pass the price `id` to say which one to update.' },
+      { status: 400 }
+    );
+  }
+
+  const targetId = id || (rows.length === 1 ? rows[0].id : null);
+
+  // An `id` from the client is only honored if it is one of THIS provider's rows.
+  if (id && !rows.some((r) => r.id === id)) {
+    return NextResponse.json({ error: 'Price not found' }, { status: 404 });
+  }
+
+  const { error } = targetId
+    ? await supabase
+        .from('clearcross_provider_prices')
+        .update({
+          price_usd,
+          price_notes: price_notes || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', targetId)
+        .eq('provider_id', userData.provider_id)
+    : await supabase.from('clearcross_provider_prices').insert({
         provider_id: userData.provider_id,
         procedure_id,
         price_usd,
         price_notes: price_notes || null,
         updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'provider_id,procedure_id' }
-    );
+      });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

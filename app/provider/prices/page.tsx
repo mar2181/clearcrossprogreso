@@ -79,21 +79,29 @@ export default function PricesPage() {
           .eq('category_id', providerData.category_id)
           .order('sort_order');
 
-        // Get current prices
+        // Get current prices. A procedure can carry SEVERAL priced items (e.g. 9
+        // GLP-1 pens under "weight loss"); this editor edits one headline price per
+        // procedure, so pin it to the lowest-id row — the same one PUT /api/providers
+        // targets — instead of letting an arbitrary row win.
         const { data: priceData } = await supabase
           .from('clearcross_provider_prices')
           .select('*')
-          .eq('provider_id', userData.provider_id);
+          .eq('provider_id', userData.provider_id)
+          .order('id', { ascending: true });
 
-        const priceMap = new Map(priceData?.map((p) => [p.procedure_id, p]) || []);
+        type PriceRow = { id: string; procedure_id: string; price_usd: number | null; price_notes: string | null };
+        const priceMap = new Map<string, PriceRow>();
+        for (const p of priceData || []) {
+          if (!priceMap.has(p.procedure_id)) priceMap.set(p.procedure_id, p);
+        }
         const proceduresWithPrices = (procData || []).map((proc) => {
           const price = priceMap.get(proc.id);
           return {
             id: price?.id || `new_${proc.id}`,
             procedure_id: proc.id,
             procedure_name: proc.name,
-            price_usd: price?.price_usd,
-            price_notes: price?.price_notes,
+            price_usd: price?.price_usd ?? null,
+            price_notes: price?.price_notes ?? null,
           };
         });
 
