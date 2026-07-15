@@ -56,8 +56,8 @@ export async function getAllCategories() {
     return mockCategories.filter((c) => c.active);
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from('clearcross_categories')
     .select('*')
@@ -71,8 +71,8 @@ export async function getCategory(slug: string) {
     return mockCategories.find((c) => c.slug === slug && c.active) || null;
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from('clearcross_categories')
     .select('*')
@@ -87,8 +87,8 @@ export async function getCategoryBySlug(slug: string) {
     return mockCategories.find((c) => c.slug === slug) || null;
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from('clearcross_categories')
     .select('*')
@@ -102,8 +102,8 @@ export async function getProvidersForCategory(categoryId: string, categorySlug: 
     return getProvidersByCategory(categorySlug);
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from('clearcross_providers')
     .select(
@@ -131,8 +131,8 @@ export async function getProceduresForCategory(categoryId: string, categorySlug:
     return getProceduresByCategory(categorySlug);
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from('clearcross_procedures')
     .select('*')
@@ -157,8 +157,8 @@ export async function getProviderBySlug(slug: string) {
     };
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data, error } = await supabase
     .from('clearcross_providers')
     .select(
@@ -186,8 +186,8 @@ export async function getProviderReviews(providerId: string) {
     return getReviewsByProvider(providerId);
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from('clearcross_reviews')
     .select('*')
@@ -209,8 +209,8 @@ export async function getRelatedProviders(categoryId: string, excludeProviderId:
       }));
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from('clearcross_providers')
     .select(
@@ -243,8 +243,8 @@ export async function getAllProviderSlugs() {
     });
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from('clearcross_providers')
     .select('slug, category_id, categories:clearcross_categories(slug)');
@@ -267,8 +267,8 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
   }
 
   // Supabase full search (when connected)
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
 
   // Search providers by name
   const { data: providerResults } = await supabase
@@ -411,8 +411,8 @@ export async function getFeaturedProviders() {
     });
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from('clearcross_providers')
     .select(`
@@ -446,8 +446,8 @@ export async function getCategoryCounts(): Promise<Record<string, number>> {
     return counts;
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from('clearcross_providers')
     .select('category_id, categories:clearcross_categories(slug)')
@@ -472,8 +472,8 @@ export async function getActiveFlashDiscounts(categorySlug?: string) {
     return getActiveFlashDiscountsMock(categorySlug);
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
 
   let query = supabase
     .from('clearcross_flash_discounts')
@@ -499,8 +499,8 @@ export async function getFlashDiscountForProvider(providerId: string) {
     return getFlashDiscountForProviderMock(providerId);
   }
 
-  const { createServerSupabaseClient } = await import('./supabase/server');
-  const supabase = createServerSupabaseClient();
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from('clearcross_flash_discounts')
     .select('*')
