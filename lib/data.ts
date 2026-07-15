@@ -171,7 +171,7 @@ export async function getProviderBySlug(slug: string) {
         price_notes,
         procedure:procedure_id(id, name, sort_order)
       ),
-      categories(id, name, slug)
+      categories:clearcross_categories(id, name, slug)
       `
     )
     .eq('slug', slug)
@@ -275,8 +275,8 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
     .from('clearcross_providers')
     .select(`
       id, name, slug, address, verified, featured, avg_rating, review_count, description, photo_url, graduation_year,
-      categories(name, slug),
-      provider_prices(
+      categories:clearcross_categories(name, slug),
+      provider_prices:clearcross_provider_prices(
         price_usd, price_notes,
         procedure:procedure_id(id, name)
       )
@@ -302,7 +302,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
         procedure:procedure_id(id, name),
         provider:provider_id(
           id, name, slug, address, verified, featured, avg_rating, review_count, description, photo_url, graduation_year,
-          categories(name, slug)
+          categories:clearcross_categories(name, slug)
         )
       `)
       .in('procedure_id', procedureIds);
@@ -417,8 +417,8 @@ export async function getFeaturedProviders() {
     .from('clearcross_providers')
     .select(`
       id, name, slug, category_id, featured, verified, avg_rating, review_count, photo_url, graduation_year,
-      categories(name, slug),
-      provider_prices(
+      categories:clearcross_categories(name, slug),
+      provider_prices:clearcross_provider_prices(
         price_usd, price_notes,
         procedure:procedure_id(id, name)
       )
