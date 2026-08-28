@@ -123,3 +123,82 @@
     @apply text-xs font-bold tracking-[0.2em] uppercase mb-2;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Dr. Leo — the AI concierge (components/SiteConcierge.tsx)
+ *
+ * ⛔ LIFT HIM; DO NOT LOWER HIS Z-INDEX. `live-agent.js` injects its own
+ * stylesheet (line 176) putting #live-agent at `bottom:0; z-index:2147483600`
+ * in a box up to 360x520 that takes pointer events. Lowering the z-index would
+ * only let page content paint over a element that is still swallowing clicks
+ * — it does not give the taps back. Moving him up does.
+ *
+ * These rules need `!important` because they are competing with that injected
+ * sheet, not because of specificity.
+ *
+ * THE BANDS ARE MEASURED, NOT GUESSED:
+ *
+ *   ≤640px  The platform already mitigates this itself — its own media query
+ *           drops the container to `pointer-events:none` and hands events to
+ *           `.la-hit`, a 46%-wide strip of a 240px box. That still lands ~110px
+ *           of live hit area over the right-hand end of MobileBottomNav
+ *           (`MobileBottomNav.tsx:76`, floating at bottom-4, ~124px tall and
+ *           spanning left-4/right-4), which is two of its nav items.
+ *
+ *   641–767 The worst band, and the reason this breakpoint is 767 and not 640:
+ *           the platform's phone treatment has stopped, so the FULL 360x520
+ *           container takes pointer events again — while this site's
+ *           MobileBottomNav is `md:hidden` and therefore still on screen.
+ *
+ *   ≥768px  The mobile nav is gone, but CompareDrawer (`CompareDrawer.tsx:53`,
+ *           fixed bottom-0) is not, and neither is the provider-page CTA bar
+ *           (`app/[category]/[provider]/page.tsx:516`, `lg:hidden` bottom-0).
+ *
+ * That exact geometry — a concierge box over a fixed bottom bar — made a
+ * previous client's shopping cart unclickable for real customers.
+ * ─────────────────────────────────────────────────────────────────────────── */
+#live-agent {
+  /* Clear of the compare drawer and the provider-page CTA bar. */
+  bottom: 96px !important;
+}
+
+@media (max-width: 767px) {
+  /* Clears the floating mobile nav (bottom-4 + a ~124px stack) with margin. */
+  #live-agent {
+    bottom: 150px !important;
+  }
+}
+
+/* Shown only after a session starts and produces no sound — see the note in
+   SiteConcierge.tsx about why the mint cannot tell us this. */
+.concierge-notice {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483601;
+  max-width: 320px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgb(229 229 229);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  font-size: 13px;
+  line-height: 1.45;
+  color: #1f2937;
+}
+.concierge-notice a {
+  color: #0d6efd;
+  text-decoration: underline;
+}
+.concierge-notice button {
+  flex: none;
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: #6b7280;
+}

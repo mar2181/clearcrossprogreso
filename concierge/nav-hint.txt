@@ -1,0 +1,61 @@
+home -> /
+the home page -> /
+inicio -> /
+la pagina principal -> /
+dentists -> /dentists
+dentists -> /dentists
+dentistas -> /dentists
+dentista -> /dentists
+los dentistas -> /dentists
+pharmacies -> /pharmacies
+pharmacies -> /pharmacies
+farmacias -> /pharmacies
+farmacia -> /pharmacies
+medicinas -> /pharmacies
+medicamentos -> /pharmacies
+optometrists -> /optometrists
+optometrists -> /optometrists
+optometristas -> /optometrists
+lentes -> /optometrists
+anteojos -> /optometrists
+optica -> /optometrists
+cosmetic surgery -> /cosmetic-surgery
+cosmetic surgery -> /cosmetic-surgery
+cirugia estetica -> /cosmetic-surgery
+cirugia plastica -> /cosmetic-surgery
+vets -> /vets
+vets -> /vets
+veterinarios -> /vets
+veterinario -> /vets
+get a quote -> /quote
+a quote -> /quote
+request a quote -> /quote
+how much would it cost -> /quote
+price quote -> /quote
+cotizacion -> /quote
+una cotizacion -> /quote
+precio -> /quote
+cuanto cuesta -> /quote
+search -> /search
+find a procedure -> /search
+buscar -> /search
+busqueda -> /search
+how it works -> /how-it-works
+how does this work -> /how-it-works
+como funciona -> /how-it-works
+is it safe -> /safety
+safety -> /safety
+safety guide -> /safety
+seguridad -> /safety
+es seguro -> /safety
+blog -> /blog
+articles -> /blog
+articulos -> /blog
+about -> /about
+about you -> /about
+who are you -> /about
+acerca de -> /about
+nosotros -> /about
+list my business -> /auth/register
+i am a provider -> /auth/register
+soy proveedor -> /auth/register

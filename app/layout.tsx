@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { I18nBody } from '@/components/layout/I18nBody'
+import SiteConcierge from '@/components/SiteConcierge'
 
 export const metadata: Metadata = {
   title: 'Best Dentists & Medical Services in Nuevo Progreso Mexico | ClearCross',
@@ -47,6 +48,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen flex flex-col bg-white">
         <I18nBody>{children}</I18nBody>
+        {/* Dr. Leo. Renders nothing until provisioned, and injects the two
+            platform tags only after the page has settled. */}
+        <SiteConcierge />
       </body>
     </html>
   )

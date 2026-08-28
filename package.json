@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "concierge:kb": "node tools/build-concierge-kb.mjs",
+    "concierge:provision": "node tools/provision-concierge.mjs --character leo",
+    "preflight:concierge": "node tools/concierge-preflight.mjs"
   },
   "dependencies": {
     "@stripe/stripe-js": "^4.0.0",
