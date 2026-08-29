@@ -3,27 +3,22 @@ the home page -> /
 inicio -> /
 la pagina principal -> /
 dentists -> /dentists
-dentists -> /dentists
 dentistas -> /dentists
 dentista -> /dentists
 los dentistas -> /dentists
-pharmacies -> /pharmacies
 pharmacies -> /pharmacies
 farmacias -> /pharmacies
 farmacia -> /pharmacies
 medicinas -> /pharmacies
 medicamentos -> /pharmacies
 optometrists -> /optometrists
-optometrists -> /optometrists
 optometristas -> /optometrists
 lentes -> /optometrists
 anteojos -> /optometrists
 optica -> /optometrists
 cosmetic surgery -> /cosmetic-surgery
-cosmetic surgery -> /cosmetic-surgery
 cirugia estetica -> /cosmetic-surgery
 cirugia plastica -> /cosmetic-surgery
-vets -> /vets
 vets -> /vets
 veterinarios -> /vets
 veterinario -> /vets

@@ -287,7 +287,19 @@ const ES_LABEL = {
 };
 
 const nav = [];
-const add = (phrase, path) => nav.push(`${phrase} -> ${path}`);
+/*
+ * De-duplicated: for a single-word category the display name and the slug are
+ * the same word, so a naive push emits "dentists -> /dentists" twice. Harmless
+ * in behaviour — this is a text hint — but it is prompt budget spent on nothing,
+ * and every one of these lines is read on every turn.
+ */
+const seen = new Set();
+const add = (phrase, path) => {
+  const line = `${phrase} -> ${path}`;
+  if (seen.has(line)) return;
+  seen.add(line);
+  nav.push(line);
+};
 
 add("home", "/");
 add("the home page", "/");
