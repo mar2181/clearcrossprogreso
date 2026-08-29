@@ -114,7 +114,7 @@ export async function getProvidersForCategory(categoryId: string, categorySlug: 
         provider_id,
         price_usd,
         price_notes,
-        procedure:procedure_id(id, name, sort_order)
+        procedure:procedure_id(id, name, slug, sort_order)
       )
       `
     )
@@ -169,7 +169,7 @@ export async function getProviderBySlug(slug: string) {
         provider_id,
         price_usd,
         price_notes,
-        procedure:procedure_id(id, name, sort_order)
+        procedure:procedure_id(id, name, slug, sort_order)
       ),
       categories:clearcross_categories(id, name, slug)
       `
@@ -219,7 +219,7 @@ export async function getRelatedProviders(categoryId: string, excludeProviderId:
       provider_prices:clearcross_provider_prices(
         id,
         price_usd,
-        procedure:procedure_id(id, name)
+        procedure:procedure_id(id, name, slug)
       )
       `
     )
@@ -278,7 +278,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
       categories:clearcross_categories(name, slug),
       provider_prices:clearcross_provider_prices(
         price_usd, price_notes,
-        procedure:procedure_id(id, name)
+        procedure:procedure_id(id, name, slug)
       )
     `)
     .ilike('name', `%${q}%`)
@@ -299,7 +299,7 @@ export async function searchAll(query: string): Promise<SearchResult[]> {
       .from('clearcross_provider_prices')
       .select(`
         price_usd, price_notes,
-        procedure:procedure_id(id, name),
+        procedure:procedure_id(id, name, slug),
         provider:provider_id(
           id, name, slug, address, verified, featured, avg_rating, review_count, description, photo_url, graduation_year,
           categories:clearcross_categories(name, slug)
@@ -420,7 +420,7 @@ export async function getFeaturedProviders() {
       categories:clearcross_categories(name, slug),
       provider_prices:clearcross_provider_prices(
         price_usd, price_notes,
-        procedure:procedure_id(id, name)
+        procedure:procedure_id(id, name, slug)
       )
     `)
     .eq('featured', true)

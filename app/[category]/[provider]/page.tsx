@@ -110,11 +110,20 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
     },
     telephone: providerData.phone || undefined,
     url: providerData.website || undefined,
-    ...(providerData.avg_rating && {
+    // ⛔ aggregateRating is gated on reviews we ACTUALLY RENDER, never on the
+    // seeded avg_rating/review_count. Google requires review markup to reflect
+    // reviews visible on the page; emitting a 4.2/27 block above a panel that
+    // reads "No reviews yet" is a structured-data policy violation, and that is
+    // manual-action territory on a health site. Tying it to the same `reviews`
+    // array the page renders below means the two can never drift apart again.
+    ...(reviews && reviews.length > 0 && {
       aggregateRating: {
         '@type': 'AggregateRating',
-        ratingValue: providerData.avg_rating.toFixed(1),
-        reviewCount: providerData.review_count,
+        ratingValue: (
+          reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) /
+          reviews.length
+        ).toFixed(1),
+        reviewCount: reviews.length,
       },
     }),
   };

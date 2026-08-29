@@ -9,6 +9,11 @@ export const metadata: Metadata = {
     'Find and compare prices for dentists, pharmacies, spas, and medical services in Nuevo Progreso, Mexico. Know the price before you cross.',
   applicationName: 'ClearCross Progreso',
   metadataBase: new URL('https://clearcrossprogreso.com'),
+  // ⛔ './' resolves against metadataBase + the CURRENT pathname, so each route
+  // canonicalises to itself. A bare '/' here would point every page on the site at
+  // the homepage — far worse than having no canonical at all. Verified per-route
+  // after building; do not change this without re-checking two different pages.
+  alternates: { canonical: './' },
   openGraph: {
     type: 'website',
     locale: 'en_US',

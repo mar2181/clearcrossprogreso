@@ -5,6 +5,18 @@ import { createHmac } from 'crypto';
 // Only these route prefixes require a logged-in Supabase user (+ role check).
 // Everything else on the site is public browsing.
 const protectedPaths = ['/dashboard', '/provider'];
+
+// ⛔ THE SITE WAS INDEXED TWICE. `clearcrossprogresocom.vercel.app` served
+// byte-identical content to the apex with no canonical tag on either, and a live
+// Google search for "dental crown cost Nuevo Progreso" returned the vercel.app
+// URL rather than the real domain — so every ranking signal was split across two
+// hostnames. Measured 2026-08-29: identical md5 on both hosts.
+const CANONICAL_HOST = 'clearcrossprogreso.com';
+
+// The stable project alias is REDIRECTED (a 301 consolidates the equity Google has
+// already given it). Preview/deployment URLs are only NOINDEXED — redirecting those
+// would make every preview deploy useless.
+const REDIRECT_HOSTS = new Set(['clearcrossprogresocom.vercel.app']);
 const passwordExemptPaths = [
   '/auth/password',
   '/api/auth/password',
@@ -21,7 +33,7 @@ function getExpectedCookieValue(): string {
   return createHmac('sha256', secret).update('clearCross_auth_v1').digest('hex');
 }
 
-export async function middleware(request: NextRequest) {
+async function handle(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow static assets and password page
@@ -125,6 +137,31 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const host = request.headers.get('host') || '';
+  const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1');
+  const wrongHost = host !== '' && host !== CANONICAL_HOST && !isLocal;
+
+  // ⛔ /api is exempt: Vercel cron arrives on a deployment hostname and a redirect
+  // would break it.
+  if (wrongHost && !pathname.startsWith('/api') && REDIRECT_HOSTS.has(host)) {
+    const target = new URL(request.nextUrl.toString());
+    target.protocol = 'https:';
+    target.host = CANONICAL_HOST;
+    target.port = '';
+    return NextResponse.redirect(target, 301);
+  }
+
+  // ⛔ Everything else still runs the FULL middleware (password gate + role
+  // gating). An early return here would let any preview hostname walk straight
+  // past both — the noindex header is decoration, not an exit.
+  const res = await handle(request);
+  if (wrongHost && !pathname.startsWith('/api')) {
+    res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  }
+  return res;
+}
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.webp$).*)',

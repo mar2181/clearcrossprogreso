@@ -1,4 +1,9 @@
-export const dynamic = 'force-dynamic';
+// ⛔ DO NOT put `force-dynamic` back. `getAllPosts()` reads content/blog/*.mdx with
+// fs at call time; under force-dynamic this sitemap runs in a serverless function
+// where those files are not traced into the bundle, so readdirSync threw ENOENT, the
+// catch below swallowed it, and production served 114 URLs with ZERO blog posts —
+// silently, for weeks, while the blog was the only thing on the site ranking page one.
+// Generated at build time, fs works and all 10 posts are emitted.
 import { MetadataRoute } from 'next';
 import { getAllPosts } from '@/lib/blog';
 import { getAllCategories, getAllProviderSlugs } from '@/lib/data';
@@ -53,7 +58,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     });
   } catch (error) {
+    // ⛔ Deliberately asymmetric with the network blocks above and below: this read
+    // touches only the local filesystem, so a failure here is a real defect and must
+    // break the build rather than quietly ship a sitemap missing its best pages.
     console.error('Error fetching blog posts for sitemap:', error);
+    throw error;
   }
 
   // Provider pages — data layer handles mock vs Supabase
