@@ -9,12 +9,16 @@
     "lint": "next lint",
     "concierge:kb": "node tools/build-concierge-kb.mjs",
     "concierge:provision": "node tools/provision-concierge.mjs --character leo",
-    "preflight:concierge": "node tools/concierge-preflight.mjs"
+    "preflight:concierge": "node tools/concierge-preflight.mjs",
+    "verify:measurement": "node test/measurement.mjs",
+    "verify": "node test/measurement.mjs && next build"
   },
   "dependencies": {
     "@stripe/stripe-js": "^4.0.0",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.0",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "clsx": "^2.1.0",
     "framer-motion": "^12.38.0",
     "gray-matter": "^4.0.3",

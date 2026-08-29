@@ -2,6 +2,9 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { I18nBody } from '@/components/layout/I18nBody'
 import SiteConcierge from '@/components/SiteConcierge'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
 
 export const metadata: Metadata = {
   title: 'Best Dentists & Medical Services in Nuevo Progreso Mexico | ClearCross',
@@ -41,7 +44,15 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.png',
     apple: '/apple-touch-icon.png',
-  }
+  },
+  // Search Console ownership. Gated on the env var so the tag only appears once
+  // there is a real token to put in it.
+  // ⛔ This CANNOT be done headlessly: the google-search-console-pp-cli OAuth
+  // token holds only the `webmasters` scopes, NOT `siteverification`, so nothing
+  // here can mint or submit a verification token. The value comes from the GSC UI.
+  ...(process.env.GOOGLE_SITE_VERIFICATION && {
+    verification: { google: process.env.GOOGLE_SITE_VERIFICATION },
+  }),
 }
 
 export default function RootLayout({
@@ -56,6 +67,13 @@ export default function RootLayout({
         {/* Dr. Leo. Renders nothing until provisioned, and injects the two
             platform tags only after the page has settled. */}
         <SiteConcierge />
+        {/* Measurement. Vercel Analytics and Speed Insights need no key and no
+            env var — they are wired to this project by the platform, so they
+            start reporting on the first deploy. GA4 stays inert until
+            NEXT_PUBLIC_GA_ID exists. */}
+        <Analytics />
+        <SpeedInsights />
+        <GoogleAnalytics />
       </body>
     </html>
   )
