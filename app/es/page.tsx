@@ -7,7 +7,7 @@ import TrustBar from '@/components/home/TrustBar';
 import FeaturedProviders from '@/components/home/FeaturedProviders';
 import Testimonials from '@/components/home/Testimonials';
 import RecentBlogPosts from '@/components/home/RecentBlogPosts';
-import { getFeaturedProviders, getCategoryCounts } from '@/lib/data';
+import { getFeaturedProviders, getCategoryCounts, getPublishedPriceCount } from '@/lib/data';
 import type { Metadata } from 'next';
 import { bilingualAlternates } from '@/lib/hreflang';
 
@@ -28,15 +28,19 @@ export const metadata: Metadata = {
 };
 
 export default async function EsHome() {
-  const [featuredProviders, categoryCounts] = await Promise.all([
+  const [featuredProviders, categoryCounts, priceCount] = await Promise.all([
     getFeaturedProviders().catch(() => []),
     getCategoryCounts().catch(() => ({})),
+    getPublishedPriceCount().catch(() => 0),
   ]);
 
   return (
     <main className="w-full">
       <Hero />
-      <SocialProofBar />
+      <SocialProofBar
+        providerCount={Object.values(categoryCounts).reduce((a, b) => a + b, 0)}
+        priceCount={priceCount}
+      />
       <WhyClearCross />
       <CategoryGrid counts={categoryCounts} />
       <HowItWorks />

@@ -463,6 +463,34 @@ export async function getCategoryCounts(): Promise<Record<string, number>> {
   return counts;
 }
 
+/**
+ * How many real, published prices this site is standing behind.
+ *
+ * This is the one number on the homepage that is genuinely ours: every
+ * competitor in this market publishes ranges ("crowns $250-450"), and we carry
+ * per-provider line items. It replaced a hardcoded "10,000+ Americans served"
+ * counter, on a site that has served nobody -- so it is computed, never typed.
+ *
+ * Counts only priced rows belonging to a visible provider, because that is what
+ * a visitor can actually go and check.
+ */
+export async function getPublishedPriceCount(): Promise<number> {
+  if (shouldUseMock()) {
+    const visible = new Set(mockProviders.filter((p) => p.verified).map((p) => p.id));
+    return mockPrices.filter((r) => visible.has(r.provider_id) && r.price_usd != null).length;
+  }
+
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
+  const { data } = await supabase
+    .from('clearcross_provider_prices')
+    .select('id, provider:provider_id!inner(verified)')
+    .not('price_usd', 'is', null)
+    .eq('provider.verified', true);
+
+  return (data || []).length;
+}
+
 // =====================================================================
 // FLASH DISCOUNTS
 // =====================================================================

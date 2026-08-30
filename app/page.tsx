@@ -7,7 +7,7 @@ import TrustBar from '@/components/home/TrustBar';
 import FeaturedProviders from '@/components/home/FeaturedProviders';
 import Testimonials from '@/components/home/Testimonials';
 import RecentBlogPosts from '@/components/home/RecentBlogPosts';
-import { getFeaturedProviders, getCategoryCounts } from '@/lib/data';
+import { getFeaturedProviders, getCategoryCounts, getPublishedPriceCount } from '@/lib/data';
 import { bilingualAlternates } from '@/lib/hreflang';
 
 export const metadata = {
@@ -20,14 +20,17 @@ export const metadata = {
 export default async function Home() {
   let featuredProviders: Awaited<ReturnType<typeof getFeaturedProviders>> = [];
   let categoryCounts: Awaited<ReturnType<typeof getCategoryCounts>> = {};
+  let priceCount = 0;
 
   try {
-    const [fp, cc] = await Promise.all([
+    const [fp, cc, pc] = await Promise.all([
       getFeaturedProviders().catch(() => []),
       getCategoryCounts().catch(() => ({})),
+      getPublishedPriceCount().catch(() => 0),
     ]);
     featuredProviders = fp;
     categoryCounts = cc;
+    priceCount = pc;
   } catch (error) {
     console.error('Home page data fetch failed:', error);
   }
@@ -38,7 +41,10 @@ export default async function Home() {
       <Hero />
 
       {/* Social Proof Stats — immediately after hero for trust */}
-      <SocialProofBar />
+      <SocialProofBar
+        providerCount={Object.values(categoryCounts).reduce((a, b) => a + b, 0)}
+        priceCount={priceCount}
+      />
 
       {/* Why ClearCross — explains the concept for new visitors */}
       <WhyClearCross />

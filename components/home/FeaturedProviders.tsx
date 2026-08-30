@@ -127,7 +127,7 @@ export default function FeaturedProviders({ providers }: { providers: FeaturedPr
                     {provider.verified && (
                       <span
                         className="inline-block px-2.5 py-0.5 bg-brand-green/10 text-brand-green text-xs font-semibold rounded-full border border-brand-green/20 cursor-help"
-                        title="Cedula Profesional verified. Credentials current as of 2026. Clinic conditions and sterilization protocols checked."
+                        title="ClearCross lists this provider and has checked the listing details. We have not inspected the clinic or checked professional licences - ask to see the Cedula Profesional at your appointment."
                       >
                         {d.verified}
                       </span>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Users, Building2, TrendingDown, Star } from 'lucide-react';
+import { Users, Building2, TrendingDown } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 
 interface StatItem {
@@ -13,7 +13,15 @@ interface StatItem {
 }
 
 function AnimatedNumber({ value, suffix }: { value: string; suffix: string }) {
-  const [display, setDisplay] = useState('0');
+  // Seeded with the REAL value, not '0'.
+  //
+  // This used to start at '0' and only reach the true number after hydration
+  // and an IntersectionObserver fire -- so the server-rendered HTML read
+  // "0 Providers listed", and that is what a crawler and a no-JS visitor got.
+  // Harmless while the numbers were invented; not harmless now that they are
+  // the only substantiated figures on the page. The count-up is decoration and
+  // now runs strictly as an enhancement, from 0, after mount.
+  const [display, setDisplay] = useState(value);
   const ref = useRef<HTMLDivElement>(null);
   const animated = useRef(false);
 
@@ -24,6 +32,10 @@ function AnimatedNumber({ value, suffix }: { value: string; suffix: string }) {
       ([entry]) => {
         if (entry.isIntersecting && !animated.current) {
           animated.current = true;
+          // Wind back to zero only at the moment the animation starts. Doing it
+          // on mount would leave the bar reading 0 for anyone who never scrolls
+          // to it -- the same defect as seeding '0', one step later.
+          setDisplay('0');
 
           // Handle special cases like "40-70" or "4.5"
           if (value.includes('-')) {
@@ -75,23 +87,42 @@ function AnimatedNumber({ value, suffix }: { value: string; suffix: string }) {
   );
 }
 
-export default function SocialProofBar() {
+/**
+ * Every number in this bar is counted from the database at request time.
+ *
+ * It used to carry two literals: "10,000+ Americans served" and "4.5 Avg
+ * provider rating", animating up on a site that has served nobody and holds
+ * zero rows in clearcross_reviews. Both are gone. What is left is what a
+ * visitor could go and count for themselves.
+ *
+ * The markup figure is the one stat not counted from our own tables -- it comes
+ * from the cited US benchmark table in lib/us-benchmarks.ts, and its label says
+ * so rather than implying we measured it.
+ */
+export interface SocialProofBarProps {
+  /** Providers currently visible on the site. */
+  providerCount: number;
+  /** Individual published prices behind those providers. */
+  priceCount: number;
+}
+
+export default function SocialProofBar({ providerCount, priceCount }: SocialProofBarProps) {
   const { dict } = useI18n();
 
   const stats: StatItem[] = [
     {
-      icon: <Users className="w-5 h-5" />,
-      value: '10,000',
-      numericValue: 10000,
-      suffix: '+',
-      label: dict.socialProof.americansServed,
+      icon: <Building2 className="w-5 h-5" />,
+      value: String(providerCount),
+      numericValue: providerCount,
+      suffix: '',
+      label: dict.socialProof.verifiedProviders,
     },
     {
-      icon: <Building2 className="w-5 h-5" />,
-      value: '60',
-      numericValue: 60,
-      suffix: '+',
-      label: dict.socialProof.verifiedProviders,
+      icon: <Users className="w-5 h-5" />,
+      value: priceCount.toLocaleString('en-US'),
+      numericValue: priceCount,
+      suffix: '',
+      label: dict.socialProof.pricesPublished,
     },
     {
       icon: <TrendingDown className="w-5 h-5" />,
@@ -100,19 +131,12 @@ export default function SocialProofBar() {
       suffix: '%',
       label: dict.socialProof.avgSavings,
     },
-    {
-      icon: <Star className="w-5 h-5" />,
-      value: '4.5',
-      numericValue: 4.5,
-      suffix: '+',
-      label: dict.socialProof.avgRating,
-    },
   ];
 
   return (
     <section className="w-full bg-brand-navy py-10 sm:py-12 px-4 sm:px-6 lg:px-8 border-b border-white/10">
       <div className="max-w-5xl mx-auto">
-        <div className="grid grid-cols-2 gap-8 sm:gap-6 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6">
           {stats.map((stat, idx) => (
             <div key={idx} className="flex flex-col items-center text-center">
               <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-3 text-amber">

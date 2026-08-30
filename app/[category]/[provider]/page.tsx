@@ -206,10 +206,10 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                     {providerData.verified && (
                       <span
                         className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-brand-green/10 text-brand-green text-xs font-bold rounded-full border border-brand-green/20 cursor-help"
-                        title="Cedula Profesional verified. Credentials current as of 2026. Clinic conditions and sterilization protocols checked by ClearCross."
+                        title="ClearCross lists this provider and has checked the listing details. We have not inspected the clinic or checked professional licences - ask to see the Cedula Profesional at your appointment."
                       >
                         <ShieldCheck className="w-3 h-3" />
-                        Verified
+                        Listed
                       </span>
                     )}
                     {providerData.featured && (
@@ -351,12 +351,12 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                 {providerData.verified && (
                   <div
                     className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg cursor-help"
-                    title="Cedula Profesional verified. Credentials current as of 2026. Clinic conditions and sterilization protocols checked by ClearCross."
+                    title="ClearCross lists this provider and has checked the listing details. We have not inspected the clinic or checked professional licences - ask to see the Cedula Profesional at your appointment."
                   >
                     <ShieldCheck className="w-5 h-5 text-brand-green flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-neutral-dark">Verified Provider</p>
-                      <p className="text-xs text-neutral-mid">Credentials checked by ClearCross</p>
+                      <p className="font-semibold text-neutral-dark">Listed on ClearCross</p>
+                      <p className="text-xs text-neutral-mid">Listing details checked. Clinic and licences not inspected.</p>
                     </div>
                   </div>
                 )}

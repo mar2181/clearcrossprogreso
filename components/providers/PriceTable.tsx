@@ -62,7 +62,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
       {/* Banner */}
       <div className="bg-brand-green-light border border-brand-green/20 rounded-lg p-4">
         <p className="text-sm text-brand-green font-medium">
-          Prices listed here are final and guaranteed. Providers agree that quoted prices will not change upon arrival.
+          These are the prices the provider gave ClearCross. Ask for a written quote before any work begins, and take it with you.
         </p>
       </div>
 
