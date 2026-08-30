@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
@@ -30,6 +30,19 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // "List Your Business" arrives here as ?role=provider.
+  //
+  // ⛔ Read AFTER mount, not in the useState initializer. An initializer touching
+  // window.location renders 'patient' on the server and 'provider' on the client,
+  // which is a hydration text mismatch — the same defect the flash-discount
+  // countdown already has on category pages. And deliberately not useSearchParams:
+  // that hook pushes the nearest Suspense boundary into client-side rendering.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('role') === 'provider') {
+      setRole('provider');
+    }
+  }, []);
 
   const supabase = createClient();
 

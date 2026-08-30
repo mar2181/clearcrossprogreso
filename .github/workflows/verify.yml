@@ -22,3 +22,15 @@ jobs:
         env:
           # Build must succeed with no secrets configured (mock mode)
           USE_MOCK_DATA: mock
+      # The link guard needs a running server: it reads SERVED html, because a
+      # <Link href> to a route that does not exist type-checks perfectly. Two 404s
+      # sat in the user menu of every page for weeks and only a human clicking
+      # found them.
+      - name: Links (starts a server)
+        run: |
+          npx next start -p 3100 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3100/ > /dev/null && break; sleep 1; done
+          node test/links.mjs
+        env:
+          USE_MOCK_DATA: mock
+          BASE: http://localhost:3100

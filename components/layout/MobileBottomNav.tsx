@@ -33,7 +33,7 @@ export function MobileBottomNav() {
     { label: d.cosmeticSurgery, href: '/cosmetic-surgery' },
     { label: d.blog, href: '/blog' },
     { label: d.getQuote, href: '/quote' },
-    { label: d.login, href: '/login' },
+    { label: d.login, href: '/auth/login' },
   ];
 
   return (

@@ -215,13 +215,13 @@ export function Navbar() {
                 </button>
                 <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-neutral-200/80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2 -translate-y-1 group-hover:translate-y-0">
                   <Link
-                    href={localizedPath('/login', locale)}
+                    href={localizedPath('/auth/login', locale)}
                     className="block px-4 py-2.5 text-sm text-neutral-dark hover:bg-brand-blue/5 hover:text-brand-blue transition-colors"
                   >
                     {dict.nav.login}
                   </Link>
                   <Link
-                    href={localizedPath('/register', locale)}
+                    href={localizedPath('/auth/register', locale)}
                     className="block px-4 py-2.5 text-sm text-neutral-dark hover:bg-brand-blue/5 hover:text-brand-blue transition-colors"
                   >
                     {dict.nav.register}

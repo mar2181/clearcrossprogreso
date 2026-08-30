@@ -12,7 +12,8 @@
     "preflight:concierge": "node tools/concierge-preflight.mjs",
     "verify:measurement": "node test/measurement.mjs",
     "verify": "node test/measurement.mjs && node test/bilingual.mjs && next build",
-    "verify:bilingual": "node test/bilingual.mjs"
+    "verify:bilingual": "node test/bilingual.mjs",
+    "verify:links": "node test/links.mjs"
   },
   "dependencies": {
     "@stripe/stripe-js": "^4.0.0",

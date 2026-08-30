@@ -228,7 +228,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 List your business and reach thousands of Americans looking for services in Nuevo Progreso.
               </p>
               <Link
-                href="/quote"
+                href="/auth/register?role=provider"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-green hover:text-brand-green/80 transition-colors"
               >
                 List Your Business

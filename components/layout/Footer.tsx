@@ -29,7 +29,7 @@ export function Footer() {
         { label: d.howItWorks, href: '/how-it-works' },
         { label: d.safetyGuide, href: '/safety' },
         { label: d.aboutUs, href: '/about' },
-        { label: d.listBusiness, href: '/quote' },
+        { label: d.listBusiness, href: '/auth/register?role=provider' },
       ],
     },
   ]
@@ -106,7 +106,7 @@ export function Footer() {
               </a>
               <div>
                 <Link
-                  href={localizedPath('/quote', locale)}
+                  href={localizedPath('/auth/register?role=provider', locale)}
                   className="text-neutral-light hover:text-white transition-colors text-sm font-medium"
                 >
                   {d.listBusiness}
