@@ -21,6 +21,23 @@
  * are case-insensitive, so browsers and Google are unaffected — and note the two
  * instruments genuinely disagree: the browser DOM normalises the name to
  * lowercase, so `outerHTML` finds it either way while curl does not.
+ *
+ * KNOWN GAP, measured on production 2026-08-30 and deliberately NOT asserted
+ * here: every page in the Spanish tree ships `<html lang="en">`. `/es`,
+ * `/es/blog`, all of it. The cause is structural, not a typo -- `app/layout.tsx`
+ * hardcodes lang="en" on the only <html> element in the app, and `app/es/layout.tsx`
+ * is a pass-through fragment. A nested layout cannot set <html>.
+ *
+ * The fix is route groups -- `app/(en)/layout.tsx` and `app/(es)/layout.tsx`, each
+ * a root layout emitting its own <html lang> -- which means moving 258 routes and
+ * needs its own guard and its own regression pass. It is NOT asserted in this file
+ * on purpose: a check that is permanently red is a check people learn to step over,
+ * and this repo already has that lesson written down twice.
+ *
+ * Do NOT "fix" it by calling headers() in the root layout to read the pathname.
+ * That opts the ENTIRE app out of static rendering -- measured: 258 prerendered
+ * routes would become dynamic -- which is a far worse trade than the attribute is
+ * worth.
  */
 import { readFileSync } from 'node:fs'
 import { stripComments } from './_strip-comments.mjs'
