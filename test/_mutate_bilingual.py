@@ -61,10 +61,13 @@ MUTATIONS = [
     # A mutation aimed at the guard's OWN instrument: if the es-MX scan stops
     # stripping comments it fails on lib/hreflang.ts, whose comment explains why
     # es-MX was removed — and the tempting fix is to delete the explanation.
-    ('guard self-check: the es-MX scan stops stripping comments',
-     'test/bilingual.mjs',
-     "  const code = src.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '').split('\\n').map((l) => l.replace(/^\\s*\\/\\/.*$/, '')).join('\\n')",
-     "  const code = src"),
+    # Retargeted when the stripper moved to a shared module: mutating it there
+    # must still be caught by THIS guard's own es-MX check, whose subject file
+    # quotes the string inside a comment explaining its removal.
+    ('the SHARED stripper loses string-awareness (guard self-check)',
+     'test/_strip-comments.mjs',
+     """    if (c === '"' || c === "'" || c === '`') { quote = c; out += c; i++; continue }""",
+     """    if (false) { quote = c; out += c; i++; continue }"""),
 ]
 
 

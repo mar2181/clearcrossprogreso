@@ -4,7 +4,7 @@ import { Resend } from 'resend';
 // crash the build during page-data collection. Only construct when actually sending.
 
 /** Escape user-provided strings before interpolating into email HTML. */
-function esc(v: string | null | undefined): string {
+export function esc(v: string | null | undefined): string {
   return String(v ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -20,7 +20,44 @@ function getResend(): Resend | null {
   return _resend;
 }
 
-const FROM_EMAIL = 'ClearCross Progreso <noreply@clearcrossprogreso.com>';
+/**
+ * The address mail is sent FROM.
+ *
+ * MUST be on a domain verified in Resend, and this one is not. Measured
+ * 2026-08-29: the only verified sending domain on the available Resend account
+ * is petbuddyconcierge.com. So setting RESEND_API_KEY alone would NOT make
+ * quotes work -- every send would be rejected, inside a catch that only
+ * console.errors, i.e. silently. Env-driven so it can be corrected without a
+ * code change. See docs/QUOTE_DELIVERY.md.
+ */
+const FROM_EMAIL =
+  process.env.QUOTE_FROM_EMAIL || 'ClearCross Progreso <noreply@clearcrossprogreso.com>';
+
+/**
+ * Where a quote goes when the clinic has no account here -- which today is every
+ * clinic, because provider registration sat behind a broken link until
+ * 2026-08-29.
+ *
+ * NO DEFAULT, DELIBERATELY. Guessing an address that may not be a real mailbox
+ * replaces one silent failure with another, and this change exists precisely
+ * because a lead reached nobody and nothing said so. Unset produces a loud error
+ * naming the variable.
+ */
+const CLEARCROSS_INBOX = process.env.QUOTE_NOTIFY_TO || '';
+
+/**
+ * One place decides whether mail can be sent at all.
+ *
+ * The three call sites used to test `=== 'your_resend_api_key'` while
+ * getResend() tested `startsWith('your_')`. So a placeholder like
+ * `your_key_here` passed the guard and then getResend() returned null, which
+ * made the non-null assertion on the very next line a lie.
+ */
+export function emailConfigured(): boolean {
+  const key = process.env.RESEND_API_KEY;
+  // `!!key` narrows; `Boolean(key)` does not — TypeScript caught that.
+  return !!key && !key.startsWith('your_');
+}
 
 // ── Quote confirmation sent to the patient ──────────────────────────
 export async function sendQuoteConfirmation({
@@ -36,8 +73,8 @@ export async function sendQuoteConfirmation({
   procedureName: string;
   quoteId: string;
 }) {
-  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'your_resend_api_key') {
-    console.log('[Email] Skipping — RESEND_API_KEY not configured');
+  if (!emailConfigured()) {
+    console.error('[Email] NOT SENT — RESEND_API_KEY is not configured');
     return;
   }
 
@@ -54,8 +91,8 @@ export async function sendQuoteConfirmation({
           </div>
           <p style="color: #2C2C2A;">Hi ${esc(patientName)},</p>
           <p style="color: #2C2C2A;">
-            Your quote request for <strong>${esc(procedureName)}</strong> has been sent to
-            <strong>${esc(providerName)}</strong>. They typically respond within 24 hours.
+            We have your request for <strong>${esc(procedureName)}</strong> and we are getting it
+            to <strong>${esc(providerName)}</strong>. They typically respond within 24 hours.
           </p>
           <div style="background: #F5F5F0; border-radius: 8px; padding: 20px; margin: 24px 0;">
             <p style="margin: 0 0 4px; color: #5F5E5A; font-size: 13px;">Quote ID</p>
@@ -92,8 +129,8 @@ export async function sendProviderQuoteAlert({
   description: string;
   quoteId: string;
 }) {
-  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'your_resend_api_key') {
-    console.log('[Email] Skipping — RESEND_API_KEY not configured');
+  if (!emailConfigured()) {
+    console.error('[Email] NOT SENT — RESEND_API_KEY is not configured');
     return;
   }
 
@@ -114,7 +151,7 @@ export async function sendProviderQuoteAlert({
           </p>
           <div style="background: #F5F5F0; border-radius: 8px; padding: 20px; margin: 24px 0;">
             <p style="margin: 0 0 4px; color: #5F5E5A; font-size: 13px;">Patient Description</p>
-            <p style="margin: 0; color: #2C2C2A;">${description.slice(0, 300)}${description.length > 300 ? '...' : ''}</p>
+            <p style="margin: 0; color: #2C2C2A;">${esc(description.slice(0, 300))}${description.length > 300 ? '...' : ''}</p>
           </div>
           <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://clearcrossprogreso.com'}/provider/quotes"
              style="display: inline-block; background: #3A8B2F; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
@@ -125,6 +162,80 @@ export async function sendProviderQuoteAlert({
     });
   } catch (error) {
     console.error('[Email] Failed to send provider alert:', error);
+  }
+}
+
+// ── Quote alert to ClearCross itself ────────────────────────────────
+/**
+ * Fires on EVERY quote, whether or not the clinic has an account here.
+ *
+ * ⛔ WHY. The provider alert was wrapped in `if (providerUser?.email)` with no
+ * else. No provider had an account — registration sat behind a broken link until
+ * 2026-08-29 — so the branch never ran: no mail, no log, no error. Meanwhile the
+ * patient was emailed "your request has been sent to <clinic>". A false statement
+ * to a customer, on every quote this site has ever taken, invisibly.
+ *
+ * ⛔ RETURNS A RESULT rather than swallowing. The caller has to be able to say
+ * whether a human was actually told; a function that cannot fail visibly is how
+ * this went unnoticed in the first place.
+ */
+export async function sendClearCrossQuoteAlert({
+  providerName,
+  providerReached,
+  patientName,
+  patientEmail,
+  patientPhone,
+  procedureName,
+  description,
+  quoteId,
+}: {
+  providerName: string;
+  providerReached: boolean;
+  patientName: string;
+  patientEmail: string;
+  patientPhone: string;
+  procedureName: string;
+  description: string;
+  quoteId: string;
+}): Promise<{ ok: boolean; reason?: string }> {
+  if (!emailConfigured()) return { ok: false, reason: 'RESEND_API_KEY is not configured' };
+  if (!CLEARCROSS_INBOX) return { ok: false, reason: 'QUOTE_NOTIFY_TO is not configured' };
+
+  // The operationally useful half: whoever opens this needs to know instantly
+  // whether the clinic has already been told or whether they have to forward it.
+  const banner = providerReached
+    ? '<p style="margin:0;color:#3A8B2F;font-weight:600;">The clinic was emailed directly as well.</p>'
+    : '<p style="margin:0;color:#B00020;font-weight:600;">This clinic has NO account here — nobody at the clinic has been told. Forward this manually.</p>';
+
+  try {
+    await getResend()!.emails.send({
+      from: FROM_EMAIL,
+      to: CLEARCROSS_INBOX,
+      replyTo: patientEmail,
+      subject: `[Quote] ${esc(procedureName)} — ${esc(providerName)}`,
+      html: `
+        <div style="font-family: Inter, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px;">
+          <h1 style="color:#1A5CB0;font-size:20px;margin:0 0 16px;">New quote request</h1>
+          <div style="background:#F5F5F0;border-radius:8px;padding:16px;margin-bottom:16px;">${banner}</div>
+          <table style="width:100%;border-collapse:collapse;color:#2C2C2A;font-size:14px;">
+            <tr><td style="padding:4px 0;color:#5F5E5A;width:110px;">Clinic</td><td>${esc(providerName)}</td></tr>
+            <tr><td style="padding:4px 0;color:#5F5E5A;">Procedure</td><td>${esc(procedureName)}</td></tr>
+            <tr><td style="padding:4px 0;color:#5F5E5A;">Patient</td><td>${esc(patientName)}</td></tr>
+            <tr><td style="padding:4px 0;color:#5F5E5A;">Email</td><td>${esc(patientEmail)}</td></tr>
+            <tr><td style="padding:4px 0;color:#5F5E5A;">Phone</td><td>${esc(patientPhone)}</td></tr>
+            <tr><td style="padding:4px 0;color:#5F5E5A;">Quote ID</td><td>${esc(quoteId)}</td></tr>
+          </table>
+          <div style="background:#F5F5F0;border-radius:8px;padding:16px;margin-top:16px;">
+            <p style="margin:0 0 4px;color:#5F5E5A;font-size:13px;">What they wrote</p>
+            <p style="margin:0;color:#2C2C2A;">${esc(description.slice(0, 1000))}${description.length > 1000 ? '…' : ''}</p>
+          </div>
+        </div>
+      `,
+    });
+    return { ok: true };
+  } catch (error) {
+    console.error('[Email] Failed to send the ClearCross quote alert:', error);
+    return { ok: false, reason: String(error).slice(0, 200) };
   }
 }
 
@@ -146,8 +257,8 @@ export async function sendQuoteStatusUpdate({
   quotedPrice?: number | null;
   quoteId: string;
 }) {
-  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 'your_resend_api_key') {
-    console.log('[Email] Skipping — RESEND_API_KEY not configured');
+  if (!emailConfigured()) {
+    console.error('[Email] NOT SENT — RESEND_API_KEY is not configured');
     return;
   }
 

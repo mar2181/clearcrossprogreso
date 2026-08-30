@@ -38,8 +38,12 @@ MUTATIONS = [
     # A mutation aimed at the guard's own instrument: if the comment stripper
     # stops being string-aware it truncates at the gtag URL, and every check
     # downstream becomes meaningless. The controls must catch that.
-    ('stripper loses string-awareness (guard self-check)',
-     'test/measurement.mjs',
+    # The stripper moved to a shared module used by four guards. Mutating it
+    # there must STILL be caught by this guard's own controls -- that is the
+    # point of defence in depth, and it is why the mutation was retargeted
+    # rather than deleted when the code moved.
+    ('the SHARED stripper loses string-awareness (guard self-check)',
+     'test/_strip-comments.mjs',
      "if (c === '\"' || c === \"'\" || c === '`') { quote = c; out += c; i++; continue }",
      "if (false) { quote = c; out += c; i++; continue }"),
 ]

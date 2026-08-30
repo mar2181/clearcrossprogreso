@@ -2,7 +2,11 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { sendQuoteConfirmation, sendProviderQuoteAlert } from '@/lib/email';
+import {
+  sendQuoteConfirmation,
+  sendProviderQuoteAlert,
+  sendClearCrossQuoteAlert,
+} from '@/lib/email';
 import { rateLimit, clientIp } from '@/lib/rate-limit';
 import {
   QUOTE_PHOTO_BUCKET,
@@ -180,8 +184,35 @@ export async function POST(request: NextRequest) {
 
     const procedureName = procedure?.name || 'Custom Procedure';
 
-    // Send email notifications (non-blocking — don't fail the request if emails fail)
-    await Promise.allSettled([
+    // ── Tell somebody ────────────────────────────────────────────────────
+    // ⛔ THE BUG THIS REPLACES: the provider alert below used to be wrapped in
+    // `if (providerUser?.email)` with NO ELSE. No clinic has an account here —
+    // registration sat behind a broken navbar link until 2026-08-29 — so the
+    // branch never ran. No email, no log, no error, and the patient was told
+    // "your request has been sent to <clinic>". Every quote this site has ever
+    // taken reached nobody, and nothing anywhere said so.
+    //
+    // Non-blocking by design: the row is already saved, so a mail failure must
+    // never cost the lead. But it must be VISIBLE, which is the part that was
+    // missing.
+    const { data: providerUser } = await db
+      .from('clearcross_users')
+      .select('email, full_name')
+      .eq('provider_id', providerId)
+      .eq('role', 'provider')
+      .single();
+
+    const providerReached = Boolean(providerUser?.email);
+    if (!providerReached) {
+      console.error(
+        '[quotes] NO PROVIDER ACCOUNT for provider_id=%s (%s) — quote %s can only reach the ClearCross inbox',
+        providerId,
+        provider.name,
+        quoteRequest.id
+      );
+    }
+
+    const [, , clearcross] = await Promise.allSettled([
       sendQuoteConfirmation({
         patientEmail: email,
         patientName: name,
@@ -189,27 +220,40 @@ export async function POST(request: NextRequest) {
         procedureName,
         quoteId: quoteRequest.id,
       }),
-      // Fetch provider's user email for the alert
-      (async () => {
-        const { data: providerUser } = await db
-          .from('clearcross_users')
-          .select('email, full_name')
-          .eq('provider_id', providerId)
-          .eq('role', 'provider')
-          .single();
-
-        if (providerUser?.email) {
-          await sendProviderQuoteAlert({
-            providerEmail: providerUser.email,
+      providerReached
+        ? sendProviderQuoteAlert({
+            providerEmail: providerUser!.email,
             providerName: provider.name,
             patientName: name,
             procedureName,
             description,
             quoteId: quoteRequest.id,
-          });
-        }
-      })(),
+          })
+        : Promise.resolve(),
+      // ⛔ UNCONDITIONAL. This is the whole point: a human at ClearCross hears
+      // about every quote regardless of whether the clinic is onboarded.
+      sendClearCrossQuoteAlert({
+        providerName: provider.name,
+        providerReached,
+        patientName: name,
+        patientEmail: email,
+        patientPhone: phone,
+        procedureName,
+        description,
+        quoteId: quoteRequest.id,
+      }),
     ]);
+
+    // A quote nobody was told about is the failure this route exists to prevent,
+    // so it is logged at error level with the reason, not left to be inferred.
+    const alert = clearcross.status === 'fulfilled' ? clearcross.value : null;
+    if (!alert?.ok) {
+      console.error(
+        '[quotes] QUOTE %s REACHED NOBODY AT CLEARCROSS: %s',
+        quoteRequest.id,
+        alert?.reason ?? (clearcross.status === 'rejected' ? String(clearcross.reason) : 'unknown')
+      );
+    }
 
     return NextResponse.json({ id: quoteRequest.id }, { status: 201 });
   } catch (error) {

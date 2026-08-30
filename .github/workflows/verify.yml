@@ -16,7 +16,11 @@ jobs:
       - name: Install
         run: npm ci
       - name: Guards
-        run: node test/measurement.mjs && node test/bilingual.mjs
+        run: |
+          node test/strip-comments.mjs
+          node test/measurement.mjs
+          node test/bilingual.mjs
+          node test/quote-delivery.mjs
       - name: Build (includes type check)
         run: npm run build
         env:

@@ -8,53 +8,13 @@
  * so it gets a guard rather than a good intention.
  */
 import { readFileSync } from 'node:fs'
+import { stripComments } from './_strip-comments.mjs'
 
-const BACKSLASH = String.fromCharCode(92)
 
 let failures = 0
 const fail = (m) => { console.error('FAIL  ' + m); failures++ }
 const pass = (m) => console.log('ok    ' + m)
 const check = (cond, m) => (cond ? pass(m) : fail(m))
-
-/**
- * Strip comments, string-aware.
- *
- * ⛔ NOT a naive line-comment regex. This source contains
- * `https://www.googletagmanager.com` inside a template literal, and a naive strip
- * truncates the file at that double slash — the guard would then read a file that
- * ends mid-expression and report confident nonsense.
- *
- * ⛔ And comments MUST be stripped at all: the code below deliberately names the
- * banned API in a comment explaining why it is banned. A scan that reads comments
- * accuses its own explanation, and the tempting fix is to delete the explanation.
- */
-function stripComments(src) {
-  let out = ''
-  let i = 0
-  const n = src.length
-  let quote = null // ' " ` or null
-  while (i < n) {
-    const c = src[i]
-    const d = src[i + 1]
-    if (quote) {
-      if (c === BACKSLASH) { out += c + (d ?? ''); i += 2; continue }
-      if (c === quote) quote = null
-      out += c; i++; continue
-    }
-    if (c === '"' || c === "'" || c === '`') { quote = c; out += c; i++; continue }
-    if (c === '/' && d === '/') { while (i < n && src[i] !== '\n') i++; continue }
-    if (c === '/' && d === '*') {
-      i += 2
-      while (i < n && !(src[i] === '*' && src[i + 1] === '/')) {
-        if (src[i] === '\n') out += '\n'
-        i++
-      }
-      i += 2; continue
-    }
-    out += c; i++
-  }
-  return out
-}
 
 const layoutRaw = readFileSync('app/layout.tsx', 'utf8')
 const gaRaw = readFileSync('components/analytics/GoogleAnalytics.tsx', 'utf8')

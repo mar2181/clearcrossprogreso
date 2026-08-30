@@ -23,6 +23,7 @@
  * lowercase, so `outerHTML` finds it either way while curl does not.
  */
 import { readFileSync } from 'node:fs'
+import { stripComments } from './_strip-comments.mjs'
 import { bilingualAlternates, enUrl, esUrl } from '../lib/hreflang.ts'
 
 let failures = 0
@@ -108,7 +109,16 @@ for (const f of SCAN) {
   // The string appears in lib/hreflang.ts only inside the comment explaining why
   // it was removed — so comments are stripped before this runs, or the guard
   // accuses its own explanation and the tempting fix is to delete the reason.
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/^\s*\/\/.*$/, '')).join('\n')
+  const code = stripComments(src)
+  // ⛔ A control against OVER-stripping, on the one file that carries the base
+  // URL. Breaking the shared stripper's string awareness makes it MORE
+  // aggressive: `//` inside a URL becomes a line comment and eats the rest. That
+  // direction removes es-MX too, so the check below would pass on a mangled
+  // file. Proven by mutation — without this line, that mutation reads green.
+  if (f === 'lib/hreflang.ts') {
+    check(code.includes('clearcrossprogreso.com'),
+      'control: stripping did not eat the URL inside a string literal')
+  }
   check(!/es-MX/.test(code), `${f} :: no es-MX (it excludes Spanish speakers with a US locale)`)
 }
 
