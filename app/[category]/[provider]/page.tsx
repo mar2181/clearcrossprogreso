@@ -37,6 +37,7 @@ import {
   getFlashDiscountForProvider,
 } from '@/lib/data';
 import FlashDiscountBanner from '@/components/providers/FlashDiscountBanner';
+import { bilingualAlternates } from '@/lib/hreflang';
 
 // Category labels are now pulled from the database via categoryData.name
 // This empty map is kept only as a fallback for edge cases
@@ -69,6 +70,7 @@ export async function generateMetadata({
       description: `View prices, reviews, and contact information for ${providerData.name}. Compare prices and save vs US costs.`,
       type: 'website',
     },
+    alternates: bilingualAlternates(`/${category}/${provider}`, 'en'),
   };
 }
 

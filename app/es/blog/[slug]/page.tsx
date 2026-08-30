@@ -3,6 +3,7 @@ import { getAllPosts, getPostBySlug } from '@/lib/blog';
 import BlogContent from '@/components/blog/BlogContent';
 import Link from 'next/link';
 import { Globe } from 'lucide-react';
+import { bilingualAlternates } from '@/lib/hreflang';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -65,13 +66,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       locale: 'es_MX',
       publishedTime: post.date,
     },
-    alternates: {
-      canonical: `https://clearcrossprogreso.com/es/blog/${slug}`,
-      languages: {
-        'en-US': `https://clearcrossprogreso.com/blog/${slug}`,
-        'es-MX': `https://clearcrossprogreso.com/es/blog/${slug}`,
-      },
-    },
+    alternates: bilingualAlternates(`/blog/${slug}`, 'es'),
   };
 }
 

@@ -11,7 +11,8 @@
     "concierge:provision": "node tools/provision-concierge.mjs --character leo",
     "preflight:concierge": "node tools/concierge-preflight.mjs",
     "verify:measurement": "node test/measurement.mjs",
-    "verify": "node test/measurement.mjs && next build"
+    "verify": "node test/measurement.mjs && node test/bilingual.mjs && next build",
+    "verify:bilingual": "node test/bilingual.mjs"
   },
   "dependencies": {
     "@stripe/stripe-js": "^4.0.0",

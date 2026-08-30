@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { getCategoryBySlug } from '@/lib/data';
 import { notFound } from 'next/navigation';
+import { bilingualAlternates } from '@/lib/hreflang';
 
 const CATEGORY_LABELS_ES: Record<string, string> = {
   dentists: 'Dentistas',
@@ -37,13 +38,7 @@ export async function generateMetadata({
       type: 'website',
       locale: 'es_MX',
     },
-    alternates: {
-      canonical: `https://clearcrossprogreso.com/es/${category}`,
-      languages: {
-        'en-US': `https://clearcrossprogreso.com/${category}`,
-        'es-MX': `https://clearcrossprogreso.com/es/${category}`,
-      },
-    },
+    alternates: bilingualAlternates(`/${category}`, 'es'),
   };
 }
 

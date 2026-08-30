@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { getAllPosts, getPostBySlug } from '@/lib/blog';
 import BlogContent from '@/components/blog/BlogContent';
+import { bilingualAlternates } from '@/lib/hreflang';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -32,6 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       authors: [post.author],
       publishedTime: post.date,
     },
+    alternates: bilingualAlternates(`/blog/${slug}`, 'en'),
   };
 }
 

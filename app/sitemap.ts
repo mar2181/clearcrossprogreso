@@ -7,31 +7,49 @@
 import { MetadataRoute } from 'next';
 import { getAllPosts } from '@/lib/blog';
 import { getAllCategories, getAllProviderSlugs } from '@/lib/data';
+import { bilingualAlternates, enUrl, esUrl } from '@/lib/hreflang';
 
-const BASE_URL = 'https://clearcrossprogreso.com';
+type Entry = MetadataRoute.Sitemap[number];
+
+/**
+ * Emit BOTH language versions of one route, each carrying the hreflang pair.
+ *
+ * ⛔ The two entries are produced together, from one English path, on purpose.
+ * Before this the sitemap listed 114 English URLs and ZERO Spanish ones — the
+ * entire `/es` tree was invisible to Google in an ~85% Hispanic market — because
+ * the Spanish routes were a separate concern nobody remembered. Pairing them here
+ * makes "add a route but only in English" impossible rather than merely unlikely.
+ *
+ * The per-entry `alternates` emits xhtml:link hreflang in the sitemap itself,
+ * which Google treats as equivalent to the HTML tags. That is what covers the
+ * static pages, which carry no metadata export of their own.
+ */
+function pair(
+  path: string,
+  opts: { changeFrequency: Entry['changeFrequency']; priority: number; lastModified?: Date }
+): Entry[] {
+  const alternates = { languages: bilingualAlternates(path, 'en').languages };
+  const lastModified = opts.lastModified ?? new Date();
+  return [
+    { url: enUrl(path), lastModified, changeFrequency: opts.changeFrequency, priority: opts.priority, alternates },
+    // The Spanish copy is deliberately a notch lower in priority: it is a
+    // translation of the same page, not an additional one.
+    { url: esUrl(path), lastModified, changeFrequency: opts.changeFrequency, priority: Math.max(0.1, opts.priority - 0.1), alternates },
+  ];
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
 
   // Homepage
-  entries.push({
-    url: BASE_URL,
-    lastModified: new Date(),
-    changeFrequency: 'daily',
-    priority: 1.0,
-  });
+  entries.push(...pair('/', { changeFrequency: 'daily', priority: 1.0 }));
 
   // Category pages — from the data layer (works in mock and Supabase modes)
   try {
     const categories = await getAllCategories();
     (categories || []).forEach((cat: any) => {
       if (cat?.slug) {
-        entries.push({
-          url: `${BASE_URL}/${cat.slug}`,
-          lastModified: new Date(),
-          changeFrequency: 'weekly',
-          priority: 0.9,
-        });
+        entries.push(...pair(`/${cat.slug}`, { changeFrequency: 'weekly', priority: 0.9 }));
       }
     });
   } catch (error) {
@@ -39,23 +57,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   // Blog index
-  entries.push({
-    url: `${BASE_URL}/blog`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.8,
-  });
+  entries.push(...pair('/blog', { changeFrequency: 'weekly', priority: 0.8 }));
 
   // Blog posts
   try {
     const posts = await getAllPosts();
     posts.forEach((post) => {
-      entries.push({
-        url: `${BASE_URL}/blog/${post.slug}`,
-        lastModified: new Date(post.date),
-        changeFrequency: 'monthly',
-        priority: 0.7,
-      });
+      entries.push(
+        ...pair(`/blog/${post.slug}`, {
+          changeFrequency: 'monthly',
+          priority: 0.7,
+          lastModified: new Date(post.date),
+        })
+      );
     });
   } catch (error) {
     // ⛔ Deliberately asymmetric with the network blocks above and below: this read
@@ -70,16 +84,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const slugs = await getAllProviderSlugs();
     slugs.forEach(({ category, provider }) => {
       if (category && provider) {
-        entries.push({
-          url: `${BASE_URL}/${category}/${provider}`,
-          lastModified: new Date(),
-          changeFrequency: 'weekly',
-          priority: 0.8,
-        });
+        entries.push(...pair(`/${category}/${provider}`, { changeFrequency: 'weekly', priority: 0.8 }));
       }
     });
   } catch (error) {
     console.error('Error fetching providers for sitemap:', error);
+  }
+
+  // Standing pages. Low ranking value individually, but they are what an E-E-A-T
+  // assessment looks for on a health site, and every one of them was missing.
+  // ⛔ `/search` and `/quote` are deliberately absent: search results are thin and
+  // infinite, and /quote still renders mock data.
+  for (const path of ['/about', '/how-it-works', '/safety', '/privacy', '/terms']) {
+    entries.push(...pair(path, { changeFrequency: 'monthly', priority: 0.5 }));
   }
 
   return entries;

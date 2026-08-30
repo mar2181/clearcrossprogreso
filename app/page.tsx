@@ -8,11 +8,13 @@ import FeaturedProviders from '@/components/home/FeaturedProviders';
 import Testimonials from '@/components/home/Testimonials';
 import RecentBlogPosts from '@/components/home/RecentBlogPosts';
 import { getFeaturedProviders, getCategoryCounts } from '@/lib/data';
+import { bilingualAlternates } from '@/lib/hreflang';
 
 export const metadata = {
   title: 'ClearCross Progreso — The US Charges Up to 2,400% More for Healthcare',
   description:
     'Compare real prices for dental implants, Botox, Ozempic, eye exams and more in Nuevo Progreso, Mexico. The US charges 400–2,400% more for the same care. Get written quotes before you cross the border.',
+  alternates: bilingualAlternates('/', 'en'),
 };
 
 export default async function Home() {

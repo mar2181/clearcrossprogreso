@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getAllPosts } from '@/lib/blog';
+import { bilingualAlternates } from '@/lib/hreflang';
 
 export const metadata: Metadata = {
   title: 'Blog — Consejos y Guías de Salud en Nuevo Progreso | ClearCross',
@@ -13,13 +14,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'es_MX',
   },
-  alternates: {
-    canonical: 'https://clearcrossprogreso.com/es/blog',
-    languages: {
-      'en-US': 'https://clearcrossprogreso.com/blog',
-      'es-MX': 'https://clearcrossprogreso.com/es/blog',
-    },
-  },
+  alternates: bilingualAlternates('/blog', 'es'),
 };
 
 const CATEGORY_LABELS_ES: Record<string, string> = {

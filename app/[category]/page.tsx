@@ -15,6 +15,7 @@ import {
   getProceduresForCategory,
   getActiveFlashDiscounts,
 } from '@/lib/data';
+import { bilingualAlternates } from '@/lib/hreflang';
 
 // Hero and fallback images keyed by slug — new categories without
 // an entry here will simply use the gradient background.
@@ -60,6 +61,7 @@ export async function generateMetadata({
       description: `Compare prices and save on ${categoryData.name.toLowerCase()} in Nuevo Progreso, Mexico.`,
       type: 'website',
     },
+    alternates: bilingualAlternates(`/${category}`, 'en'),
   };
 }
 

@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getAllPosts, getAllTags } from '@/lib/blog';
+import { bilingualAlternates } from '@/lib/hreflang';
 
 export const metadata: Metadata = {
   title: 'Blog | ClearCross Progreso — Dental Tourism Guides & Tips',
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
     url: 'https://clearcrossprogreso.com/blog',
     type: 'website',
   },
+  alternates: bilingualAlternates('/blog', 'en'),
 };
 
 export default async function BlogPage() {

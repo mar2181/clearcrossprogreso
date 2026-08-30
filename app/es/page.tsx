@@ -9,6 +9,7 @@ import Testimonials from '@/components/home/Testimonials';
 import RecentBlogPosts from '@/components/home/RecentBlogPosts';
 import { getFeaturedProviders, getCategoryCounts } from '@/lib/data';
 import type { Metadata } from 'next';
+import { bilingualAlternates } from '@/lib/hreflang';
 
 export const metadata: Metadata = {
   title: 'Mejores Dentistas y Servicios Médicos en Nuevo Progreso México | ClearCross',
@@ -23,13 +24,7 @@ export const metadata: Metadata = {
     description:
       'Encuentre y compare precios de dentistas, farmacias, spas y servicios médicos en Nuevo Progreso, México. Conozca el precio antes de cruzar.',
   },
-  alternates: {
-    canonical: 'https://clearcrossprogreso.com/es',
-    languages: {
-      'en-US': 'https://clearcrossprogreso.com',
-      'es-MX': 'https://clearcrossprogreso.com/es',
-    },
-  },
+  alternates: bilingualAlternates('/', 'es'),
 };
 
 export default async function EsHome() {
