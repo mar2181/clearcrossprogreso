@@ -45,3 +45,6 @@ export async function generateMetadata({
 // Re-export the default component + static params from English version
 export { default } from '@/app/[category]/page';
 export { generateStaticParams } from '@/app/[category]/page';
+// Route segment config is read per route file, so the Spanish tree needs its
+// own export -- without it /es would stay build-time-only while / revalidates.
+export { revalidate } from '@/app/[category]/page';

@@ -65,6 +65,23 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * Regenerate hourly instead of only at build time.
+ *
+ * These pages filter on `verified`, and that column now changes OUTSIDE a
+ * deploy: tools/verify/run-places-verification.mjs re-checks every provider
+ * against Google Places and flips the flag in the database. Baked purely at
+ * build time, 32 providers that had just earned their listing stayed invisible
+ * on the live site and /spas still read "No providers" -- with the database
+ * saying otherwise and nothing anywhere going red.
+ *
+ * A directory that needs a code push to show a new business is a directory
+ * that goes stale between pushes. ISR keeps the page fully static and
+ * crawlable -- the HTML a bot receives is unchanged -- while letting inventory
+ * appear on its own.
+ */
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
   const categories = await getAllCategories();
   return categories.map((cat) => ({ category: cat.slug }));
