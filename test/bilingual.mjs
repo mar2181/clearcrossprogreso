@@ -34,6 +34,35 @@
  * on purpose: a check that is permanently red is a check people learn to step over,
  * and this repo already has that lesson written down twice.
  *
+ * SECOND KNOWN GAP, measured on production 2026-09-01 and bigger than the first:
+ * the Spanish CATEGORY and PROVIDER pages are the English pages with a translated
+ * <title>. Measured with `grep -o | wc -l` on the live HTML:
+ *
+ *     /spas        english-ui 34   spanish-ui 0
+ *     /es/spas     english-ui 34   spanish-ui 0
+ *     /dentists    english-ui 82   spanish-ui 0
+ *     /es/dentists english-ui 82   spanish-ui 0
+ *
+ * Identical. "View Profile", "Compare", "Request Quote", "Verified" all render in
+ * English to a Spanish reader. Cause: app/es/[category]/page.tsx re-exports the
+ * English component wholesale (`export { default } from '@/app/[category]/page'`)
+ * and that component takes no locale, so only generateMetadata is localised.
+ *
+ * And every provider link on those pages points OUT of the Spanish tree --
+ * measured, ZERO `/es/<category>/<slug>` hrefs site-wide, while the Spanish
+ * provider pages themselves exist and return 200 and sit in the sitemap. So a
+ * Spanish visitor is dropped into English on their first click, and 129 real
+ * pages have no internal link pointing at them.
+ *
+ * ⛔ Not asserted here for the same reason as the lang gap: it is a real feature
+ * (thread a locale through ProviderCard and the listing client, which are shared
+ * with search and the homepage), not a patch, and a permanently red check is one
+ * people learn to step over. It is the plan's Phase 4 item 17, which recorded this
+ * for BLOG bodies only -- it is in fact the whole Spanish tree.
+ *
+ * ⛔ This matters more than its position in the plan suggests. The market is ~85%
+ * Hispanic and Spanish is the wedge the whole strategy rests on.
+ *
  * Do NOT "fix" it by calling headers() in the root layout to read the pathname.
  * That opts the ENTIRE app out of static rendering -- measured: 258 prerendered
  * routes would become dynamic -- which is a far worse trade than the attribute is
