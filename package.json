@@ -10,14 +10,15 @@
     "concierge:kb": "node tools/build-concierge-kb.mjs",
     "concierge:provision": "node tools/provision-concierge.mjs --character leo",
     "preflight:concierge": "node tools/concierge-preflight.mjs",
-    "verify": "node test/strip-comments.mjs && node test/measurement.mjs && node test/bilingual.mjs && node test/quote-delivery.mjs && node test/honest-claims.mjs && next build",
+    "verify": "node test/strip-comments.mjs && node test/measurement.mjs && node test/bilingual.mjs && node test/quote-delivery.mjs && node test/honest-claims.mjs && node test/places-match.mjs && next build",
     "verify:strip": "node test/strip-comments.mjs",
     "verify:measurement": "node test/measurement.mjs",
     "verify:bilingual": "node test/bilingual.mjs",
     "verify:quotes": "node test/quote-delivery.mjs",
     "verify:links": "node test/links.mjs",
     "verify:served": "node test/links.mjs",
-    "verify:claims": "node test/honest-claims.mjs"
+    "verify:claims": "node test/honest-claims.mjs",
+    "verify:places": "node test/places-match.mjs"
   },
   "dependencies": {
     "@stripe/stripe-js": "^4.0.0",
