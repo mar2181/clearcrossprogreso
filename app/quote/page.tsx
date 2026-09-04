@@ -1,7 +1,8 @@
 export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { providers as mockProviders, categories as mockCategories } from '@/lib/mock-data';
+import { redirect } from 'next/navigation';
+import { getProviderPathById, getVerifiedProvidersForPicker } from '@/lib/data';
 import { en } from '@/lib/i18n/dictionaries/en';
 
 export const metadata: Metadata = {
@@ -9,17 +10,30 @@ export const metadata: Metadata = {
   description: 'Get a guaranteed price before you cross the border. Request a quote from our vetted providers in Nuevo Progreso, Mexico.',
 };
 
-export default async function QuotePage() {
+export default async function QuotePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ provider?: string }>;
+}) {
   const d = en.quote;
-  // Sort by featured first, then by name
-  const featuredProviders = mockProviders
-    .filter((p) => p.verified)
-    .sort((a, b) => {
-      if (a.featured && !b.featured) return -1;
-      if (!a.featured && b.featured) return 1;
-      return a.name.localeCompare(b.name);
-    })
-    .slice(0, 20);
+
+  // A provider was named -- send the visitor to that provider's own page, at
+  // the form.
+  //
+  // ⛔ Deliberately a redirect to the ONE working form rather than a second
+  // form rendered here. The quote form lives on the provider page and posts to
+  // /api/quotes; a copy on this route would be two forms to keep in step, and
+  // the first divergence is a silently broken funnel.
+  //
+  // A bad or unknown id falls through to the picker below rather than 404ing --
+  // a stale link should cost the visitor a click, not the lead.
+  const { provider: providerId } = await searchParams;
+  if (providerId) {
+    const path = await getProviderPathById(providerId);
+    if (path) redirect(`/${path.category}/${path.provider}#quote-form`);
+  }
+
+  const featuredProviders = await getVerifiedProvidersForPicker(20);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white">
@@ -113,7 +127,7 @@ export default async function QuotePage() {
               {featuredProviders.map((provider) => (
                 <Link
                   key={provider.id}
-                  href={`/${mockCategories.find((c) => c.id === provider.category_id)?.slug || 'dentists'}/${provider.slug}`}
+                  href={`/${provider.categorySlug}/${provider.slug}#quote-form`}
                   className="p-4 border border-neutral-200 rounded-lg hover:border-brand-blue hover:shadow-md transition-all group"
                 >
                   <p className="font-semibold text-neutral-900 group-hover:text-brand-blue">

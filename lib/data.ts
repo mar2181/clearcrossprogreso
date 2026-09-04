@@ -708,3 +708,90 @@ function searchMockData(q: string): SearchResult[] {
     return (b.provider.avg_rating || 0) - (a.provider.avg_rating || 0);
   });
 }
+
+/**
+ * Resolve a provider id to its public path.
+ *
+ * ⛔ WHY THIS EXISTS. Five CTAs across the highest-intent surfaces -- the
+ * provider cards, every row of the price table, the flash-discount banner --
+ * link to `/quote?provider=<id>`. That page never read searchParams, so the
+ * provider the visitor had just chosen was discarded and they were shown a list
+ * asking them to choose one. This is the lookup that ends that round trip.
+ */
+export async function getProviderPathById(id: string) {
+  if (!id) return null;
+
+  if (shouldUseMock()) {
+    const p = mockProviders.find((x) => x.id === id);
+    if (!p) return null;
+    const category = mockCategories.find((c) => c.id === p.category_id);
+    return { category: category?.slug || 'dentists', provider: p.slug };
+  }
+
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
+  const { data } = await supabase
+    .from('clearcross_providers')
+    .select('slug, categories:clearcross_categories(slug)')
+    .eq('id', id)
+    .single();
+
+  if (!data) return null;
+  return {
+    category: (data as any).categories?.slug || 'dentists',
+    provider: (data as any).slug,
+  };
+}
+
+/**
+ * The provider list shown on /quote when no provider was named.
+ *
+ * ⛔ Reads through the data layer on purpose. /quote used to import
+ * lib/mock-data directly -- the only page on the site that did -- so its list
+ * was filtered on a FROZEN mock `verified` flag rather than the live column
+ * the Places re-verification writes. It was stale in both directions: it could
+ * show a provider the site had hidden, and hide one it had just published.
+ */
+export async function getVerifiedProvidersForPicker(limit = 20) {
+  if (shouldUseMock()) {
+    return mockProviders
+      .filter((p) => p.verified)
+      .sort((a, b) => {
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        return a.name.localeCompare(b.name);
+      })
+      .slice(0, limit)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        address: p.address,
+        avg_rating: p.avg_rating,
+        review_count: p.review_count,
+        categorySlug: mockCategories.find((c) => c.id === p.category_id)?.slug || 'dentists',
+      }));
+  }
+
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
+  const { data } = await supabase
+    .from('clearcross_providers')
+    .select('id, name, slug, address, avg_rating, review_count, featured, categories:clearcross_categories(slug)')
+    .eq('verified', true)
+    .order('featured', { ascending: false })
+    .order('name', { ascending: true })
+    .limit(limit);
+
+  if (!data) return [];
+
+  return data.map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    address: p.address,
+    avg_rating: p.avg_rating,
+    review_count: p.review_count,
+    categorySlug: p.categories?.slug || 'dentists',
+  }));
+}

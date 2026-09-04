@@ -60,6 +60,18 @@ export function emailConfigured(): boolean {
 }
 
 // ── Quote confirmation sent to the patient ──────────────────────────
+  // ⛔ NO LINK TO /quote/<id> HERE, DELIBERATELY.
+  //
+  // That page reads through the anon client and the only patient SELECT policy
+  // on clearcross_quote_requests is `user_id = auth.uid()`. The anonymous funnel
+  // creates the user row with gen_random_uuid() via the service role, so it is
+  // not an auth.users id and auth.uid() is null -- every anonymous submitter got
+  // a 404 from a button labelled "View Quote Status". Every submitter is
+  // anonymous. Sending someone a dead link minutes after they trusted us with a
+  // medical photo is worse than not linking at all.
+  //
+  // The real fix is a per-quote access token in the URL, read with the admin
+  // client. Until that ships, this says what is true: we will email you.
 export async function sendQuoteConfirmation({
   patientEmail,
   patientName,
@@ -82,6 +94,9 @@ export async function sendQuoteConfirmation({
     await getResend()!.emails.send({
       from: FROM_EMAIL,
       to: patientEmail,
+      // So a reply reaches a person. FROM_EMAIL is a noreply on a domain the
+      // patient has no other route into; without this their answer is lost.
+      ...(CLEARCROSS_INBOX ? { replyTo: CLEARCROSS_INBOX } : {}),
       subject: `Quote Request Received — ${esc(procedureName)}`,
       html: `
         <div style="font-family: Inter, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px;">
@@ -98,10 +113,10 @@ export async function sendQuoteConfirmation({
             <p style="margin: 0 0 4px; color: #5F5E5A; font-size: 13px;">Quote ID</p>
             <p style="margin: 0; font-weight: 600; color: #2C2C2A;">${quoteId.slice(0, 8).toUpperCase()}</p>
           </div>
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://clearcrossprogreso.com'}/quote/${quoteId}"
-             style="display: inline-block; background: #1A5CB0; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
-            View Quote Status
-          </a>
+          <p style="color: #2C2C2A;">
+            We will email you the moment the clinic comes back with a price. If you
+            need to reach us before then, just reply to this message.
+          </p>
           <p style="color: #5F5E5A; font-size: 13px; margin-top: 32px;">
             If you didn't request this quote, you can safely ignore this email.
           </p>
@@ -284,6 +299,7 @@ export async function sendQuoteStatusUpdate({
     await getResend()!.emails.send({
       from: FROM_EMAIL,
       to: patientEmail,
+      ...(CLEARCROSS_INBOX ? { replyTo: CLEARCROSS_INBOX } : {}),
       subject: msg.subject,
       html: `
         <div style="font-family: Inter, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px;">
@@ -293,10 +309,9 @@ export async function sendQuoteStatusUpdate({
           <p style="color: #2C2C2A;">Hi ${esc(patientName)},</p>
           <p style="color: #2C2C2A;">${msg.body}</p>
           <div style="margin-top: 24px;">
-            <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://clearcrossprogreso.com'}/quote/${quoteId}"
-               style="display: inline-block; background: #1A5CB0; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">
-              View Quote Details
-            </a>
+            <p style="color: #2C2C2A; margin: 0;">
+              Reply to this email if you have any questions about this quote.
+            </p>
           </div>
         </div>
       `,

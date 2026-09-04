@@ -64,7 +64,14 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
 
     const formData = new FormData();
     formData.append('provider_id', providerId);
-    formData.append('procedure_id', form.procedureId || 'general');
+    // Only sent when the visitor actually chose one.
+    //
+    // This used to fall back to a sentinel string, which went into a column
+    // typed uuid NOT NULL -- a guaranteed 500 on the 61% of providers that
+    // publish no prices, because the <select> below is not rendered at all
+    // there and so this value was permanently empty. Guarded by
+    // test/quote-delivery.mjs section 5.
+    if (form.procedureId) formData.append('procedure_id', form.procedureId);
     formData.append('description', form.description.trim());
     formData.append('name', form.name.trim());
     formData.append('email', form.email.trim());
@@ -85,6 +92,20 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
 
       setQuoteId(data.id);
       setStatus('success');
+
+      // The one conversion this form produces.
+      //
+      // Imported dynamically so the analytics bundle is never on the submit
+      // path, and wrapped because a measurement failure must not turn a lead
+      // that already reached the server into an error on screen.
+      try {
+        const { track } = await import('@vercel/analytics');
+        const payload = { provider: providerName, path: window.location.pathname };
+        track('quote_submitted', payload);
+        window.gtag?.('event', 'quote_submitted', payload);
+      } catch {
+        /* never break a lead that has already been accepted */
+      }
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setStatus('error');

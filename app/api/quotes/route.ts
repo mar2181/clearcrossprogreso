@@ -43,7 +43,11 @@ export async function POST(request: NextRequest) {
     const photo = formData.get('photo') as File | null;
 
     // Validation
-    if (!providerId || !procedureId || !description || !name || !email || !phone) {
+    // procedureId is deliberately NOT required. The procedure <select> only
+    // renders for providers that publish prices, so demanding it here rejected
+    // every quote from the majority of provider pages. See section 5 of
+    // test/quote-delivery.mjs.
+    if (!providerId || !description || !name || !email || !phone) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -101,12 +105,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch the procedure name for emails
-    const { data: procedure } = await supabase
-      .from('clearcross_procedures')
-      .select('name')
-      .eq('id', procedureId)
-      .single();
+    // Fetch the procedure name for emails, only when one was supplied.
+    //
+    // Conditional on purpose. Comparing a uuid column against an empty string
+    // is a cast error, and this destructure discards it -- which is precisely
+    // how the old failure stayed invisible in the logs while the insert below
+    // threw for the same reason.
+    const { data: procedure } = procedureId
+      ? await supabase
+          .from('clearcross_procedures')
+          .select('name')
+          .eq('id', procedureId)
+          .single()
+      : { data: null };
 
     // Get or create user
     const { data: existingUser } = await db
@@ -166,7 +177,7 @@ export async function POST(request: NextRequest) {
       .insert({
         provider_id: providerId,
         user_id: userId,
-        procedure_id: procedureId,
+        procedure_id: procedureId || null,
         description,
         photo_url: photoUrl,
         status: 'pending',
@@ -182,7 +193,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const procedureName = procedure?.name || 'Custom Procedure';
+    const procedureName = procedure?.name || 'General enquiry';
 
     // ── Tell somebody ────────────────────────────────────────────────────
     // ⛔ THE BUG THIS REPLACES: the provider alert below used to be wrapped in

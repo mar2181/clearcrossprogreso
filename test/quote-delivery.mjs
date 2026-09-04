@@ -148,6 +148,46 @@ check(!/has been sent to\s*\n?\s*<strong>\$\{esc\(providerName\)/.test(email),
 check(/We have your request for/.test(email),
   'it says what is true in both branches instead')
 
+// ---------------------------------------------------------------- section 5
+// A quote survives a provider that has no price list.
+//
+// ⛔ THE BUG THIS REPLACES, and it was the largest hole in the funnel. The form
+// sent `procedure_id: form.procedureId || 'general'` into a column typed
+// `uuid NOT NULL REFERENCES clearcross_procedures(id)`. Postgres cannot cast
+// the string to a uuid, so the insert threw and the visitor got
+// `500 Failed to create quote request`.
+//
+// It was not an edge case. Where a provider publishes no prices the procedure
+// <select> is not rendered at all (it sits behind `hasProcedures &&`), so
+// procedureId was permanently '' and EVERY submission on that page failed.
+// Measured 2026-09-04: 63 of 104 providers (61%) have no prices. On the other
+// 39% it failed whenever the visitor skipped a dropdown labelled "optional" —
+// which is most of them.
+//
+// The API's own procedure lookup hit the same cast error one block earlier and
+// discarded it, so nothing in the log ever named the cause.
+const form = stripComments(readFileSync('components/quotes/QuoteForm.tsx', 'utf8'))
+
+check(!/['"]general['"]/.test(form),
+  "the form never sends the sentinel 'general' into a uuid column")
+check(/formData\.append\(\s*['"]procedure_id['"]/.test(form) && !/\|\|\s*['"]general['"]/.test(form),
+  'procedure_id is appended only when a real procedure was chosen')
+
+// The required-field gate must not demand a procedure the page never offered.
+const required = between(route, 'if (!providerId', 'status: 400', 'the required-field check')
+check(required !== '' && !/!procedureId/.test(required),
+  'the API does not reject a submission for having no procedure')
+
+// The lookup must be conditional. An unconditional .eq('id', undefined) is the
+// same cast error, one block earlier, inside a swallowing destructure.
+check(/procedureId\s*\?[^:]*:|if\s*\(\s*procedureId\s*\)/.test(route),
+  'the procedure lookup only runs when a procedure was supplied')
+
+// And the insert must write NULL, never a sentinel.
+const insert = between(route, "from('clearcross_quote_requests')", '.select(', 'the quote insert')
+check(insert !== '' && /procedure_id:\s*procedureId\s*\|\|\s*null/.test(insert),
+  'the insert writes procedure_id: procedureId || null')
+
 console.log(failures === 0
   ? '\nPASS — a quote always reaches a human, and the email does not overclaim.'
   : `\nFAILED — ${failures} check(s).`)
