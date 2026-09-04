@@ -38,10 +38,22 @@ import {
 } from '@/lib/data';
 import FlashDiscountBanner from '@/components/providers/FlashDiscountBanner';
 import { bilingualAlternates } from '@/lib/hreflang';
+import {
+  providerGraph,
+  CATEGORY_LABEL,
+  CATEGORY_LABEL_PLURAL,
+} from '@/lib/schema';
 
 // Category labels are now pulled from the database via categoryData.name
 // This empty map is kept only as a fallback for edge cases
-const CATEGORY_LABELS: Record<string, string> = {};
+// The label map used to be declared here as an EMPTY object, so every lookup
+// below fell through to its fallback and all 104 provider titles read
+// "-- dentists in Nuevo Progreso" -- the raw plural URL slug -- while the
+// category page beside them correctly read "Dentists in Nuevo Progreso". The
+// labels now come from lib/schema.ts, which is also what the BreadcrumbList
+// markup reads, so the trail on screen and the trail in the JSON-LD cannot
+// disagree. The plural values were measured against the live category pages
+// first, so nothing visible shifts.
 
 interface ProviderPageProps {
   params: Promise<{ category: string; provider: string }>;
@@ -63,7 +75,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${providerData.name} — ${CATEGORY_LABELS[category] || category} in Nuevo Progreso Mexico | Prices & Reviews | ClearCross`,
+    title: `${providerData.name} — ${CATEGORY_LABEL[category] || category} in Nuevo Progreso Mexico | Prices & Reviews | ClearCross`,
     description: `View prices and reviews for ${providerData.name} in Nuevo Progreso, Mexico. Save big vs US prices. Get a free written quote.`,
     openGraph: {
       title: `${providerData.name} | ClearCross Progreso`,
@@ -115,37 +127,15 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
   const hasPrices = providerPrices.length > 0;
   const flashDiscount = await getFlashDiscountForProvider(providerData.id);
 
-  // Structured data
-  const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: providerData.name,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: providerData.address,
-      addressLocality: 'Nuevo Progreso',
-      addressRegion: 'Tamaulipas',
-      addressCountry: 'MX',
-    },
-    telephone: providerData.phone || undefined,
-    url: providerData.website || undefined,
-    // ⛔ aggregateRating is gated on reviews we ACTUALLY RENDER, never on the
-    // seeded avg_rating/review_count. Google requires review markup to reflect
-    // reviews visible on the page; emitting a 4.2/27 block above a panel that
-    // reads "No reviews yet" is a structured-data policy violation, and that is
-    // manual-action territory on a health site. Tying it to the same `reviews`
-    // array the page renders below means the two can never drift apart again.
-    ...(reviews && reviews.length > 0 && {
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: (
-          reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) /
-          reviews.length
-        ).toFixed(1),
-        reviewCount: reviews.length,
-      },
-    }),
-  };
+  // Structured data. Built from the SAME price helper the visible table uses,
+  // so the JSON-LD can never state a figure the page does not show.
+  const structuredData = providerGraph({
+    provider: providerData as any,
+    category,
+    prices: providerPrices,
+    reviews: reviews || [],
+    flashDiscount,
+  });
 
   return (
     <main className="min-h-screen bg-neutral-50">
@@ -164,7 +154,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
             <li><ChevronRight className="w-3.5 h-3.5" /></li>
             <li>
               <Link href={`/${category}`} className="hover:text-brand-blue transition-colors">
-                {CATEGORY_LABELS[category] || categoryData.name}
+                {CATEGORY_LABEL_PLURAL[category] || categoryData.name}
               </Link>
             </li>
             <li><ChevronRight className="w-3.5 h-3.5" /></li>
@@ -493,7 +483,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
             {relatedProviders && relatedProviders.length > 0 && (
               <section>
                 <h2 className="text-xl font-bold text-neutral-dark mb-6">
-                  Other {CATEGORY_LABELS[category] || categoryData.name} in Nuevo Progreso
+                  Other {CATEGORY_LABEL_PLURAL[category] || categoryData.name} in Nuevo Progreso
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5">
                   {relatedProviders.slice(0, 4).map((relProvider: any) => (
@@ -511,7 +501,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                     href={`/${category}`}
                     className="inline-flex items-center gap-2 text-sm text-brand-blue font-semibold hover:text-brand-navy transition-colors"
                   >
-                    View all {CATEGORY_LABELS[category] || categoryData.name}
+                    View all {CATEGORY_LABEL_PLURAL[category] || categoryData.name}
                     <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>

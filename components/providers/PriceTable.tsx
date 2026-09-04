@@ -6,25 +6,15 @@ import { Zap } from 'lucide-react';
 import { ProviderPrice, FlashDiscount } from '@/lib/types';
 import { cn, formatUSD } from '@/lib/utils';
 import { US_BENCHMARKS } from '@/lib/us-benchmarks';
+// One definition of what a price is, shared with the JSON-LD builder so the
+// table and the structured data cannot drift apart. See lib/pricing.ts.
+import { effectivePrice } from '@/lib/pricing';
 
 interface PriceTableProps {
   prices: (ProviderPrice & { procedure?: { name: string; sort_order: number; slug?: string; id?: string } })[];
   providerName: string;
   providerId?: string;
   flashDiscount?: FlashDiscount | null;
-}
-
-function getDiscountedPrice(price: number, flash: FlashDiscount): number {
-  if (flash.discount_type === 'percentage') {
-    return Math.round(price * (1 - flash.discount_value / 100) * 100) / 100;
-  }
-  return Math.max(0, price - flash.discount_value);
-}
-
-function isProcedureDiscounted(procId: string | undefined, flash: FlashDiscount): boolean {
-  if (!procId) return false;
-  if (!flash.procedure_ids || flash.procedure_ids.length === 0) return true;
-  return flash.procedure_ids.includes(procId);
 }
 
 const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerId, flashDiscount }) => {
@@ -106,6 +96,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
           </thead>
           <tbody>
             {sortedPrices.map((item, index) => {
+              const priced = effectivePrice(item, flashDiscount);
               const procedureSlug = item.procedure?.slug || '';
               const usPrice = US_BENCHMARKS[procedureSlug] || null;
               const dollarSaved = usPrice && item.price_usd ? usPrice - item.price_usd : null;
@@ -127,22 +118,22 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
                     )}
                   </td>
                   <td className="py-3 px-4 text-right">
-                    {item.price_usd !== null && item.price_usd !== undefined ? (
-                      item.price_usd === 0 ? (
+                    {priced ? (
+                      priced.amount === 0 ? (
                         <span className="font-semibold text-brand-green">Free</span>
-                      ) : flashDiscount && isProcedureDiscounted(item.procedure_id || item.procedure?.id, flashDiscount) ? (
+                      ) : priced.wasAmount !== undefined ? (
                         <div className="flex flex-col items-end gap-0.5">
                           <span className="text-xs text-neutral-400 line-through">
-                            {formatUSD(item.price_usd)}
+                            {formatUSD(priced.wasAmount)}
                           </span>
                           <span className="font-bold text-brand-green flex items-center gap-1">
                             <Zap className="w-3 h-3 text-orange-500 fill-orange-500" />
-                            {formatUSD(getDiscountedPrice(item.price_usd, flashDiscount))}
+                            {formatUSD(priced.amount)}
                           </span>
                         </div>
                       ) : (
                         <span className="font-semibold text-brand-green">
-                          {formatUSD(item.price_usd)}
+                          {formatUSD(priced.amount)}
                         </span>
                       )
                     ) : (
