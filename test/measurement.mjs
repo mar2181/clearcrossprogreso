@@ -30,7 +30,7 @@ check(!ga.includes('deliberately NOT'),
   'control: comment prose is actually removed')
 
 // 1. Every measurement surface is mounted.
-for (const tag of ['<Analytics />', '<SpeedInsights />', '<GoogleAnalytics />']) {
+for (const tag of ['<Analytics />', '<SpeedInsights />', '<GoogleAnalytics />', '<OutboundTracker />']) {
   check(layout.includes(tag), `root layout mounts ${tag}`)
 }
 
@@ -65,6 +65,45 @@ check(/\.\.\.\(\s*process\.env\.GOOGLE_SITE_VERIFICATION\s*&&\s*\{/.test(layout)
   'Search Console verification is CONDITIONAL on the env var, not asserted')
 check((layout.match(/verification:/g) || []).length === 1,
   'exactly one verification block (no unconditional second one)')
+
+// ---------------------------------------------------------------- outbound
+// The contact classifier, EXECUTED.
+//
+// ⛔ Scanning the tracker's source cannot distinguish a working classifier from
+// one that returns null for everything -- and "null for everything" produces
+// exactly the same data as "nobody clicked", which is the failure this whole
+// component was built to end. So it is imported and run against real hrefs.
+const { classify } = await import('../lib/outbound.ts')
+const HOST = 'clearcrossprogreso.com'
+
+const cases = [
+  // [href, expected, why]
+  ['tel:956-567-0231', 'contact_phone', 'a phone link'],
+  ['TEL:9565670231', 'contact_phone', 'uppercase scheme still counts'],
+  ['https://wa.me/529564671535', 'contact_whatsapp', 'a WhatsApp link'],
+  ['https://api.whatsapp.com/send?phone=52', 'contact_whatsapp', 'the other WhatsApp host'],
+  ['https://dentalartistry.mx/precios', 'contact_website', "a clinic's own site"],
+  ['https://www.example-clinic.com', 'contact_website', 'a clinic site with www'],
+  // Everything below must NOT be counted as reaching a clinic.
+  ['/dentists/alpha-dental-implant-center', null, 'an internal link is not a contact'],
+  ['/es/dentistas', null, 'an internal Spanish link is not a contact'],
+  ['https://clearcrossprogreso.com/quote', null, 'our own absolute URL is not a contact'],
+  ['https://www.clearcrossprogreso.com/quote', null, 'our own URL with www is not a contact'],
+  ['mailto:info@clearcrossprogreso.com', null, 'mailto is not a clinic contact'],
+  ['#quote-form', null, 'an in-page anchor is not a contact'],
+  ['javascript:void(0)', null, 'a javascript: href is not a contact'],
+  ['', null, 'an empty href is not a contact'],
+]
+
+for (const [href, expected, why] of cases) {
+  const got = classify(href, HOST)
+  check(got === expected, `${why}: classify(${JSON.stringify(href)}) -> ${expected === null ? 'null' : expected}`)
+}
+
+// A control: the classifier must actually discriminate. If it ever returns the
+// same answer for everything, the loop above could still pass a lopsided list.
+const distinct = new Set(cases.map(([h]) => classify(h, HOST)))
+check(distinct.size >= 4, `the classifier discriminates (${distinct.size} distinct outcomes, not one)`)
 
 console.log(failures === 0
   ? '\nPASS — the site can be measured, and cannot silently stop being measurable.'

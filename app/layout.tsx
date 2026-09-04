@@ -5,6 +5,7 @@ import SiteConcierge from '@/components/SiteConcierge'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
+import { OutboundTracker } from '@/components/analytics/OutboundTracker'
 
 export const metadata: Metadata = {
   title: 'Best Dentists & Medical Services in Nuevo Progreso Mexico | ClearCross',
@@ -74,6 +75,11 @@ export default function RootLayout({
         <Analytics />
         <SpeedInsights />
         <GoogleAnalytics />
+        {/* Counts phone, WhatsApp and clinic-website clicks. On most provider
+            pages those are the only working way to reach anybody, and until
+            now not one of them was measured. Inert until Web Analytics or
+            GA4 is switched on; no second deploy needed when they are. */}
+        <OutboundTracker />
       </body>
     </html>
   )
