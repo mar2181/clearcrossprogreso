@@ -84,19 +84,26 @@ declare global {
 /**
  * The pages he can take a visitor to, and what they are called.
  *
- * ⛔ CATEGORIES THAT SHOW NOTHING ARE DELIBERATELY ABSENT. `/spas`, `/doctors`
- * and `/liquor` are in the site's own navigation and every one of them renders
- * "0 verified providers" — the category pages list VERIFIED providers only.
- * Teaching him to offer a page that turns out to be empty is a promise broken
- * on the first click, so this list is the pages that actually have something on
- * them. It is kept in step with `concierge/nav-hint.txt`, which the KB builder
- * generates from the live database for exactly the same reason.
+ * ⛔ A CATEGORY THAT SHOWS NOTHING IS DELIBERATELY ABSENT. Category pages list
+ * confirmed listings only, so teaching him to offer a page that turns out to be
+ * empty is a promise broken on the first click. `/liquor` is in the site's own
+ * navigation and still renders zero, so it is still not here.
+ *
+ * ⛔ THIS LIST GOES STALE SILENTLY, WHICH IS THE REAL HAZARD. It is a hand-kept
+ * copy of something the database knows: `/spas` (8) and `/doctors` (4) were
+ * excluded here — with a comment asserting they rendered zero — for three days
+ * after the Google Places pass took the site from 46 listings to 78. Nothing
+ * went red; he simply denied that two whole categories existed. Keep it in step
+ * with `concierge/nav-hint.txt`, which `tools/build-concierge-kb.mjs` generates
+ * from the live database, and re-run that builder after any verification pass.
  */
 const LIVE_CATEGORIES: { slug: string; en: string; es: string[] }[] = [
   { slug: 'dentists', en: 'Dentists', es: ['dentistas', 'dentista'] },
   { slug: 'pharmacies', en: 'Pharmacies', es: ['farmacias', 'farmacia', 'medicinas'] },
+  { slug: 'spas', en: 'Spas', es: ['spa', 'estetica'] },
   { slug: 'optometrists', en: 'Optometrists', es: ['optometristas', 'lentes', 'optica'] },
   { slug: 'cosmetic-surgery', en: 'Cosmetic Surgery', es: ['cirugia estetica', 'cirugia plastica'] },
+  { slug: 'doctors', en: 'Doctors', es: ['doctores', 'medicos', 'doctor'] },
   { slug: 'vets', en: 'Vets', es: ['veterinarios', 'veterinario'] },
 ]
 

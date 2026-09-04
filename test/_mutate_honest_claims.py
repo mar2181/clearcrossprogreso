@@ -25,6 +25,12 @@ FEAT = 'components/home/FeaturedProviders.tsx'
 PRICE = 'components/providers/PriceTable.tsx'
 SOCIAL = 'components/home/SocialProofBar.tsx'
 
+# The concierge — the surface the guard could not see until 2026-09-04.
+KB = 'concierge/kb.md'
+BUILDER = 'tools/build-concierge-kb.mjs'
+WIDGET = 'components/SiteConcierge.tsx'
+GUARD = 'test/honest-claims.mjs'
+
 TIP = ('ClearCross lists this provider and has checked the listing details. '
        'We have not inspected the clinic or checked professional licences - '
        'ask to see the Cedula Profesional at your appointment.')
@@ -117,6 +123,50 @@ MUTATIONS = [
     # -- The badge must not simply vanish --------------------------------
     ('the confirmed-listing badge is deleted rather than corrected',
      PROV, 'providerData.verified', 'false && providerData.notVerified'),
+
+    # -- Sections 6-8: the concierge, which is the LOUDER surface --------
+    # Dr. Leo is a voice agent: whatever his knowledge base says, he says out
+    # loud. Until 2026-09-04 it claimed providers were "verified against a
+    # valid Cedula Profesional" while the provider page two clicks away said
+    # the opposite. Both halves are mutated -- the artifact AND its generator
+    # -- because scanning only one lets the claim live in the other.
+    ('the Cedula claim comes back in the KB artifact',
+     KB, 'A listing here means one thing: the listing details',
+     'Providers are verified against a valid **Cédula Profesional**, the '
+     'Mexican\nprofessional licence. A listing here means one thing: the '
+     'listing details'),
+
+    ('the Cedula claim comes back in the GENERATOR only',
+     BUILDER, 'A listing here means one thing: the listing details',
+     'Providers are verified against a valid **Cédula Profesional**, the '
+     'Mexican\nprofessional licence. A listing here means one thing: the '
+     'listing details'),
+
+    # -- THE CONTROL again, one surface over -----------------------------
+    # Section 6 is a deny-list, and silence satisfies it perfectly. These two
+    # delete the honest halves -- the admission and the advice -- while
+    # leaving every claim removed.
+    ('the KB drops the admission that we inspected nothing',
+     KB, 'ClearCross has not visited any of these\nclinics, has not inspected '
+     "them, and has not checked anybody's professional\nlicence.", ''),
+
+    ('the KB drops the Cedula ADVICE (over-broad deny-list)',
+     KB, 'Ask to see it at your appointment', 'It is displayed at the office'),
+
+    ('the denial test is deleted from the concierge deny rule',
+     GUARD, ' && !DENIAL.test(s))', ')'),
+
+    # -- The counts, which go stale silently -----------------------------
+    # Anchored on the LABEL, not on the number. Anchoring on "**78 providers**"
+    # would drift the moment the builder is re-run against a changed database,
+    # and the harness would report DRIFTED for a mutation that is still valid.
+    # Prefixing a digit inflates the headline without touching the per-category
+    # lines, which is exactly the hand-edit this check exists to catch.
+    ('a hand-edit moves the headline total but not the category lines',
+     KB, 'Total listed publicly: **', 'Total listed publicly: **9'),
+
+    ('LIVE_CATEGORIES goes stale again (spas dropped)',
+     WIDGET, "  { slug: 'spas', en: 'Spas', es: ['spa', 'estetica'] },\n", ''),
 ]
 
 

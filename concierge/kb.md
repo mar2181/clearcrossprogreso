@@ -10,17 +10,20 @@ any of the providers listed, and it does not take payment for treatment.
 
 ## What is listed right now
 
-- **Dentists** — 24 listed, at `/dentists`
-- **Pharmacies** — 14 listed, at `/pharmacies`
-- **Optometrists** — 1 listed, at `/optometrists`
-- **Cosmetic Surgery** — 6 listed, at `/cosmetic-surgery`
-- **Vets** — 1 listed, at `/vets`
+- **Dentists** — 30 listed, at `/dentists`
+- **Pharmacies** — 16 listed, at `/pharmacies`
+- **Spas** — 8 listed, at `/spas`
+- **Optometrists** — 8 listed, at `/optometrists`
+- **Cosmetic Surgery** — 10 listed, at `/cosmetic-surgery`
+- **Doctors** — 4 listed, at `/doctors`
+- **Vets** — 2 listed, at `/vets`
 
-Total listed publicly: **46 providers**, across 5 categories,
+Total listed publicly: **78 providers**, across 7 categories,
 with **312 individual prices** on file covering 83 procedures.
 
-Listings shown to the public are limited to providers we have **verified**. That
-is why the directory holds more records than the pages display.
+Not every record is shown. A provider reaches a category page only once its
+listing details have been checked; the rest are held back. That is why the
+directory holds more records than the pages display.
 
 ## Dental prices actually on the site
 
@@ -71,12 +74,18 @@ Four steps, described on `/quote`:
 3. **Accept or decline.** An accepted quote locks in that price.
 4. **Visit and review.** Only patients who completed a visit can leave a review.
 
-## Safety and verification
+## What a listing means, and what it does not
 
-Providers are verified against a valid **Cédula Profesional**, the Mexican
-professional licence. Ratings and review counts shown come from that verification
-research. There is a full safety guide at `/safety` covering what to check
-before crossing, and `/how-it-works` explains the process end to end.
+A listing here means one thing: the listing details — name, address, category —
+were checked, against the provider's Google Places record where one could be
+found. It does not mean more than that. ClearCross has not visited any of these
+clinics, has not inspected them, and has not checked anybody's professional
+licence.
+
+Every dentist and doctor practising in Mexico must hold a **Cédula Profesional**,
+the professional licence. Ask to see it at your appointment — it should be
+displayed in the office. There is a full safety guide at `/safety` covering what
+to check before crossing, and `/how-it-works` explains the process end to end.
 
 ## The site in both languages
 

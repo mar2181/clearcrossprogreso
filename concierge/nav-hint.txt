@@ -11,6 +11,9 @@ farmacias -> /pharmacies
 farmacia -> /pharmacies
 medicinas -> /pharmacies
 medicamentos -> /pharmacies
+spas -> /spas
+spa -> /spas
+estetica -> /spas
 optometrists -> /optometrists
 optometristas -> /optometrists
 lentes -> /optometrists
@@ -19,6 +22,10 @@ optica -> /optometrists
 cosmetic surgery -> /cosmetic-surgery
 cirugia estetica -> /cosmetic-surgery
 cirugia plastica -> /cosmetic-surgery
+doctors -> /doctors
+doctores -> /doctors
+medicos -> /doctors
+doctor -> /doctors
 vets -> /vets
 veterinarios -> /vets
 veterinario -> /vets

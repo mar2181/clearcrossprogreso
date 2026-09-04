@@ -115,6 +115,28 @@ const rangesFor = (categorySlug, limit) => {
 };
 
 /* ── kb.md ───────────────────────────────────────────────────────────────── */
+/*
+ * ⛔ THE "WHAT A LISTING MEANS" SECTION BELOW IS THE HIGHEST-LIABILITY PARAGRAPH
+ * IN THIS FILE, and it must not be upgraded. Until 2026-09-04 it read
+ * "providers are verified against a valid Cedula Profesional, the Mexican
+ * professional licence" — a claim the provider page two clicks away flatly
+ * contradicts ("We have not inspected the clinic or checked professional
+ * licences"). Dr. Leo is a VOICE agent on a healthcare directory: whatever is
+ * written there he says OUT LOUD, in the client's own voice, to somebody
+ * deciding whether to cross a border for surgery.
+ *
+ * The site's honest position, which this has to match word for word in
+ * substance: the LISTING was checked; the clinic and the licence were not.
+ * The sources of truth are `app/[category]/[provider]/page.tsx` (the badge
+ * tooltip) and `lib/i18n/dictionaries/{en,es}.ts` (`adv3Desc`).
+ *
+ * ⛔ This note lives OUT HERE rather than in the template literal on purpose.
+ * Inside it, it would be written into `kb.md`, spend the agent's prompt budget
+ * on instructions meant for a developer, and — because it quotes the removed
+ * claim in order to explain it — be caught by section 6 of
+ * `test/honest-claims.mjs`, which scans the generated markdown. Out here,
+ * `stripComments` removes it before that guard ever sees it.
+ */
 const catLines = categories
   .filter((c) => (byCat[c.slug] ?? []).length > 0)
   .map((c) => `- **${c.name}** — ${byCat[c.slug].length} listed, at \`/${c.slug}\``)
@@ -149,8 +171,9 @@ ${catLines}
 Total listed publicly: **${shown.length} providers**, across ${Object.keys(byCat).length} categories,
 with **${prices.length} individual prices** on file covering ${procedures.length} procedures.
 
-Listings shown to the public are limited to providers we have **verified**. That
-is why the directory holds more records than the pages display.
+Not every record is shown. A provider reaches a category page only once its
+listing details have been checked; the rest are held back. That is why the
+directory holds more records than the pages display.
 
 ## Dental prices actually on the site
 
@@ -179,12 +202,18 @@ Four steps, described on \`/quote\`:
 3. **Accept or decline.** An accepted quote locks in that price.
 4. **Visit and review.** Only patients who completed a visit can leave a review.
 
-## Safety and verification
+## What a listing means, and what it does not
 
-Providers are verified against a valid **Cédula Profesional**, the Mexican
-professional licence. Ratings and review counts shown come from that verification
-research. There is a full safety guide at \`/safety\` covering what to check
-before crossing, and \`/how-it-works\` explains the process end to end.
+A listing here means one thing: the listing details — name, address, category —
+were checked, against the provider's Google Places record where one could be
+found. It does not mean more than that. ClearCross has not visited any of these
+clinics, has not inspected them, and has not checked anybody's professional
+licence.
+
+Every dentist and doctor practising in Mexico must hold a **Cédula Profesional**,
+the professional licence. Ask to see it at your appointment — it should be
+displayed in the office. There is a full safety guide at \`/safety\` covering what
+to check before crossing, and \`/how-it-works\` explains the process end to end.
 
 ## The site in both languages
 
@@ -245,14 +274,20 @@ people's health and their money.
    through the quote process, and even then only once it is accepted. Say so.
 
 4. **Never overstate a provider's credentials.** You may say a provider is
-   verified if the site says so. You may not say they are licensed, accredited,
-   board-certified, English-speaking, or the best at anything unless it is
-   written in the record.
+   listed here and that its listing details were checked. You may not say they
+   are licensed, accredited, board-certified, English-speaking, or the best at
+   anything unless it is written in the record.
+
+   ClearCross has not visited any of these clinics and has not checked anybody's
+   professional licence. If you are asked whether a provider is licensed, say
+   plainly that we have not checked that, then tell them every dentist and doctor
+   in Mexico must hold a Cédula Profesional and to ask to see it at the
+   appointment.
 
 5. **Never recommend one provider over another.** You are the directory, not a
    referral. Show what is listed and let the visitor compare. If pressed, explain
-   how to compare — price, rating, review count, verification — rather than
-   picking for them.
+   how to compare — the prices on file, what is listed, and what the provider
+   will put in writing through the quote — rather than picking for them.
 
 6. **Never give border, immigration, customs or legal advice**, including what
    medicine may be brought back across. Point at the safety guide instead.

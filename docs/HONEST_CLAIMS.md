@@ -131,3 +131,66 @@ That is Phase 2 step 11 and it needs the Google Places pass first.
 worded to claim only that the **listing** was checked, which is the most that
 can honestly be said until the Places re-verification runs and can cite a
 source. Do not upgrade the wording to name Google before that pass has run.
+
+> ⛔ **CORRECTION 2026-09-04 — the second half of that paragraph is spent.** The
+> Places pass ran on 2026-09-01 (`docs/PROVIDER_VERIFICATION.md`), so naming
+> Google is now permitted — and `concierge/kb.md` does. It is worded *"against
+> the provider's Google Places record **where one could be found**"* rather than
+> as a blanket claim, because the runner never demotes a currently-visible
+> provider: some visible rows are legacy `verified: true` that were never
+> matched, so "every listing was matched against Places" would not be true. The
+> first half stands: `verified` still records no provenance of its own.
+
+## The surface this guard could not see (2026-09-04)
+
+The sweep above stripped *"we checked the licence"* from every page and left it
+standing in `concierge/kb.md`, which said:
+
+> Providers are verified against a valid **Cédula Profesional**, the Mexican
+> professional licence. Ratings and review counts shown come from that
+> verification research.
+
+Both sentences were false, and the second twice over — no page renders a rating
+at all. It survived because every `SOURCES` array in the guard is a list of
+**pages**, and Dr. Leo is not a page. He is a **voice** agent: whatever is in his
+knowledge base he says out loud, in the client's own voice, to somebody deciding
+whether to cross a border for surgery. It was the loudest surface on the site and
+the only one outside the guard's reach.
+
+Sections 6–8 of `test/honest-claims.mjs` now scan `concierge/*.md`, `nav-hint.txt`
+and — the durable half — `tools/build-concierge-kb.mjs`, which is where the
+sentence actually lived. Scanning only the artifact lets the claim be
+re-introduced at the source and stay green until somebody re-runs the builder.
+
+⛔ **Markdown does not go through `stripComments`.** That helper is a JS/TS
+parser; over prose, a bare `https://` truncates a line and a stray apostrophe
+opens a string that never closes. Markdown has no JS comments — it has HTML ones,
+which is what is removed. The `.mjs` builder still goes through `stripComments`,
+so the comment there quoting the removed claim cannot accuse itself.
+
+⛔ **The line-wrap and the emphasis nearly beat the guard.** The claim rendered as
+`verified against a valid **Cédula\nProfesional**`, so a plain literal misses it
+on both counts. Section 6 flattens accents, markdown emphasis and line wraps
+before matching — a guard that misses the exact sentence it was written for is
+worse than none.
+
+⛔ **The denial test is the whole difficulty, not padding.** The honest
+replacement — *"ClearCross has not visited any of these clinics … and has not
+checked anybody's professional licence"* — carries every ingredient the deny rule
+looks for. Without the negation test the rule deletes the disclaimer and keeps
+nothing. The rule is therefore **self-tested against known answers before it is
+allowed to accuse a file**, with fixtures in both directions, and the scan is
+**skipped** if it misclassifies: a broken instrument must not send the next
+person to edit the knowledge base.
+
+⚠️ **The counts go stale silently, and offline nothing can check them against the
+database.** The KB shipped *"46 providers"* for the three days after the Places
+pass took the site to 78, and `LIVE_CATEGORIES` in `components/SiteConcierge.tsx`
+still excluded `/spas` and `/doctors` — carrying a comment asserting both rendered
+zero — so Dr. Leo denied two whole categories existed. Section 8 checks what *is*
+checkable offline: the per-category counts sum to the headline, the category count
+matches, and the hand-kept `LIVE_CATEGORIES` agrees with the generated
+`nav-hint.txt`. Re-run `npm run concierge:kb` after any verification pass.
+
+Harness: `python test/_mutate_honest_claims.py` — **23 mutations, 23 caught**
+(was 16). Seven are new, and four of those attack the concierge control.
