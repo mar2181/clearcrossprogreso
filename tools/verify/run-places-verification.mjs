@@ -43,6 +43,7 @@ async function searchPlaces(textQuery) {
         'places.id', 'places.displayName', 'places.formattedAddress',
         'places.location', 'places.rating', 'places.userRatingCount',
         'places.businessStatus', 'places.nationalPhoneNumber',
+        'places.internationalPhoneNumber',
         'places.regularOpeningHours.weekdayDescriptions',
       ].join(','),
     },
@@ -55,8 +56,23 @@ async function searchPlaces(textQuery) {
 
 const q = (s) => `'${String(s).replace(/'/g, "''")}'`;
 
+/**
+ * The phone number to store, or null.
+ *
+ * ⛔ INTERNATIONAL FORMAT IS PREFERRED, and it is not a style choice. The
+ * audience is people in the Rio Grande Valley dialing ACROSS A BORDER. Places
+ * returns `nationalPhoneNumber` in the number's OWN country format, so a Mexican
+ * clinic comes back as "899 934 1234" -- which is not dialable from a US phone,
+ * and fails in the worst way: it looks like a phone number and quietly does
+ * nothing. `internationalPhoneNumber` carries the country code, so it is
+ * dialable from either side for both the Mexican clinics and the several
+ * providers on this strip that publish US (+1 956) numbers.
+ */
+const placePhone = (pl) =>
+  (pl.internationalPhoneNumber || pl.nationalPhoneNumber || '').trim() || null;
+
 const rows = await sql(`
-  select p.id, p.name, p.slug, p.address, p.verified, c.slug as category
+  select p.id, p.name, p.slug, p.address, p.verified, p.phone, c.slug as category
   from clearcross_providers p
   join clearcross_categories c on c.id = p.category_id
   order by c.slug, p.name
@@ -99,9 +115,37 @@ const toHide = results.filter((r) => !r.verdict.matched && r.p.verified);
 console.log(`\nwould reveal: ${toReveal.length} (currently hidden, matched)`);
 console.log(`would hide:   ${toHide.length} (currently visible, NO match)`);
 
+// Phone coverage. We already pay for `nationalPhoneNumber` on every call and
+// have been discarding it, while two thirds of provider pages render no working
+// contact affordance at all.
+const hasPhone = (p) => Boolean(p.phone && String(p.phone).trim());
+const phoneFills = matched.filter(({ p, verdict }) => !hasPhone(p) && placePhone(verdict.place));
+const phoneKept = matched.filter(({ p, verdict }) => hasPhone(p) && placePhone(verdict.place));
+console.log(`\nwould fill phone: ${phoneFills.length} (matched, we hold no number)`);
+console.log(`would NOT touch:  ${phoneKept.length} (matched, we already hold a number -- ours wins)`);
+for (const { p, verdict } of phoneFills) {
+  console.log(`  + [${p.category}] ${p.name}  ->  ${placePhone(verdict.place)}`);
+}
+
 if (!APPLY) {
   console.log('\nDRY RUN -- nothing written. Re-run with --apply.');
   process.exit(0);
+}
+
+// The write path below sets `phone_source`, added by migration
+// 005_provider_phone_source.sql. Check it exists BEFORE writing anything rather
+// than discovering it 63 statements in, having already spent the API calls.
+const hasPhoneSource = await sql(`
+  select count(*)::int as n from information_schema.columns
+  where table_name = 'clearcross_providers' and column_name = 'phone_source'
+`);
+if (!hasPhoneSource[0]?.n) {
+  console.error(
+    '\nclearcross_providers.phone_source does not exist.\n' +
+    'Apply supabase/migrations/005_provider_phone_source.sql first, then re-run.\n' +
+    'Nothing has been written.'
+  );
+  process.exit(1);
 }
 
 let written = 0;
@@ -117,9 +161,27 @@ for (const { p, verdict } of results) {
   const pl = verdict.place;
   const hours = pl.regularOpeningHours?.weekdayDescriptions
     ? q(JSON.stringify(pl.regularOpeningHours.weekdayDescriptions)) : 'null';
+  const phone = placePhone(pl) ? q(placePhone(pl)) : 'null';
   await sql(`
     update clearcross_providers set
       verified = true,
+      -- ⛔ FILL A BLANK, NEVER OVERWRITE. Our numbers came from the clinics'
+      -- own websites and WhatClinic (see lib/mock-data.ts); Places is a
+      -- SUPPLEMENT, not an authority, and it is measurably wrong about this
+      -- strip -- six real pharmacies all resolve to Linda Pharmacy. Writing
+      -- Google's number over a curated one would silently point a patient at
+      -- a different business.
+      --
+      -- The rule is a COALESCE rather than a JS conditional, so it is
+      -- structural (and note: no backticks in this comment -- it lives inside a
+      -- JS template literal, where one would terminate the string early). The
+      -- right-hand side reads the OLD row, so this statement CANNOT overwrite a
+      -- number that is already there even if the caller asks it to. A guard in
+      -- JS alone is one edit away from being bypassed.
+      phone = coalesce(nullif(phone, ''), ${phone}),
+      phone_source = case
+        when nullif(phone, '') is null and ${phone} is not null then 'google-places'
+        else phone_source end,
       google_place_id = ${q(pl.id)},
       verified_at = now(),
       verification_source = 'google-places',

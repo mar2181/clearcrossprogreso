@@ -99,11 +99,54 @@ ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, slug=EXCLUDED.slug, descripti
 }
 
 // Providers
+//
+// ⛔ THE CONFLICT PATH MUST NOT TOUCH verified / lat / lng / phone.
+//
+// This seed is generated from lib/mock-data.ts, a snapshot of March 2026
+// research. Four of those columns are no longer owned by that snapshot -- they
+// are owned by tools/verify/run-places-verification.mjs, which checks each
+// provider against Google Places and corrects them in the live database.
+//
+// Before this rule existed the emitted clause ended
+// `... verified=EXCLUDED.verified, lat=EXCLUDED.lat, lng=EXCLUDED.lng;`
+// -- which meant that regenerating this file and
+// applying it would have SILENTLY REVERTED the verification and taken the live
+// site from 78 visible providers back to 46 -- re-emptying /spas, /doctors and
+// /optometrists, the exact three pages in the top nav that the verification pass
+// existed to fill. Nothing would have errored. The seed is idempotent by design,
+// so it would have looked like it worked.
+//
+// The fix is structural rather than a warning: these columns are simply absent
+// from the DO UPDATE list, so an apply CANNOT clobber them however it is run.
+// They remain in the INSERT, which is correct -- a brand new database has no
+// verification results yet and needs the snapshot's values to start from.
+//
+// `phone` is here for the same reason as of migration 005: a provider's number
+// may now have been filled from Places, and re-seeding would blank it back to
+// the NULL that mock-data holds for two thirds of these rows.
+//
+// ⚠️ Not covered, and a real but separate question: avg_rating / review_count
+// stay in the update list. Those ARE still owned by the snapshot -- nothing live
+// writes them (Google's rating goes to google_rating, see migration 003) -- so
+// re-seeding restores them rather than reverting anything. They are a hazard for
+// a different reason, recorded in docs/PROVIDER_VERIFICATION.md.
+const PROVIDER_SEED_OWNED = [
+  'name', 'address', 'whatsapp', 'website', 'description', 'logo_url',
+  'photo_url', 'graduation_year', 'featured', 'plan', 'avg_rating',
+  'review_count',
+];
+const providerConflictSet = PROVIDER_SEED_OWNED.map((c) => `${c}=EXCLUDED.${c}`).join(', ');
+
 sql += '\n-- Providers\n';
+sql += `-- ⛔ verified / lat / lng / phone are deliberately ABSENT from the
+-- DO UPDATE list below. They are owned by the Google Places verification pass
+-- (tools/verify/run-places-verification.mjs), not by this snapshot. Re-adding
+-- them here would make re-applying this seed revert the verification and hide
+-- 32 currently-visible providers. See scripts/generate-seed.mjs.\n`;
 for (const p of mock.providers) {
   sql += `INSERT INTO public.clearcross_providers (id, category_id, name, slug, address, phone, whatsapp, website, description, logo_url, photo_url, graduation_year, verified, featured, plan, avg_rating, review_count, lat, lng)
 VALUES (${q(uuid5(p.id))}, ${q(uuid5(p.category_id))}, ${q(p.name)}, ${q(p.slug)}, ${q(p.address)}, ${q(p.phone)}, ${q(p.whatsapp)}, ${q(p.website)}, ${q(p.description)}, ${q(p.logo_url)}, ${q(p.photo_url)}, ${q(p.graduation_year)}, ${q(p.verified ?? false)}, ${q(p.featured ?? false)}, ${q(p.plan ?? 'free')}, ${q(p.avg_rating ?? 0)}, ${q(p.review_count ?? 0)}, ${q(p.lat)}, ${q(p.lng)})
-ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, address=EXCLUDED.address, phone=EXCLUDED.phone, whatsapp=EXCLUDED.whatsapp, website=EXCLUDED.website, description=EXCLUDED.description, logo_url=EXCLUDED.logo_url, photo_url=EXCLUDED.photo_url, graduation_year=EXCLUDED.graduation_year, verified=EXCLUDED.verified, featured=EXCLUDED.featured, plan=EXCLUDED.plan, avg_rating=EXCLUDED.avg_rating, review_count=EXCLUDED.review_count, lat=EXCLUDED.lat, lng=EXCLUDED.lng;\n`;
+ON CONFLICT (id) DO UPDATE SET ${providerConflictSet};\n`;
 }
 
 // Prices
