@@ -11,6 +11,8 @@ import { Card, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import StarRating from '@/components/ui/StarRating';
+import { useI18n } from '@/lib/i18n';
+import { localizedPath } from '@/lib/i18n/get-locale';
 import CountdownTimer from '@/components/ui/CountdownTimer';
 
 interface ProviderCardProps {
@@ -33,6 +35,7 @@ function getYearsExperience(graduationYear: number | null): number | null {
 }
 
 const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedureIds = [], flashDiscount, onCompare, isInCompare = false }) => {
+  const { locale } = useI18n();
   const categoryName = provider.category?.name || 'Medical';
   const categorySlug = provider.category?.slug || 'dentists';
   const yearsExp = getYearsExperience(provider.graduation_year);
@@ -60,7 +63,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
       <CardContent className="flex-1 p-0">
         {/* Provider photo */}
         {provider.photo_url && (
-          <Link href={`/${categorySlug}/${provider.slug}`}>
+          <Link href={localizedPath(`/${categorySlug}/${provider.slug}`, locale)}>
             <div className="relative w-full h-40 overflow-hidden rounded-t-xl">
               <Image
                 src={provider.photo_url}
@@ -110,7 +113,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
         <div className="p-4 pb-3 border-b border-neutral-100">
           <div className="flex items-start justify-between gap-2 mb-2">
             <Link
-              href={`/${categorySlug}/${provider.slug}`}
+              href={localizedPath(`/${categorySlug}/${provider.slug}`, locale)}
               className="flex-1 hover:text-brand-blue transition-colors"
             >
               <h3 className="font-semibold text-neutral-dark text-sm line-clamp-2">
@@ -202,7 +205,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
           <div className="px-4 py-3 border-b border-neutral-100">
             <p className="text-xs text-neutral-400 italic mb-1">No price listed for this procedure</p>
             <Link
-              href={`/quote?provider=${provider.id}`}
+              href={`${localizedPath(`/${categorySlug}/${provider.slug}`, locale)}#quote-form`}
               className="text-sm font-medium text-brand-blue hover:underline"
             >
               Request Quote
@@ -211,7 +214,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
         ) : (
           <div className="px-4 py-3 border-b border-neutral-100">
             <Link
-              href={`/quote?provider=${provider.id}`}
+              href={`${localizedPath(`/${categorySlug}/${provider.slug}`, locale)}#quote-form`}
               className="text-sm font-medium text-brand-blue hover:underline"
             >
               Request Quote
@@ -240,7 +243,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
           </button>
         )}
         <Link
-          href={`/${categorySlug}/${provider.slug}`}
+          href={localizedPath(`/${categorySlug}/${provider.slug}`, locale)}
           className="flex-1"
         >
           <Button
@@ -252,7 +255,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
           </Button>
         </Link>
         <Link
-          href={`/quote?provider=${provider.id}`}
+          href={`${localizedPath(`/${categorySlug}/${provider.slug}`, locale)}#quote-form`}
           className="flex-1"
         >
           <Button
