@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useI18n } from '@/lib/i18n';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +26,7 @@ const StarRating: React.FC<StarRatingProps> = ({
   showCount,
   className,
 }) => {
+  const { dict } = useI18n();
   const iconSize = sizeMap[size];
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
@@ -65,7 +67,7 @@ const StarRating: React.FC<StarRatingProps> = ({
       {/* Review Count */}
       {showCount !== undefined && (
         <span className="text-sm text-neutral-500 ml-1">
-          ({showCount} {showCount === 1 ? 'review' : 'reviews'})
+          ({showCount} {showCount === 1 ? dict.ui.reviewOne : dict.ui.reviewMany})
         </span>
       )}
     </div>

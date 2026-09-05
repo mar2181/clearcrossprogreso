@@ -107,7 +107,7 @@ export async function sendQuoteConfirmation({
           <p style="color: #2C2C2A;">Hi ${esc(patientName)},</p>
           <p style="color: #2C2C2A;">
             We have your request for <strong>${esc(procedureName)}</strong> and we are getting it
-            to <strong>${esc(providerName)}</strong>. They typically respond within 24 hours.
+            to <strong>${esc(providerName)}</strong>. They reply to you directly with their own price.
           </p>
           <div style="background: #F5F5F0; border-radius: 8px; padding: 20px; margin: 24px 0;">
             <p style="margin: 0 0 4px; color: #5F5E5A; font-size: 13px;">Quote ID</p>

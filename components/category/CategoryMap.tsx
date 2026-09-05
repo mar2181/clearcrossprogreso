@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { Map, List, MapPin } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
+import { categoryLabel } from '@/lib/i18n/category-label';
 import { cn } from '@/lib/utils';
 
 interface CategoryMapProps {
@@ -25,6 +27,8 @@ interface CategoryMapProps {
  * Uses a search query to center on Nuevo Progreso with markers.
  */
 export default function CategoryMap({ providers, categoryName, categorySlug }: CategoryMapProps) {
+  const { dict } = useI18n();
+  const categoryLabelText = categoryLabel(categorySlug, dict, categoryName);
   const [view, setView] = useState<'list' | 'map'>('list');
 
   // Filter to providers with coordinates
@@ -51,7 +55,7 @@ export default function CategoryMap({ providers, categoryName, categorySlug }: C
           )}
         >
           <List className="w-3.5 h-3.5" />
-          List
+          {dict.ui.listView}
         </button>
         <button
           onClick={() => setView('map')}
@@ -63,10 +67,10 @@ export default function CategoryMap({ providers, categoryName, categorySlug }: C
           )}
         >
           <Map className="w-3.5 h-3.5" />
-          Map View
+          {dict.ui.mapView}
         </button>
         <span className="text-xs text-neutral-400 ml-2">
-          {withCoords.length} locations mapped
+          {dict.ui.locationsMapped.replace('{n}', String(withCoords.length))}
         </span>
       </div>
 
@@ -75,7 +79,7 @@ export default function CategoryMap({ providers, categoryName, categorySlug }: C
         <div className="rounded-xl overflow-hidden border border-neutral-200 shadow-sm mb-6">
           <div className="relative w-full h-[400px] sm:h-[500px]">
             <iframe
-              title={`Map of ${categoryName} in Nuevo Progreso`}
+              title={dict.ui.mapTitle.replace('{category}', categoryLabelText)}
               src={embedUrl}
               width="100%"
               height="100%"
@@ -89,7 +93,7 @@ export default function CategoryMap({ providers, categoryName, categorySlug }: C
           <div className="bg-white p-4 border-t border-neutral-100">
             <p className="text-sm text-neutral-mid flex items-center gap-1.5">
               <MapPin className="w-4 h-4 text-brand-blue" />
-              <strong>{withCoords.length}</strong> {categoryName.toLowerCase()} locations in Nuevo Progreso, Tamaulipas
+              <strong>{withCoords.length}</strong> {dict.ui.mapLocationsLine.replace('{category}', categoryLabelText.toLowerCase())}
             </p>
           </div>
         </div>

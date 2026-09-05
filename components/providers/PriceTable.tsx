@@ -9,6 +9,7 @@ import { US_BENCHMARKS } from '@/lib/us-benchmarks';
 // One definition of what a price is, shared with the JSON-LD builder so the
 // table and the structured data cannot drift apart. See lib/pricing.ts.
 import { effectivePrice } from '@/lib/pricing';
+import { useI18n } from '@/lib/i18n';
 
 interface PriceTableProps {
   prices: (ProviderPrice & { procedure?: { name: string; sort_order: number; slug?: string; id?: string } })[];
@@ -18,6 +19,7 @@ interface PriceTableProps {
 }
 
 const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerId, flashDiscount }) => {
+  const { dict } = useI18n();
   const [showComparison, setShowComparison] = useState(true);
 
   // Sort by procedure sort_order
@@ -30,7 +32,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
   if (sortedPrices.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-neutral-500">No procedures listed yet.</p>
+        <p className="text-neutral-500">{dict.ui.noProceduresYet}</p>
       </div>
     );
   }
@@ -52,7 +54,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
       {/* Banner */}
       <div className="bg-brand-green-light border border-brand-green/20 rounded-lg p-4">
         <p className="text-sm text-brand-green font-medium">
-          These are the prices the provider gave ClearCross. Ask for a written quote before any work begins, and take it with you.
+          {dict.ui.priceSourceNote}
         </p>
       </div>
 
@@ -67,7 +69,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
               : 'bg-neutral-100 text-neutral-500 border border-neutral-200'
           )}
         >
-          {showComparison ? '🇺🇸 US comparison ON' : '🇺🇸 Show US prices'}
+          {showComparison ? dict.ui.comparisonOn : dict.ui.comparisonOff}
         </button>
       </div>
 
@@ -77,18 +79,18 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
           <thead>
             <tr className="border-b border-neutral-200">
               <th className="text-left py-3 px-4 font-semibold text-neutral-dark">
-                Procedure
+                {dict.ui.colProcedure}
               </th>
               <th className="text-right py-3 px-4 font-semibold text-brand-green">
-                Progreso Price
+                {dict.ui.colProgresoPrice}
               </th>
               {showComparison && (
                 <>
                   <th className="text-right py-3 px-4 font-semibold text-neutral-400">
-                    US Price
+                    {dict.ui.colUsPrice}
                   </th>
                   <th className="text-right py-3 px-4 font-semibold text-brand-green">
-                    You Save
+                    {dict.ui.colYouSave}
                   </th>
                 </>
               )}
@@ -110,7 +112,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
                   )}
                 >
                   <td className="py-3 px-4 text-neutral-dark">
-                    <span>{item.procedure?.name || 'Procedure'}</span>
+                    <span>{item.procedure?.name || dict.ui.colProcedure}</span>
                     {item.price_notes && (
                       <span className="block text-xs text-neutral-500 mt-0.5">
                         {item.price_notes}
@@ -120,7 +122,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
                   <td className="py-3 px-4 text-right">
                     {priced ? (
                       priced.amount === 0 ? (
-                        <span className="font-semibold text-brand-green">Free</span>
+                        <span className="font-semibold text-brand-green">{dict.ui.free}</span>
                       ) : priced.wasAmount !== undefined ? (
                         <div className="flex flex-col items-end gap-0.5">
                           <span className="text-xs text-neutral-400 line-through">
@@ -138,10 +140,10 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
                       )
                     ) : (
                       <Link
-                        href={`/quote?provider=${providerId}`}
+                        href="#quote-form"
                         className="text-brand-blue hover:underline font-medium"
                       >
-                        Request Quote
+                        {dict.ui.requestQuote}
                       </Link>
                     )}
                   </td>
@@ -157,7 +159,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
                       <td className="py-3 px-4 text-right">
                         {dollarSaved && dollarSaved > 0 ? (
                           <span className="inline-flex items-center gap-1 bg-brand-green/10 text-brand-green font-bold text-xs px-2 py-1 rounded-full">
-                            Save ${dollarSaved.toLocaleString()}
+                            {dict.ui.save} ${dollarSaved.toLocaleString()}
                           </span>
                         ) : (
                           <span className="text-neutral-300">—</span>
@@ -176,7 +178,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
       {showComparison && savingsCount > 0 && (
         <div className="bg-gradient-to-r from-brand-green/5 to-brand-blue/5 border border-brand-green/20 rounded-lg p-4">
           <p className="text-sm text-neutral-dark">
-            <span className="font-bold text-brand-green">💰 Save ${totalSaved.toLocaleString()}</span> on these {savingsCount} procedures compared to US prices.
+            <span className="font-bold text-brand-green">💰 Save ${totalSaved.toLocaleString()}</span> {dict.ui.savingsSummaryTail.replace('{n}', String(savingsCount))}
             {/*
               ⛔ This sentence used to read "All procedures at {providerName} are
               performed by licensed professionals using the same quality
@@ -186,8 +188,7 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
               from instead; that part is true and is the part a reader needs.
               Guarded by test/honest-claims.mjs sections 9 and 10.
             */}
-            Worked out from the prices {providerName} gave ClearCross against average US
-            self-pay prices. Ask for the final price in writing before any work begins.
+            {dict.ui.savingsProvenance.replace('{provider}', providerName)}
           </p>
         </div>
       )}

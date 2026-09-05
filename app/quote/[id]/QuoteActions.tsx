@@ -234,7 +234,7 @@ export function QuoteActions({
         {/* Price Display */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-6">
           <p className="text-sm text-green-700 mb-2 font-medium">
-            Guaranteed Quote Price
+            Quoted Price
           </p>
           <p className="text-4xl font-bold text-green-700 mb-4">
             ${quotedPrice?.toFixed(2) || '0.00'}

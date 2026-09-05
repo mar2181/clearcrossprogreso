@@ -128,6 +128,21 @@ export interface ProviderGraphInput {
   prices: PricedProcedure[];
   reviews: { rating: number }[];
   flashDiscount?: FlashDiscount | null;
+  /**
+   * The label the PAGE renders for "Home" in the visitor's language, and the
+   * URL of that home page. ⛔ Both, not just the label: on /es the trail starts
+   * at /es, so a hardcoded SITE_URL points the crumb at the English home page.
+   */
+  homeLabel?: string;
+  homeUrl?: string;
+  /**
+   * The label the PAGE renders for this category in the visitor's language.
+   * ⛔ Google requires the BreadcrumbList to describe the trail the visitor
+   * actually sees, so this must be the same string the markup shows -- which is
+   * why it is passed in rather than looked up again here. Defaults to the
+   * English plural label, so an existing caller is unchanged.
+   */
+  categoryLabel?: string;
 }
 
 /**
@@ -143,6 +158,9 @@ export function providerGraph({
   prices,
   reviews,
   flashDiscount,
+  categoryLabel,
+  homeLabel,
+  homeUrl,
 }: ProviderGraphInput) {
   const pageUrl = SITE_URL + '/' + category + '/' + provider.slug;
   const businessId = pageUrl + '#business';
@@ -208,11 +226,11 @@ export function providerGraph({
     '@type': 'BreadcrumbList',
     '@id': pageUrl + '#breadcrumb',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      { '@type': 'ListItem', position: 1, name: homeLabel || 'Home', item: homeUrl || SITE_URL },
       {
         '@type': 'ListItem',
         position: 2,
-        name: CATEGORY_LABEL_PLURAL[category] || category,
+        name: categoryLabel || CATEGORY_LABEL_PLURAL[category] || category,
         item: SITE_URL + '/' + category,
       },
       { '@type': 'ListItem', position: 3, name: provider.name },

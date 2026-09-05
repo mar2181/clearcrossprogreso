@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useI18n } from '@/lib/i18n';
 import { Review } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import StarRating from '@/components/ui/StarRating';
@@ -11,11 +12,12 @@ interface ReviewListProps {
 }
 
 const ReviewList: React.FC<ReviewListProps> = ({ reviews }) => {
+  const { dict } = useI18n();
   if (reviews.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-neutral-500">
-          No reviews yet. Be the first to share your experience.
+          {dict.ui.rNoneYet}
         </p>
       </div>
     );
@@ -35,11 +37,11 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviews }) => {
         <div className="bg-neutral-50 rounded-lg p-6 border border-neutral-200">
           <div className="flex items-center gap-4">
             <div>
-              <p className="text-neutral-500 text-sm mb-1">Average Rating</p>
+              <p className="text-neutral-500 text-sm mb-1">{dict.ui.rAverageRating}</p>
               <div className="flex items-center gap-2">
                 <StarRating rating={averageRating} size="md" />
                 <span className="text-sm text-neutral-600">
-                  {averageRating.toFixed(1)} out of 5
+                  {averageRating.toFixed(1)} {dict.ui.pOutOf5}
                 </span>
               </div>
             </div>
@@ -68,7 +70,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviews }) => {
                   <StarRating rating={review.rating} size="sm" className="mb-2" />
                   {review.verified && (
                     <Badge variant="verified" className="text-xs">
-                      ✓ Verified Patient
+                      ✓ {dict.ui.verifiedPatient}
                     </Badge>
                   )}
                 </div>
@@ -90,7 +92,7 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviews }) => {
           ))
         ) : (
           <div className="text-center py-8">
-            <p className="text-neutral-500">No verified reviews yet.</p>
+            <p className="text-neutral-500">{dict.ui.rNoVerified}</p>
           </div>
         )}
       </div>

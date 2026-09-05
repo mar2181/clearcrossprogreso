@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useI18n } from '@/lib/i18n';
+import { localizedPath } from '@/lib/i18n/get-locale';
 import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, Star, Search, ArrowRight, Sparkles, SearchX, TrendingUp, Award } from 'lucide-react';
@@ -40,6 +42,7 @@ const POPULAR_SEARCHES = [
 ];
 
 export default function SearchResultsClient({ results, query }: SearchResultsClientProps) {
+  const { dict, locale } = useI18n();
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -50,18 +53,18 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
           <Search className="w-10 h-10 text-brand-blue/40" />
         </div>
         <p className="text-neutral-dark text-lg font-semibold font-display">
-          Start searching
+          {dict.ui.startSearching}
         </p>
         <p className="text-neutral-400 text-sm mt-2 max-w-sm mx-auto">
-          Type at least 2 characters to search across procedures, medicines, and providers
+          {dict.ui.startSearchingDesc}
         </p>
         <div className="mt-8">
-          <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-3">Popular searches</p>
+          <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-3">{dict.ui.popularSearches}</p>
           <div className="flex flex-wrap justify-center gap-2">
             {POPULAR_SEARCHES.map((s) => (
               <Link
                 key={s.query}
-                href={`/search?q=${encodeURIComponent(s.query)}`}
+                href={localizedPath(`/search?q=${encodeURIComponent(s.query)}`, locale)}
                 className="px-3.5 py-1.5 bg-white border border-neutral-200 rounded-full text-sm text-neutral-600 hover:border-brand-blue hover:text-brand-blue hover:bg-brand-blue/5 transition-all"
               >
                 {s.label}
@@ -89,7 +92,7 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
           {POPULAR_SEARCHES.map((s) => (
             <Link
               key={s.query}
-              href={`/search?q=${encodeURIComponent(s.query)}`}
+              href={localizedPath(`/search?q=${encodeURIComponent(s.query)}`, locale)}
               className="px-3.5 py-1.5 bg-white border border-neutral-200 rounded-full text-sm text-neutral-600 hover:border-brand-blue hover:text-brand-blue hover:bg-brand-blue/5 transition-all"
             >
               {s.label}
@@ -97,10 +100,10 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
           ))}
         </div>
         <Link
-          href="/#categories"
+          href={localizedPath(`/#categories`, locale)}
           className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-blue text-white rounded-lg font-medium text-sm hover:bg-brand-navy transition-colors shadow-sm"
         >
-          Browse All Categories
+          {dict.ui.browseAllCategories}
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
@@ -210,7 +213,7 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
                 </span>
               </h2>
               <Link
-                href={`/${catSlug}`}
+                href={localizedPath(`/${catSlug}`, locale)}
                 className="text-sm text-brand-blue font-medium hover:text-brand-navy flex items-center gap-1 transition-colors"
               >
                 View all <ArrowRight className="w-3.5 h-3.5" />
@@ -233,7 +236,7 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
                 return (
                   <Link
                     key={result.provider.id}
-                    href={`/${result.category.slug}/${result.provider.slug}`}
+                    href={localizedPath(`/${result.category.slug}/${result.provider.slug}`, locale)}
                     className={`group block rounded-xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${
                       isFeatured
                         ? 'bg-gradient-to-r from-brand-blue/[3%] to-transparent border-l-[3px] border-l-brand-blue border border-neutral-200/80 shadow-sm'
@@ -267,13 +270,13 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
                               </h3>
                               {result.provider.verified && (
                                 <span className="flex-shrink-0 text-[10px] bg-brand-green/10 text-brand-green font-semibold px-2 py-0.5 rounded-full border border-brand-green/20">
-                                  Verified
+                                  {dict.ui.verified}
                                 </span>
                               )}
                               {isFeatured && (
                                 <span className="flex-shrink-0 text-[10px] bg-amber/10 text-amber font-semibold px-2 py-0.5 rounded-full border border-amber/20 inline-flex items-center gap-0.5">
                                   <Sparkles className="w-2.5 h-2.5" />
-                                  Featured
+                                  {dict.ui.featured}
                                 </span>
                               )}
                               {yearsExp && yearsExp > 0 && (
@@ -343,7 +346,7 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
                           {minPrice && (
                             <div className="flex-shrink-0 ml-2">
                               <div className="bg-brand-green/10 rounded-xl px-3 py-2.5 text-center border border-brand-green/15">
-                                <p className="text-[10px] font-medium text-brand-green/70 uppercase tracking-wider">from</p>
+                                <p className="text-[10px] font-medium text-brand-green/70 uppercase tracking-wider">{dict.ui.fromPrice}</p>
                                 <p className="text-xl font-bold text-brand-green leading-tight">
                                   {formatUSD(minPrice)}
                                 </p>
@@ -383,7 +386,7 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
             -- a provider gives us a number and we publish it. See
             test/honest-claims.mjs section 9.
           */}
-          <span>Prices as listed by each provider</span>
+          <span>{dict.ui.pricesAsListed}</span>
         </div>
       </div>
     </div>

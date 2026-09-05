@@ -42,8 +42,15 @@ export async function generateMetadata({
   };
 }
 
-// Re-export the default component + static params from English version
-export { default } from '@/app/[category]/[provider]/page';
+// ⛔ NOT a bare re-export. See app/es/[category]/page.tsx -- the English
+// component takes a locale and defaults to 'en', so re-exporting it served
+// English copy to every Spanish reader while only the <title> was translated.
+import ProviderPage from '@/app/[category]/[provider]/page';
+
+export default async function EsProviderPage({ params }: ProviderPageProps) {
+  return ProviderPage({ params, locale: 'es' });
+}
+
 export { generateStaticParams } from '@/app/[category]/[provider]/page';
 // Route segment config is read per route file, so the Spanish tree needs its
 // own export -- without it /es would stay build-time-only while / revalidates.

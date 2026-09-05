@@ -13,6 +13,7 @@ import Button from '@/components/ui/Button';
 import StarRating from '@/components/ui/StarRating';
 import { useI18n } from '@/lib/i18n';
 import { localizedPath } from '@/lib/i18n/get-locale';
+import { categoryLabel } from '@/lib/i18n/category-label';
 import CountdownTimer from '@/components/ui/CountdownTimer';
 
 interface ProviderCardProps {
@@ -35,8 +36,9 @@ function getYearsExperience(graduationYear: number | null): number | null {
 }
 
 const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedureIds = [], flashDiscount, onCompare, isInCompare = false }) => {
-  const { locale } = useI18n();
-  const categoryName = provider.category?.name || 'Medical';
+  const { dict, locale } = useI18n();
+  const categorySlugForLabel = provider.category?.slug;
+  const categoryName = categoryLabel(categorySlugForLabel, dict, provider.category?.name);
   const categorySlug = provider.category?.slug || 'dentists';
   const yearsExp = getYearsExperience(provider.graduation_year);
   const [isFlashExpired, setIsFlashExpired] = React.useState(false);
@@ -79,7 +81,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
                   <div className="flex flex-col items-end gap-1">
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-full shadow-lg animate-pulse">
                       <Zap className="w-3 h-3 fill-current" />
-                      FLASH DEAL
+                      {dict.ui.flashDeal}
                     </span>
                     <CountdownTimer
                       expiresAt={activeFlash.expires_at}
@@ -123,12 +125,12 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
             <div className="flex gap-1 flex-shrink-0">
               {provider.verified && (
                 <Badge variant="verified" className="text-xs">
-                  ✓ Verified
+                  ✓ {dict.ui.verified}
                 </Badge>
               )}
               {provider.featured && (
                 <Badge variant="featured" className="text-xs">
-                  ★ Featured
+                  ★ {dict.ui.featured}
                 </Badge>
               )}
             </div>
@@ -162,7 +164,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
                 />
               </>
             ) : (
-              <span className="text-xs text-neutral-500">No reviews yet</span>
+              <span className="text-xs text-neutral-500">{dict.ui.noReviewsYet}</span>
             )}
           </div>
         </div>
@@ -179,7 +181,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
         {displayPrice && displayPrice.price_usd ? (
           <div className="px-4 py-3 border-b border-neutral-100">
             <p className="text-xs text-neutral-500 mb-1">
-              {displayPrice.procedure?.name || 'Starting price'}
+              {displayPrice.procedure?.name || dict.ui.startingPrice}
             </p>
             {activeFlash && isFlashApplicable(activeFlash, displayPrice) ? (
               <div>
@@ -203,12 +205,12 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
           </div>
         ) : hasActiveFilter ? (
           <div className="px-4 py-3 border-b border-neutral-100">
-            <p className="text-xs text-neutral-400 italic mb-1">No price listed for this procedure</p>
+            <p className="text-xs text-neutral-400 italic mb-1">{dict.ui.noPriceForProcedure}</p>
             <Link
               href={`${localizedPath(`/${categorySlug}/${provider.slug}`, locale)}#quote-form`}
               className="text-sm font-medium text-brand-blue hover:underline"
             >
-              Request Quote
+              {dict.ui.requestQuote}
             </Link>
           </div>
         ) : (
@@ -217,7 +219,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
               href={`${localizedPath(`/${categorySlug}/${provider.slug}`, locale)}#quote-form`}
               className="text-sm font-medium text-brand-blue hover:underline"
             >
-              Request Quote
+              {dict.ui.requestQuote}
             </Link>
           </div>
         )}
@@ -237,7 +239,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
                 ? 'bg-brand-blue/10 text-brand-blue border-brand-blue/30'
                 : 'bg-white text-neutral-500 border-neutral-200 hover:border-brand-blue hover:text-brand-blue'
             )}
-            title={isInCompare ? 'Remove from compare' : 'Add to compare'}
+            title={isInCompare ? dict.ui.removeFromCompare : dict.ui.addToCompare}
           >
             {isInCompare ? <Check className="w-4 h-4" /> : <GitCompareArrows className="w-4 h-4" />}
           </button>
@@ -251,7 +253,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
             size="sm"
             className="w-full"
           >
-            View Profile
+            {dict.ui.viewProfile}
           </Button>
         </Link>
         <Link
@@ -263,7 +265,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
             size="sm"
             className="w-full"
           >
-            Get Quote
+            {dict.ui.getQuote}
           </Button>
         </Link>
       </div>

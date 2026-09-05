@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+import { useI18n } from '@/lib/i18n';
+import { localizedPath } from '@/lib/i18n/get-locale';
 import Link from 'next/link';
 import { X, GitCompareArrows, ShieldCheck, Star, TrendingDown } from 'lucide-react';
 import { formatUSD, cn } from '@/lib/utils';
@@ -29,6 +31,7 @@ interface CompareDrawerProps {
 }
 
 export function CompareDrawer({ providers, onRemove, onClear }: CompareDrawerProps) {
+  const { dict, locale } = useI18n();
   if (providers.length === 0) return null;
 
   // Collect all unique procedures across selected providers
@@ -65,7 +68,7 @@ export function CompareDrawer({ providers, onRemove, onClear }: CompareDrawerPro
               onClick={onClear}
               className="text-sm text-neutral-400 hover:text-neutral-dark transition-colors"
             >
-              Clear all
+              {dict.ui.clearAllShort}
             </button>
           </div>
         </div>
@@ -83,14 +86,14 @@ export function CompareDrawer({ providers, onRemove, onClear }: CompareDrawerPro
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
                     <Link
-                      href={`/${provider.categorySlug}/${provider.slug}`}
+                      href={localizedPath(`/${provider.categorySlug}/${provider.slug}`, locale)}
                       className="font-semibold text-sm text-neutral-dark hover:text-brand-blue transition-colors line-clamp-1"
                     >
                       {provider.name}
                     </Link>
                     <div className="flex items-center gap-2 mt-1">
                       {provider.verified && (
-                        <span className="text-xs text-brand-green font-medium">✓ Verified</span>
+                        <span className="text-xs text-brand-green font-medium">✓ {dict.ui.verified}</span>
                       )}
                       {provider.avg_rating && (
                         <span className="text-xs text-neutral-mid flex items-center gap-0.5">

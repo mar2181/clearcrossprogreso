@@ -57,6 +57,17 @@ const INSPECTION_CLAIMS = [
   [/Cedula Profesional verified/i, '"Cedula Profesional verified"'],
   [/\bwe (?:verify|check|inspect)\b[^.!?]{0,90}(?:cedula|clinic condition|sterilization|licen[sc]e)/i,
     'a first-person "we verify/check ... licence/clinic/sterilization"'],
+  // ⛔ THIS RULE HAS NO DENIAL TEST AND IT FIRES ON HONEST SPANISH COPY.
+  // Spanish conjugates without a pronoun, so a DENIAL -- "No inspeccionamos la
+  // clinica ni las licencias" -- is indistinguishable here from a claim. The
+  // English rule escapes only by accident of word order: it requires "we"
+  // immediately followed by the verb, and a denial reads "we have NOT inspected".
+  //
+  // ⛔ IF THIS GOES RED ON A DISCLAIMER, DO NOT DELETE THE DISCLAIMER. Write it
+  // in the passive, the way the English is written -- "La clinica y las licencias
+  // no estan inspeccionadas" -- which is the better translation anyway because it
+  // mirrors the English shape. It caught exactly that on 2026-09-05, on a Spanish
+  // disclaimer written an hour earlier.
   [/\b(?:verificamos|revisamos|inspeccionamos)\b[^.!?]{0,90}(?:dula|esteriliz|condiciones del consultorio|licencia)/i,
     'a first-person Spanish "verificamos/revisamos ... cedula/esterilizacion"'],
   [/verified with a valid Cedula Profesional/i, 'English "verified with a valid Cedula Profesional"'],
@@ -463,6 +474,54 @@ const CLAIM_RULES = [
     label: 'a claim that ClearCross verified/checked something',
   },
   {
+    // ⛔ A GUARANTEE MADE ON A PROVIDER'S BEHALF. Section 2 bans the four
+    // wordings that were live in August, against a six-file list. These were
+    // found live on 2026-09-05 in files that list never covered:
+    //   "Written price guarantee"              (the quote form)
+    //   "guaranteed price quote within 2 hours"(the confirmation screen)
+    //   "Guaranteed Quote Price"               (the quote detail page)
+    //   "Get a guaranteed price"               (the /quote meta description)
+    //   "No surprise fees — ever"              (the homepage trust section)
+    // No provider has signed anything. We cannot promise what they will charge.
+    id: 'guarantee',
+    re: /\b(?:price|quote|pricing)\s+guarantee\b|\bguarantee[ds]?\s+(?:price|quote|pricing|rate|fee)\b|\bno\s+surprise\s+fees\b|\bprecios?\s+garantizados?\b|\bcotizaci[oó]n\s+garantizada\b|\bsin\s+cargos\s+sorpresa\b/i,
+    advice: false,
+    // "We do not guarantee prices" must survive; "No surprise fees" must not.
+    denial: /\b(?:not|never|cannot|dont|doesnt)\s+(?:\w+\s+){0,3}guarantee|\bno\s+guarantee\b|\bno\s+garantiza\w*\b/i,
+    label: 'a price or quote GUARANTEE made on a provider behalf',
+  },
+  {
+    // ⛔ AN INVENTED RESPONSE TIME. There is ONE quote request in the whole
+    // history of the database, submitted 2026-08-30 and still `pending`; no
+    // provider has ever answered one, because none has ever been signed. So the
+    // average response time is not a number -- it is undefined.
+    //   "Average response: <2hrs"                    (homepage)
+    //   "most providers respond within 2 hours"      (the quote form)
+    //   "most providers respond the same day"        (homepage)
+    //   "They typically respond within 24 hours."    (the patient EMAIL)
+    //
+    // ⛔ SCOPED TO A CLAIM ABOUT *PROVIDERS*, not about us. "We will respond to
+    // your request within 30 days" in the privacy policy is a commitment WE
+    // make and must survive -- it is in the quiet fixtures.
+    id: 'response-time',
+    re: /\b(?:provider|proveedor)\w*[^.!?]{0,60}\b(?:respond|reply|replies|responden?)\w*[^.!?]{0,30}\b(?:within|the same day|el mismo d[ií]a|en menos de)\b|\b(?:average|avg\.?|typical|median)\s+response\b|\brespuesta\s+(?:promedio|t[ií]pica)\b|\bthey\s+typically\s+respond\b/i,
+    advice: false,
+    denial: /\b(?:not|never|cannot|do not|does not)\s+(?:\w+\s+){0,3}(?:respond|reply|guarantee)\b|\bno\s+(?:podemos|garantizamos)\b/i,
+    label: 'an invented provider response time (no provider has ever answered one)',
+  },
+  {
+    // ⛔ THE AUGUST CLAIM IN NEW WORDS. Section 1 bans "Cedula Profesional
+    // verified" and "checked by ClearCross"; the homepage said "Credentials
+    // Verified / By our team, on-site", which is the same statement with none
+    // of the banned words in it, under a heading reading "Your Protection,
+    // Built In". Nobody from ClearCross has visited a clinic.
+    id: 'credentials-checked',
+    re: /\bcredentials?\s+(?:verified|checked|confirmed)\b|\bcredenciales\s+(?:verificadas?|revisadas?)\b|\bby\s+our\s+team,?\s+on[- ]site\b|\bpor\s+nuestro\s+equipo,?\s+en\s+el\s+lugar\b/i,
+    advice: false,
+    denial: /\b(?:not|never|cannot|no)\s+(?:\w+\s+){0,4}(?:verif\w*|check\w*|inspect\w*|revisad\w*|verificad\w*)/i,
+    label: 'a claim that credentials were verified by us',
+  },
+  {
     id: 'materials',
     // An equivalence claim about what a clinic uses. Nobody has looked in a
     // cupboard in Nuevo Progreso.
@@ -485,6 +544,19 @@ const CLAIM_FIRES = [
   ['by-us', 'Prices verified by ClearCross'],
   ['by-us', 'Precios verificados por ClearCross'],
   ['materials', 'using the same quality materials'],
+  ['guarantee', 'Written price guarantee'],
+  ['guarantee', 'Guaranteed Quote Price'],
+  ['guarantee', 'Get a guaranteed price before you cross the border.'],
+  ['guarantee', 'No surprise fees — ever'],
+  ['guarantee', 'Sin cargos sorpresa — nunca'],
+  ['response-time', 'Free, no commitment — most providers respond within 2 hours'],
+  ['response-time', 'Average response: <2hrs'],
+  ['response-time', 'Respuesta promedio: <2hrs'],
+  ['response-time', 'Request a quote and most providers respond the same day.'],
+  ['response-time', 'They typically respond within 24 hours.'],
+  ['credentials-checked', 'Credentials Verified'],
+  ['credentials-checked', 'By our team, on-site'],
+  ['credentials-checked', 'Credenciales Verificadas'],
 ]
 const CLAIM_QUIET = [
   'We have not inspected the clinic or checked professional licences - ask to see the Cedula Profesional at your appointment.',
@@ -493,13 +565,23 @@ const CLAIM_QUIET = [
   'These are the prices the provider gave ClearCross.',
   'Precios segun los proveedores. ClearCross no verifica precios.',
   'ClearCross has not checked anybody licence.',
+  // ⛔ OUR OWN commitment, in the privacy policy. A response-time rule broad
+  // enough to catch the provider claims must leave this alone -- it is a legal
+  // undertaking we make about ourselves and deleting it would be worse than the
+  // claim it replaced.
+  'We will respond to your request within 30 days.',
+  // Advice and provenance that use the same vocabulary in the honest direction.
+  'Ask for an itemized written quote before your visit, and take it with you to the appointment.',
+  'Ask for the price in writing',
+  'Send your details and the provider replies to you directly with their own price.',
+  'Every Mexican dentist and doctor must hold a Cedula Profesional. We have not checked anybody - ask to see it at your appointment.',
 ]
 
 let claimRulesSound = true
 for (const [id, sentence] of CLAIM_FIRES) {
   const rule = CLAIM_RULES.find((r) => r.id === id)
   const flat9 = flatten(sentence)
-  const fired = rule.re.test(flat9) && !DENIAL.test(flat9) && !(rule.advice && ADVICE.test(flat9))
+  const fired = rule.re.test(flat9) && !(rule.denial || DENIAL).test(flat9) && !(rule.advice && ADVICE.test(flat9))
   if (!fired) {
     claimRulesSound = false
     bad('SELFTEST: rule "' + id + '" did NOT fire on a claim that was live -- ' + sentence)
@@ -508,7 +590,7 @@ for (const [id, sentence] of CLAIM_FIRES) {
 for (const sentence of CLAIM_QUIET) {
   const flat9 = flatten(sentence)
   for (const rule of CLAIM_RULES) {
-    const fired = rule.re.test(flat9) && !DENIAL.test(flat9) && !(rule.advice && ADVICE.test(flat9))
+    const fired = rule.re.test(flat9) && !(rule.denial || DENIAL).test(flat9) && !(rule.advice && ADVICE.test(flat9))
     if (fired) {
       claimRulesSound = false
       bad('SELFTEST: rule "' + rule.id + '" wrongly fired on honest copy -- ' + sentence)
@@ -530,7 +612,7 @@ if (!claimRulesSound) {
       // the reason.
       for (const s of sentences(flatten(read(f)))) {
         if (!rule.re.test(s)) continue
-        if (DENIAL.test(s)) continue
+        if ((rule.denial || DENIAL).test(s)) continue
         if (rule.advice && ADVICE.test(s)) continue
         found.push(f + ' :: ' + s.trim().slice(0, 110))
       }
@@ -551,17 +633,70 @@ if (!claimRulesSound) {
  */
 console.log('\n10. control: each surface still says where its numbers came from')
 
+/*
+ * ⛔ THE ATTRIBUTION MOVED INTO THE DICTIONARY, AND THE CHECK HAD TO FOLLOW IT
+ * -- WHICH MADE IT STRONGER, NOT WEAKER.
+ *
+ * These sentences used to be typed into the components, so scanning the
+ * component was enough. They are now dictionary entries, which means each one
+ * exists TWICE (en + es) and is referenced by a key. The old shape would have
+ * gone quietly green the day somebody deleted the ES half, because it only ever
+ * read the component -- and a Spanish reader losing the attribution is the
+ * failure that matters most here, in a market that is ~85% Hispanic.
+ *
+ * So each row asserts THREE things: the English text is present, the Spanish
+ * entry is present and is NOT the English string, and the component actually
+ * renders the key. Deleting any one of the three is caught.
+ */
 const PROVENANCE = [
-  [PRICE_TABLE, /prices? the provider gave ClearCross/i,
-    'the price table still says the provider supplied the prices'],
-  // Tightened after the fix: /provider/i already matched this file BEFORE the
-  // claim was removed, so it proved nothing. Pin the attribution itself.
-  ['components/category/SavingsBanner.tsx', /come from the providers/i,
-    'the savings banner still attributes its figures to the providers'],
-  ['components/search/SearchResultsClient.tsx', /as (?:quoted|listed) by/i,
-    'search results still attribute prices to the provider, not to us'],
+  {
+    key: 'priceSourceNote',
+    file: PRICE_TABLE,
+    en: /prices? the provider gave ClearCross/i,
+    es: /precios que el proveedor le dio a ClearCross/i,
+    label: 'the price table still says the provider supplied the prices',
+  },
+  {
+    key: 'savingsBannerNote',
+    file: 'components/category/SavingsBanner.tsx',
+    en: /come from the providers/i,
+    es: /vienen de las listas de precios/i,
+    label: 'the savings banner still attributes its figures to the providers',
+  },
+  {
+    key: 'pricesAsListed',
+    file: 'components/search/SearchResultsClient.tsx',
+    en: /as (?:quoted|listed) by/i,
+    es: /seg[uú]n los publica cada proveedor/i,
+    label: 'search results still attribute prices to the provider, not to us',
+  },
 ]
-for (const [f, re, label] of PROVENANCE) chk(re.test(read(f)), label)
+for (const p of PROVENANCE) {
+  chk(p.en.test(src[EN]), p.label + ' (en)')
+  chk(p.es.test(src[ES]), p.label + ' (es)')
+  chk(read(p.file).includes('dict.ui.' + p.key), p.file + ' renders dict.ui.' + p.key)
+}
+
+/*
+ * The homepage trust section is four pillars under "Your Protection, Built In".
+ * Three of the four were claims we could not substantiate. A deny-list is
+ * satisfied by deleting them, and four empty pillars under that heading is its
+ * own kind of dishonest -- so each replacement must still say a true thing.
+ */
+const TRUST_PILLARS = [
+  [/Ask for an itemized written quote/i, /cotizaci[oó]n detallada por escrito/i,
+    'the written-quote pillar still tells the visitor to ask for one'],
+  [/We have not checked anybody/i, /no hemos revisado ninguna/i,
+    'the credentials pillar states plainly that we checked nobody licence'],
+  [/given to us by the provider who charges it/i, /nos lo dio el proveedor que lo cobra/i,
+    'the prices pillar attributes every price to the provider'],
+  [/replies to you directly with their own price/i, /le responde directamente con su propio precio/i,
+    'the quote pillar describes what actually happens'],
+]
+for (const [reEn, reEs, label] of TRUST_PILLARS) {
+  chk(reEn.test(src[EN]), label + ' (en)')
+  chk(reEs.test(src[ES]), label + ' (es)')
+}
 
 console.log(fails === 0
   ? '\nPASS - every claim on the page is one we can substantiate\n'

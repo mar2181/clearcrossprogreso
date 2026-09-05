@@ -71,6 +71,8 @@
 import { readFileSync } from 'node:fs'
 import { stripComments } from './_strip-comments.mjs'
 import { bilingualAlternates, enUrl, esUrl } from '../lib/hreflang.ts'
+import { en as enDict } from '../lib/i18n/dictionaries/en.ts'
+import { es as esDict } from '../lib/i18n/dictionaries/es.ts'
 
 let failures = 0
 const fail = (m) => { console.error('FAIL  ' + m); failures++ }
@@ -193,6 +195,120 @@ check(/const alternates = \{\s*languages:\s*bilingualAlternates\(path, 'en'\)\.l
 check((sm.match(/,\s*alternates\s*\}/g) || []).length === 2,
   'both halves of every sitemap pair actually carry that hreflang')
 check(/from '@\/lib\/hreflang'/.test(sm), 'the sitemap derives its URLs from the shared helper')
+
+
+// ---------------------------------------------------------------- section 5
+/*
+ * THE SHARED COMPONENTS SPEAK THE VISITOR'S LANGUAGE.
+ *
+ * ⛔ WHAT THIS IS FOR, measured on production 2026-09-05 before it existed:
+ *
+ *     /dentists      en-ui 84   es-ui 0
+ *     /es/dentists   en-ui 83   es-ui 1
+ *
+ * Identical. 129 Spanish pages were live and in the sitemap, and every one was
+ * the English page with a translated <title>. "View Profile", "Request Quote",
+ * "Verified", "Dentists" -- all English, to a reader in a market that is ~85%
+ * Hispanic, which is the wedge the whole strategy rests on. After:
+ *
+ *     /es/dentists   en-ui 7    es-ui 28
+ *
+ * The cause was structural in two different ways, so the checks come in two
+ * halves:
+ *
+ *   CLIENT components hardcoded English. They CAN know the locale -- useI18n()
+ *   resolves from usePathname(), which runs during SSR too, so the Spanish text
+ *   is in the HTML a crawler reads.
+ *
+ *   SERVER components could not know it at all: app/es/[category]/page.tsx
+ *   re-exported the English component wholesale, so only generateMetadata was
+ *   ever localised. Fixed with a `locale` prop defaulting to 'en' and a wrapper
+ *   on the Spanish route.
+ *
+ * ⛔ THE SERVER HALF MUST NOT BE "FIXED" WITH headers() OR cookies(). Reading
+ * the request in a layout opts the ENTIRE app out of static rendering -- 273
+ * prerendered routes become dynamic. The locale is a build-time constant per
+ * route; keep it that way.
+ */
+
+const SHARED_CLIENT = [
+  'components/providers/ProviderCard.tsx',
+  'components/providers/PriceTable.tsx',
+  'components/category/CategoryListingClient.tsx',
+  'components/category/CategoryMap.tsx',
+  'components/category/SavingsBanner.tsx',
+  'components/search/SearchResultsClient.tsx',
+  'components/compare/CompareDrawer.tsx',
+  'components/quotes/QuoteForm.tsx',
+  'components/ui/StarRating.tsx',
+]
+
+for (const f of SHARED_CLIENT) {
+  const code = stripComments(readFileSync(f, 'utf8'))
+  check(/useI18n\(\)/.test(code), `${f} :: reads the dictionary (useI18n)`)
+  check(/dict\.(ui|category)\./.test(code), `${f} :: renders at least one dictionary string`)
+  // A client component that reads usePathname() must say 'use client', or the
+  // hook silently returns the default locale on the server and the page ships
+  // English while every source check passes.
+  check(/^'use client'/m.test(readFileSync(f, 'utf8')), `${f} :: is a client component`)
+}
+
+/*
+ * ⛔ AND THE LINKS. A Spanish visitor clicking a provider card used to land in
+ * the English tree on their FIRST click -- measured, zero /es/<category>/<slug>
+ * hrefs existed site-wide while 129 Spanish provider pages sat in the sitemap
+ * with nothing linking to them. A translated label on a link that leaves the
+ * language is worse than no translation: it looks deliberate.
+ */
+const MUST_LOCALIZE_LINKS = [
+  'components/providers/ProviderCard.tsx',
+  'components/search/SearchResultsClient.tsx',
+  'components/compare/CompareDrawer.tsx',
+  'app/[category]/page.tsx',
+]
+for (const f of MUST_LOCALIZE_LINKS) {
+  const code = stripComments(readFileSync(f, 'utf8'))
+  check(/localizedPath\(/.test(code), `${f} :: routes its internal links through localizedPath`)
+}
+
+/*
+ * The Spanish routes must PASS a locale, not re-export the English component.
+ * A bare `export { default } from '@/app/[category]/page'` type-checks, builds,
+ * renders and serves English -- which is exactly what it did.
+ */
+const ES_ROUTE = 'app/es/[category]/page.tsx'
+const esRoute = stripComments(readFileSync(ES_ROUTE, 'utf8'))
+check(!/export \{ default \} from '@\/app\/\[category\]\/page'/.test(esRoute),
+  `${ES_ROUTE} :: does not blind-re-export the English page component`)
+check(/locale:\s*'es'/.test(esRoute), `${ES_ROUTE} :: passes locale: 'es'`)
+
+// The English page must still default to English on its own route.
+const enRoute = stripComments(readFileSync('app/[category]/page.tsx', 'utf8'))
+check(/locale\s*=\s*'en'/.test(enRoute), "app/[category]/page.tsx :: defaults to locale 'en'")
+
+/*
+ * ⛔ EVERY ui KEY EXISTS IN BOTH DICTIONARIES AND THE SPANISH IS NOT THE
+ * ENGLISH. A missing key renders `undefined` on the page; a copied key renders
+ * English while every other check here passes. Both have to be impossible.
+ *
+ * A handful of entries ARE legitimately identical across the two languages --
+ * a currency-free brand word, a symbol. They are listed by name so that adding
+ * to the list is a decision somebody makes on purpose.
+ */
+const SAME_IN_BOTH_LANGUAGES = new Set([])
+const enUi = enDict.ui
+const esUi = esDict.ui
+check(!!enUi && !!esUi, 'control: both dictionaries carry a ui section')
+const enKeys = Object.keys(enUi).sort()
+const esKeys = Object.keys(esUi).sort()
+check(enKeys.join(',') === esKeys.join(','),
+  `the ui sections carry identical key sets (en ${enKeys.length}, es ${esKeys.length})`)
+const untranslated = enKeys.filter((k) => enUi[k] === esUi[k] && !SAME_IN_BOTH_LANGUAGES.has(k))
+check(untranslated.length === 0,
+  'every ui string is actually translated' +
+    (untranslated.length ? ' -- identical in both: ' + untranslated.join(', ') : ''))
+const empty = enKeys.filter((k) => !enUi[k] || !esUi[k])
+check(empty.length === 0, 'no ui string is empty' + (empty.length ? ' -- ' + empty.join(', ') : ''))
 
 console.log(failures === 0
   ? '\nPASS — the two language trees name each other, from one source.'

@@ -42,8 +42,15 @@ export async function generateMetadata({
   };
 }
 
-// Re-export the default component + static params from English version
-export { default } from '@/app/[category]/page';
+// ⛔ NOT a bare re-export any more. The English component now takes a locale
+// and defaults to 'en', so re-exporting it served English copy on every page of
+// the Spanish tree -- only the <title> was translated. Pass the locale.
+import CategoryPage from '@/app/[category]/page';
+
+export default async function EsCategoryPage({ params }: CategoryPageProps) {
+  return CategoryPage({ params, locale: 'es' });
+}
+
 export { generateStaticParams } from '@/app/[category]/page';
 // Route segment config is read per route file, so the Spanish tree needs its
 // own export -- without it /es would stay build-time-only while / revalidates.

@@ -38,10 +38,14 @@ import {
 } from '@/lib/data';
 import FlashDiscountBanner from '@/components/providers/FlashDiscountBanner';
 import { bilingualAlternates } from '@/lib/hreflang';
+import { en, es, type Locale } from '@/lib/i18n';
+import { localizedPath } from '@/lib/i18n/get-locale';
+import { categoryLabel } from '@/lib/i18n/category-label';
 import {
   providerGraph,
   CATEGORY_LABEL,
   CATEGORY_LABEL_PLURAL,
+  SITE_URL,
 } from '@/lib/schema';
 
 // Category labels are now pulled from the database via categoryData.name
@@ -107,8 +111,11 @@ export async function generateStaticParams() {
   return getAllProviderSlugs();
 }
 
-export default async function ProviderPage({ params }: ProviderPageProps) {
+export default async function ProviderPage({ params, locale = 'en' }: ProviderPageProps & { locale?: Locale }) {
   const { category, provider } = await params;
+  const dict = locale === 'es' ? es : en;
+  const t = dict.category;
+  const u = dict.ui;
 
   const providerData = await getProviderBySlug(provider);
   if (!providerData) notFound();
@@ -127,6 +134,14 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
   const hasPrices = providerPrices.length > 0;
   const flashDiscount = await getFlashDiscountForProvider(providerData.id);
 
+  // ⛔ ONE expression, read by the visible breadcrumb AND by the JSON-LD below.
+  // They disagreed for exactly as long as it took the schema guard to run.
+  const categoryTrailLabel = categoryLabel(
+    category,
+    dict,
+    CATEGORY_LABEL_PLURAL[category] || categoryData.name,
+  );
+
   // Structured data. Built from the SAME price helper the visible table uses,
   // so the JSON-LD can never state a figure the page does not show.
   const structuredData = providerGraph({
@@ -135,6 +150,9 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
     prices: providerPrices,
     reviews: reviews || [],
     flashDiscount,
+    categoryLabel: categoryTrailLabel,
+    homeLabel: t.home,
+    homeUrl: locale === 'es' ? SITE_URL + '/es' : SITE_URL,
   });
 
   return (
@@ -149,12 +167,12 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
         <div className="container-page py-3">
           <ol className="flex items-center gap-1.5 text-sm text-neutral-400">
             <li>
-              <Link href="/" className="hover:text-brand-blue transition-colors">Home</Link>
+              <Link href={localizedPath('/', locale)} className="hover:text-brand-blue transition-colors">{t.home}</Link>
             </li>
             <li><ChevronRight className="w-3.5 h-3.5" /></li>
             <li>
               <Link href={`/${category}`} className="hover:text-brand-blue transition-colors">
-                {CATEGORY_LABEL_PLURAL[category] || categoryData.name}
+                {categoryTrailLabel}
               </Link>
             </li>
             <li><ChevronRight className="w-3.5 h-3.5" /></li>
@@ -209,7 +227,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
 
                   {/* Badges */}
                   <div className="flex items-center gap-2 flex-wrap mb-3">
-                    <Badge variant="default">{categoryData.name}</Badge>
+                    <Badge variant="default">{categoryLabel(category, dict, categoryData.name)}</Badge>
                     {providerData.verified && (
                       <span
                         className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-brand-green/10 text-brand-green text-xs font-bold rounded-full border border-brand-green/20 cursor-help"
@@ -263,7 +281,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                       <div className="mt-3 flex items-center gap-2 p-3 bg-brand-green/5 rounded-lg border border-brand-green/20">
                         <TrendingDown className="w-4 h-4 text-brand-green flex-shrink-0" />
                         <p className="text-sm text-brand-green font-semibold">
-                          US charges up to {Math.round((maxSav.percentSaved / (100 - maxSav.percentSaved)) * 100)}% more for this procedure at comparable providers
+                          {u.pUsCharges.replace('{n}', String(Math.round((maxSav.percentSaved / (100 - maxSav.percentSaved)) * 100)))}
                         </p>
                       </div>
                     );
@@ -278,7 +296,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                     <p className="font-display text-3xl font-bold text-neutral-dark">
                       {providerData.avg_rating.toFixed(1)}
                     </p>
-                    <p className="text-xs text-neutral-400 mt-0.5">out of 5</p>
+                    <p className="text-xs text-neutral-400 mt-0.5">{u.pOutOf5}</p>
                   </div>
                   <div className="border-l border-neutral-200 pl-4">
                     <StarRating rating={providerData.avg_rating} size="md" />
@@ -319,7 +337,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                 className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-blue text-white rounded-xl hover:bg-brand-navy transition-colors font-semibold text-sm shadow-sm"
               >
                 <MessageSquare size={18} />
-                Get a Quote
+                {t.getQuote}
               </a>
             </div>
           </div>
@@ -336,7 +354,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
             <section className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-200 shadow-sm">
               <h2 className="text-xl font-bold text-neutral-dark mb-4 flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-brand-green" />
-                About {providerData.name}
+                {u.pAboutPrefix} {providerData.name}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                 {yearsExp && yearsExp > 0 && (
@@ -363,7 +381,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                     <ShieldCheck className="w-5 h-5 text-brand-green flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold text-neutral-dark">Listed on ClearCross</p>
-                      <p className="text-xs text-neutral-mid">Listing details checked. Clinic and licences not inspected.</p>
+                      <p className="text-xs text-neutral-mid">{u.pListingChecked}</p>
                     </div>
                   </div>
                 )}
@@ -371,8 +389,8 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                   <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg">
                     <Clock className="w-5 h-5 text-amber flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-neutral-dark">{providerPrices.length} Services Listed</p>
-                      <p className="text-xs text-neutral-mid">Transparent pricing</p>
+                      <p className="font-semibold text-neutral-dark">{u.pServicesListed.replace('{n}', String(providerPrices.length))}</p>
+                      <p className="text-xs text-neutral-mid">{u.pTransparentPricing}</p>
                     </div>
                   </div>
                 )}
@@ -435,7 +453,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
             <section className="bg-white rounded-xl p-6 sm:p-8 border border-neutral-200 shadow-sm">
               <h2 className="text-xl font-bold text-neutral-dark mb-6 flex items-center gap-2">
                 <Star className="w-5 h-5 text-amber" />
-                Patient Reviews
+                {u.pPatientReviews}
               </h2>
               {reviews && reviews.length > 0 ? (
                 <ReviewList reviews={reviews} />
@@ -483,7 +501,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
             {relatedProviders && relatedProviders.length > 0 && (
               <section>
                 <h2 className="text-xl font-bold text-neutral-dark mb-6">
-                  Other {CATEGORY_LABEL_PLURAL[category] || categoryData.name} in Nuevo Progreso
+                  {u.pOtherIn.replace('{category}', categoryTrailLabel)}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5">
                   {relatedProviders.slice(0, 4).map((relProvider: any) => (
@@ -501,7 +519,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                     href={`/${category}`}
                     className="inline-flex items-center gap-2 text-sm text-brand-blue font-semibold hover:text-brand-navy transition-colors"
                   >
-                    View all {CATEGORY_LABEL_PLURAL[category] || categoryData.name}
+                    {u.pViewAll.replace('{category}', categoryTrailLabel)}
                     <ChevronRight className="w-4 h-4" />
                   </Link>
                 </div>

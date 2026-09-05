@@ -1,4 +1,8 @@
+'use client';
+
 import React from 'react';
+import { useI18n } from '@/lib/i18n';
+import { categoryLabel } from '@/lib/i18n/category-label';
 import { TrendingDown, DollarSign } from 'lucide-react';
 import { US_BENCHMARKS, getSavings } from '@/lib/us-benchmarks';
 import { formatUSD } from '@/lib/utils';
@@ -9,17 +13,20 @@ interface SavingsBannerProps {
   categorySlug: string;
 }
 
-// Category-specific savings callouts
-const SAVINGS_HEADLINES: Record<string, string> = {
-  dentists: 'Save up to 96% on dental work vs US prices',
-  'cosmetic-surgery': 'Save up to 100% on cosmetic procedures vs US prices',
-  optometrists: 'Save up to 90% on eye care vs US prices',
-  doctors: 'Save up to 90% on doctor visits & labs vs US prices',
-  pharmacies: 'Save up to 99% on prescriptions vs US prices',
-  spas: 'Save up to 90% on spa & wellness vs US prices',
+// Category-specific savings callouts, keyed to the dictionary so they read in
+// the visitor's language. ⚠️ The percentages are HAND-WRITTEN, not computed
+// from the prices below them -- see the note in STATE.md.
+const SAVINGS_HEADLINE_KEYS: Record<string, 'savingsDentists' | 'savingsCosmeticSurgery' | 'savingsOptometrists' | 'savingsDoctors' | 'savingsPharmacies' | 'savingsSpas'> = {
+  dentists: 'savingsDentists',
+  'cosmetic-surgery': 'savingsCosmeticSurgery',
+  optometrists: 'savingsOptometrists',
+  doctors: 'savingsDoctors',
+  pharmacies: 'savingsPharmacies',
+  spas: 'savingsSpas',
 };
 
 const SavingsBanner: React.FC<SavingsBannerProps> = ({ providers, categoryName, categorySlug }) => {
+  const { dict } = useI18n();
   // Collect all unique procedures with prices from all providers in this category
   const procedureSavings: Map<string, { name: string; usPrice: number; mexicoPriceLow: number; percentSaved: number }> = new Map();
 
@@ -50,7 +57,10 @@ const SavingsBanner: React.FC<SavingsBannerProps> = ({ providers, categoryName, 
     .sort((a, b) => b.percentSaved - a.percentSaved)
     .slice(0, 5);
 
-  const headline = SAVINGS_HEADLINES[categorySlug] || `Save big on ${categoryName} vs US prices`;
+  const headlineKey = SAVINGS_HEADLINE_KEYS[categorySlug];
+  const headline = headlineKey
+    ? dict.ui[headlineKey]
+    : dict.ui.savingsGeneric.replace('{category}', categoryLabel(categorySlug, dict, categoryName));
 
   return (
     <div className="bg-gradient-to-r from-brand-green/5 to-brand-green/10 border border-brand-green/20 rounded-2xl p-6 sm:p-8">
@@ -68,7 +78,7 @@ const SavingsBanner: React.FC<SavingsBannerProps> = ({ providers, categoryName, 
               category page and we have checked nobody's licence. Attribute the
               figures instead. See test/honest-claims.mjs section 9.
             */}
-            Compared to average US self-pay prices. Figures come from the providers&rsquo; own price lists.
+            {dict.ui.savingsBannerNote}
           </p>
         </div>
       </div>
@@ -84,13 +94,13 @@ const SavingsBanner: React.FC<SavingsBannerProps> = ({ providers, categoryName, 
             </p>
             <div className="flex items-baseline justify-between">
               <div>
-                <p className="text-xs text-neutral-400">From</p>
+                <p className="text-xs text-neutral-400">{dict.ui.savingsFrom}</p>
                 <p className="text-xl font-bold text-brand-green">
                   {formatUSD(item.mexicoPriceLow)}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-neutral-400">US avg</p>
+                <p className="text-xs text-neutral-400">{dict.ui.savingsUsAvg}</p>
                 <p className="text-sm text-neutral-400 line-through">
                   {formatUSD(item.usPrice)}
                 </p>
@@ -98,7 +108,7 @@ const SavingsBanner: React.FC<SavingsBannerProps> = ({ providers, categoryName, 
             </div>
             <div className="mt-2 flex items-center gap-1">
               <span className="inline-flex items-center gap-1 text-xs font-bold text-brand-green bg-brand-green/10 px-2 py-0.5 rounded-full">
-                Save {item.percentSaved}%
+                {dict.ui.savePercent.replace('{n}', String(item.percentSaved))}
               </span>
             </div>
           </div>

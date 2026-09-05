@@ -16,6 +16,9 @@ import {
   getActiveFlashDiscounts,
 } from '@/lib/data';
 import { bilingualAlternates } from '@/lib/hreflang';
+import { en, es, type Locale } from '@/lib/i18n';
+import { localizedPath } from '@/lib/i18n/get-locale';
+import { categoryLabel } from '@/lib/i18n/category-label';
 
 // Hero and fallback images keyed by slug — new categories without
 // an entry here will simply use the gradient background.
@@ -87,8 +90,10 @@ export async function generateStaticParams() {
   return categories.map((cat) => ({ category: cat.slug }));
 }
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage({ params, locale = 'en' }: CategoryPageProps & { locale?: Locale }) {
   const { category } = await params;
+  const dict = locale === 'es' ? es : en;
+  const t = dict.category;
 
   const categoryData = await getCategory(category);
   if (!categoryData) notFound();
@@ -98,6 +103,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const flashDiscounts = await getActiveFlashDiscounts(categoryData.slug);
 
   const heroImage = CATEGORY_HEROES[category] || CATEGORY_FALLBACKS[category] || null;
+  const categoryTitle = categoryLabel(categoryData.slug, dict, categoryData.name);
   const tagline = categoryData.description;
 
   return (
@@ -107,11 +113,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <div className="container-page py-3">
           <ol className="flex items-center gap-1.5 text-sm text-neutral-400">
             <li>
-              <Link href="/" className="hover:text-brand-blue transition-colors">Home</Link>
+              <Link href={localizedPath('/', locale)} className="hover:text-brand-blue transition-colors">{t.home}</Link>
             </li>
             <li><ChevronRight className="w-3.5 h-3.5" /></li>
             <li className="text-neutral-dark font-medium">
-              {categoryData.name}
+              {categoryTitle}
             </li>
           </ol>
         </div>
@@ -124,7 +130,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           <div className="absolute inset-0">
             <Image
               src={heroImage}
-              alt={`${categoryData.name} in Nuevo Progreso`}
+              alt={`${categoryTitle} — Nuevo Progreso`}
               fill
               className="object-cover"
               sizes="100vw"
@@ -139,7 +145,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <div className="container-page relative z-10 flex items-end py-16 sm:py-20 lg:py-0 lg:min-h-[420px] lg:items-end lg:pb-12">
           <div className="max-w-2xl">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-3 font-display drop-shadow-lg">
-              {categoryData.name} in Nuevo Progreso
+              {categoryTitle} {t.inNuevoProgreso}
             </h1>
             <p className="text-lg text-white/90 mb-5 leading-relaxed drop-shadow-md">
               {tagline}
@@ -150,12 +156,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               <div className="flex items-center gap-2 text-white">
                 <ShieldCheck className="w-4 h-4 text-brand-green" />
                 <span>
-                  <strong>{providersList.length}</strong> verified providers
+                  <strong>{providersList.length}</strong> {t.verifiedProviders}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-white">
                 <TrendingDown className="w-4 h-4 text-amber" />
-                <span>Save <strong>$100s–$1000s</strong> vs US prices</span>
+                <span>{t.saveVsUS}</span>
               </div>
             </div>
           </div>
@@ -199,25 +205,25 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             {/* Category Info Card */}
             <div className="bg-white border border-neutral-200 rounded-xl p-6 shadow-sm">
               <h2 className="font-display font-semibold text-neutral-dark mb-3">
-                About {categoryData.name}
+                {t.aboutPrefix} {categoryTitle}
               </h2>
               <p className="text-sm text-neutral-mid leading-relaxed mb-4">
                 {categoryData.description}
               </p>
               <div className="space-y-2">
                 <Link
-                  href="/safety"
+                  href={localizedPath('/safety', locale)}
                   className="flex items-center gap-2 text-sm font-medium text-brand-blue hover:text-brand-navy transition-colors"
                 >
                   <ShieldCheck className="w-4 h-4" />
-                  Is it safe?
+                  {t.isItSafe}
                   <ArrowRight className="w-3 h-3" />
                 </Link>
                 <Link
-                  href="/how-it-works"
+                  href={localizedPath('/how-it-works', locale)}
                   className="flex items-center gap-2 text-sm font-medium text-brand-blue hover:text-brand-navy transition-colors"
                 >
-                  How does it work?
+                  {t.howDoesItWork}
                   <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
@@ -225,30 +231,30 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
             {/* CTA Card */}
             <div className="bg-gradient-to-br from-brand-blue to-brand-navy rounded-xl p-6 text-white shadow-sm">
-              <h3 className="font-display font-semibold mb-2">Need a specific price?</h3>
+              <h3 className="font-display font-semibold mb-2">{t.needSpecificPrice}</h3>
               <p className="text-sm mb-4 text-blue-200/80">
-                Request a personalized quote from any provider. Free, no commitment.
+                {t.quoteDesc}
               </p>
               <Link
-                href="/quote"
+                href={localizedPath('/quote', locale)}
                 className="inline-flex items-center gap-2 bg-white text-brand-blue font-semibold px-5 py-2.5 rounded-lg hover:bg-neutral-light transition-colors text-sm"
               >
-                Get a Quote
+                {t.getQuote}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
 
             {/* Provider CTA */}
             <div className="bg-brand-green/5 border border-brand-green/20 rounded-xl p-6">
-              <h3 className="font-display font-semibold text-neutral-dark mb-2">Are you a provider?</h3>
+              <h3 className="font-display font-semibold text-neutral-dark mb-2">{t.areYouProvider}</h3>
               <p className="text-sm text-neutral-mid mb-4">
-                List your business and reach thousands of Americans looking for services in Nuevo Progreso.
+                {t.providerDesc}
               </p>
               <Link
-                href="/auth/register?role=provider"
+                href={localizedPath('/auth/register?role=provider', locale)}
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-green hover:text-brand-green/80 transition-colors"
               >
-                List Your Business
+                {t.listBusiness}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

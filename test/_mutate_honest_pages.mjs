@@ -19,37 +19,40 @@ import { execFileSync } from 'node:child_process'
 const MUTATIONS = [
   {
     name: 'the licence claim comes back in PriceTable',
-    file: 'components/providers/PriceTable.tsx',
-    find: 'Worked out from the prices {providerName} gave ClearCross against average US',
-    repl: 'All procedures at {providerName} are performed by licensed professionals. Worked out from the prices gave ClearCross against average US',
+    // ⛔ These strings moved into the dictionary when the components were
+    // translated. The harness REFUSED to score them rather than mutate
+    // whatever happened to be at the old anchor -- re-pointed, not deleted.
+    file: 'lib/i18n/dictionaries/en.ts',
+    find: "savingsProvenance: 'Worked out from",
+    repl: "savingsProvenance: 'All procedures are performed by licensed professionals. Worked out from",
     expect: 'licensed or certified',
   },
   {
     name: 'the licence claim comes back in SavingsBanner (a different file)',
-    file: 'components/category/SavingsBanner.tsx',
-    find: 'Compared to average US self-pay prices. Figures come from the providers&rsquo; own price lists.',
-    repl: 'Compared to average US self-pay prices. All procedures by licensed professionals.',
+    file: 'lib/i18n/dictionaries/en.ts',
+    find: "savingsBannerNote: 'Compared to average US self-pay prices.",
+    repl: "savingsBannerNote: 'All procedures by licensed professionals. Compared to average US self-pay prices.",
     expect: 'licensed or certified',
   },
   {
     name: '"verified by ClearCross" comes back in a file that was never in SOURCES',
-    file: 'components/search/SearchResultsClient.tsx',
-    find: '<span>Prices as listed by each provider</span>',
-    repl: '<span>Prices verified by ClearCross</span>',
+    file: 'lib/i18n/dictionaries/en.ts',
+    find: "pricesAsListed: 'Prices as listed by each provider',",
+    repl: "pricesAsListed: 'Prices verified by ClearCross',",
     expect: 'ClearCross verified/checked',
   },
   {
     name: 'the materials equivalence comes back',
-    file: 'components/providers/PriceTable.tsx',
+    file: 'lib/i18n/dictionaries/en.ts',
     find: 'Ask for the final price in writing before any work begins.',
     repl: 'They use the same quality materials. Ask for the final price in writing before any work begins.',
     expect: 'same materials/standards',
   },
   {
     name: 'the attribution is deleted instead of corrected (deny-list satisfied, reader told nothing)',
-    file: 'components/category/SavingsBanner.tsx',
-    find: 'Compared to average US self-pay prices. Figures come from the providers&rsquo; own price lists.',
-    repl: 'Compared to average US self-pay prices.',
+    file: 'lib/i18n/dictionaries/en.ts',
+    find: " Figures come from the providers",
+    repl: " Figures are",
     expect: 'savings banner still attributes',
   },
   {
@@ -62,6 +65,63 @@ const MUTATIONS = [
     find: 'const sizeMap: Record<StarSize, number> = {',
     repl: "const note = 'All treatments are carried out by licensed professionals.';\n\nconst sizeMap: Record<StarSize, number> = {",
     expect: 'licensed or certified',
+  },
+  // ── the claims found on 2026-09-05, in files the old SOURCES list never saw ──
+  {
+    name: 'the homepage says our team verified credentials on-site',
+    file: 'lib/i18n/dictionaries/en.ts',
+    find: "credentialsDesc: 'Ask to see the C",
+    repl: "credentialsDesc: 'By our team, on-site', xDesc: 'Ask to see the C",
+    expect: 'credentials were verified by us',
+  },
+  {
+    name: 'the SPANISH homepage says it (the English rule must have a Spanish twin)',
+    file: 'lib/i18n/dictionaries/es.ts',
+    find: "credentialsDesc: 'Pida ver la C",
+    repl: "credentialsDesc: 'Por nuestro equipo, en el lugar', xDesc: 'Pida ver la C",
+    expect: 'credentials were verified by us',
+  },
+  {
+    name: 'a price guarantee comes back on the quote detail page',
+    file: 'app/quote/[id]/QuoteActions.tsx',
+    find: 'Quoted Price',
+    repl: 'Guaranteed Quote Price',
+    expect: 'GUARANTEE made on a provider behalf',
+  },
+  {
+    name: '"no surprise fees" comes back (a guarantee that USES a negative word)',
+    file: 'lib/i18n/dictionaries/en.ts',
+    find: "writtenQuotesDesc: 'Ask for one before you go',",
+    repl: "writtenQuotesDesc: 'No surprise fees - ever',",
+    expect: 'GUARANTEE made on a provider behalf',
+  },
+  {
+    name: 'an invented response time comes back in the patient EMAIL',
+    file: 'lib/email.ts',
+    find: 'They reply to you directly with their own price.',
+    repl: 'They typically respond within 24 hours.',
+    expect: 'invented provider response time',
+  },
+  {
+    name: 'an average response time comes back on the homepage',
+    file: 'lib/i18n/dictionaries/en.ts',
+    find: "quotesDesc: 'Free, no account needed',",
+    repl: "quotesDesc: 'Average response: <2hrs',",
+    expect: 'invented provider response time',
+  },
+  {
+    name: 'the credentials pillar stops stating the limit (deny-list satisfied, reader misled)',
+    file: 'lib/i18n/dictionaries/en.ts',
+    find: "We have not checked anybody's - ask",
+    repl: "Ask",
+    expect: 'states plainly that we checked nobody licence',
+  },
+  {
+    name: 'the prices pillar stops attributing its prices',
+    file: 'lib/i18n/dictionaries/es.ts',
+    find: 'nos lo dio el proveedor que lo cobra',
+    repl: 'es competitivo',
+    expect: 'attributes every price to the provider',
   },
 ]
 

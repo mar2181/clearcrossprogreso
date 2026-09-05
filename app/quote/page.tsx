@@ -7,7 +7,7 @@ import { en } from '@/lib/i18n/dictionaries/en';
 
 export const metadata: Metadata = {
   title: 'Get a Quote | ClearCross Progreso',
-  description: 'Get a guaranteed price before you cross the border. Request a quote from our vetted providers in Nuevo Progreso, Mexico.',
+  description: 'Ask a provider in Nuevo Progreso for their price before you cross the border. Free, and no account needed.',
 };
 
 export default async function QuotePage({

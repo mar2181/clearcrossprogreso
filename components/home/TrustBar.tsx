@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {
   FileCheck,
   ShieldCheck,
-  Star,
+  DollarSign,
   Clock,
   ArrowRight,
 } from 'lucide-react';
@@ -44,7 +44,7 @@ export default function TrustBar() {
       bgColor: 'bg-brand-green/10',
     },
     {
-      icon: <Star className="w-7 h-7" />,
+      icon: <DollarSign className="w-7 h-7" />,
       label: d.reviewsTitle,
       description: d.reviewsDesc,
       detail: d.reviewsDetail,

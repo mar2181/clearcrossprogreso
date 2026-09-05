@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useI18n } from '@/lib/i18n';
 import { MessageSquare, Camera, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { ShieldCheck, Clock, Star } from 'lucide-react';
@@ -24,6 +25,7 @@ interface FormState {
 type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
 
 export default function QuoteForm({ providerId, providerName, procedures, hasProcedures }: QuoteFormProps) {
+  const { dict } = useI18n();
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<SubmitStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -43,13 +45,13 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
   function validate(): boolean {
     const newErrors: Partial<Record<keyof FormState, string>> = {};
 
-    if (!form.name.trim()) newErrors.name = 'Name is required';
-    if (!form.email.trim()) newErrors.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Enter a valid email';
-    if (!form.phone.trim()) newErrors.phone = 'Phone is required';
-    if (!form.description.trim()) newErrors.description = 'Description is required';
-    else if (form.description.length < 50) newErrors.description = 'Describe your needs in at least 50 characters';
-    else if (form.description.length > 2000) newErrors.description = 'Description must be under 2000 characters';
+    if (!form.name.trim()) newErrors.name = dict.ui.qfErrName;
+    if (!form.email.trim()) newErrors.email = dict.ui.qfErrEmail;
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = dict.ui.qfErrEmailInvalid;
+    if (!form.phone.trim()) newErrors.phone = dict.ui.qfErrPhone;
+    if (!form.description.trim()) newErrors.description = dict.ui.qfErrDesc;
+    else if (form.description.length < 50) newErrors.description = dict.ui.qfErrDescShort;
+    else if (form.description.length > 2000) newErrors.description = dict.ui.qfErrDescLong;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -87,7 +89,7 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit quote request');
+        throw new Error(data.error || dict.ui.qfErrSubmit);
       }
 
       setQuoteId(data.id);
@@ -107,7 +109,7 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
         /* never break a lead that has already been accepted */
       }
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setErrorMessage(err instanceof Error ? err.message : dict.ui.qfErrGeneric);
       setStatus('error');
     }
   }
@@ -134,38 +136,38 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
         <div className="bg-gradient-to-br from-brand-green to-brand-green/80 text-white p-6">
           <div className="text-center py-4">
             <CheckCircle className="w-16 h-16 mx-auto mb-4 text-white" />
-            <h3 className="text-xl font-bold mb-2">Quote Request Submitted!</h3>
+            <h3 className="text-xl font-bold mb-2">{dict.ui.qfSubmitted}</h3>
             <p className="text-green-100 text-sm mb-4">
-              {providerName} will review your request and send a guaranteed price quote within 2 hours.
+              {dict.ui.qfSentTo.replace('{provider}', providerName)}
             </p>
             <div className="bg-white/10 rounded-lg p-3 mb-4">
               <p className="text-xs text-green-100">
-                <strong>Reference ID:</strong> {quoteId}
+                <strong>{dict.ui.qfReferenceId}</strong> {quoteId}
               </p>
             </div>
             <p className="text-sm text-green-100 mb-4">
-              Check your email for confirmation and next steps. No commitment required.
+              {dict.ui.qfCheckEmail}
             </p>
             <button
               onClick={resetForm}
               className="w-full px-4 py-3 bg-white text-brand-green font-bold rounded-lg hover:bg-green-50 transition-colors shadow-sm"
             >
-              Submit Another Request
+              {dict.ui.qfAnother}
             </button>
           </div>
 
           <div className="mt-4 pt-4 border-t border-white/20 space-y-3">
             <div className="flex items-center gap-2.5 text-sm">
               <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-              <span>Written price guarantee</span>
+              <span>{dict.ui.qfAskInWriting}</span>
             </div>
             <div className="flex items-center gap-2.5 text-sm">
               <Clock className="w-4 h-4 flex-shrink-0" />
-              <span>Average response: &lt;2 hours</span>
+              <span>{dict.ui.qfNoAccount}</span>
             </div>
             <div className="flex items-center gap-2.5 text-sm">
               <Star className="w-4 h-4 flex-shrink-0" />
-              <span>No commitment required</span>
+              <span>{dict.ui.qfNoCommitment}</span>
             </div>
           </div>
         </div>
@@ -176,9 +178,9 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
   return (
     <Card id="quote-form" className="sticky top-6 overflow-hidden">
       <div className="bg-gradient-to-br from-brand-blue to-brand-navy text-white p-6">
-        <h3 className="text-xl font-bold mb-1">Get a Quote</h3>
+        <h3 className="text-xl font-bold mb-1">{dict.ui.qfTitle}</h3>
         <p className="text-blue-200 text-sm mb-5">
-          Free, no commitment — most providers respond within 2 hours
+          {dict.ui.qfSubtitle}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -186,7 +188,7 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
           {hasProcedures && (
             <div>
               <label htmlFor="procedure" className="block text-sm font-medium mb-1.5">
-                Procedure
+                {dict.ui.qfProcedure}
               </label>
               <select
                 id="procedure"
@@ -194,7 +196,7 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
                 onChange={(e) => setForm({ ...form, procedureId: e.target.value })}
                 className="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"
               >
-                <option value="">Select a procedure (optional)</option>
+                <option value="">{dict.ui.qfSelectProcedure}</option>
                 {procedures.map(({ id, name }) => (
                   <option key={id} value={id}>
                     {name}
@@ -207,14 +209,14 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
           {/* Description */}
           <div>
             <label htmlFor="description" className="block text-sm font-medium mb-1.5">
-              What do you need?
+              {dict.ui.qfWhatDoYouNeed}
             </label>
             <textarea
               id="description"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
-              placeholder="Describe what you're looking for..."
+              placeholder={dict.ui.qfDescribePlaceholder}
               className={`w-full px-3 py-2.5 rounded-lg bg-white/10 border text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm resize-none ${
                 errors.description ? 'border-red-400' : 'border-white/30'
               }`}
@@ -233,14 +235,14 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
           {/* Contact Fields */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium mb-1.5">
-              Your Name
+              {dict.ui.qfYourName}
             </label>
             <input
               type="text"
               id="name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="John Smith"
+              placeholder={dict.ui.qfNamePlaceholder}
               className={`w-full px-3 py-2.5 rounded-lg bg-white/10 border text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm ${
                 errors.name ? 'border-red-400' : 'border-white/30'
               }`}
@@ -255,7 +257,7 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium mb-1.5">
-              Email
+              {dict.ui.qfEmail}
             </label>
             <input
               type="email"
@@ -277,7 +279,7 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
 
           <div>
             <label htmlFor="phone" className="block text-sm font-medium mb-1.5">
-              Phone
+              {dict.ui.qfPhone}
             </label>
             <input
               type="tel"
@@ -300,7 +302,7 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
           {/* Photo Upload */}
           <div>
             <label htmlFor="photo" className="block text-sm font-medium mb-1.5">
-              Upload Photo <span className="text-blue-200/50">(optional)</span>
+              Upload Photo <span className="text-blue-200/50">{dict.ui.qfOptional}</span>
             </label>
             <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/20 text-xs text-blue-200/60">
               <Camera className="w-4 h-4 flex-shrink-0" />
@@ -332,19 +334,19 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
             {isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Submitting...
+                {dict.ui.qfSubmitting}
               </>
             ) : (
               <>
                 <MessageSquare className="w-4 h-4" />
-                Request Quote
+                {dict.ui.qfSubmit}
               </>
             )}
           </button>
         </form>
 
         <p className="text-xs text-blue-200/50 mt-4 text-center">
-          Your information is private and only shared with this provider
+          {dict.ui.qfPrivacy}
         </p>
       </div>
     </Card>

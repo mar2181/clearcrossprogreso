@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import { useI18n } from '@/lib/i18n';
 import { Provider, Procedure, FlashDiscount } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import ProviderCard from '@/components/providers/ProviderCard';
@@ -25,6 +26,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
   categorySlug,
   flashDiscounts = [],
 }) => {
+  const { dict } = useI18n();
   // Draft selection (what user is picking)
   const [selectedProcedures, setSelectedProcedures] = useState<string[]>([]);
   // Applied filter (what's actually filtering results)
@@ -196,7 +198,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
             )}
           >
             <Zap className={cn('w-4 h-4', flashDealsOnly && 'fill-current')} />
-            Flash Deals Only
+            {dict.ui.flashDealsOnly}
             <span className={cn(
               'inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold',
               flashDealsOnly ? 'bg-white/25 text-white' : 'bg-orange-100 text-orange-700'
@@ -216,7 +218,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
       {procedures.length > 0 && (
         <div>
           <p className="text-sm font-semibold text-neutral-dark mb-3">
-            Filter by Procedure
+            {dict.ui.filterByProcedure}
           </p>
           <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
             <div className="flex gap-2 sm:flex-wrap">
@@ -244,7 +246,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
         <div>
           <p className="text-sm font-semibold text-neutral-dark mb-3 flex items-center gap-1.5">
             <Award className="w-4 h-4 text-brand-navy" />
-            Filter by Experience
+            {dict.ui.filterByExperience}
           </p>
           <div className="flex gap-2 flex-wrap">
             {[0, 5, 10, 15, 20, 25].map((years) => (
@@ -258,7 +260,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
                     : 'bg-white text-neutral-dark border-neutral-200 hover:border-brand-navy hover:text-brand-navy'
                 )}
               >
-                {years === 0 ? 'Any' : `${years}+ years`}
+                {years === 0 ? dict.ui.anyExperience : dict.ui.yearsPlus.replace('{n}', String(years))}
               </button>
             ))}
           </div>
@@ -279,7 +281,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
             )}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            {appliedProcedures.length > 0 ? 'Update Results' : 'Show Results'}
+            {appliedProcedures.length > 0 ? dict.ui.updateResults : dict.ui.showResults}
           </button>
           {appliedProcedures.length > 0 && (
             <button
@@ -287,7 +289,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium text-neutral-mid hover:text-neutral-dark hover:bg-neutral-100 transition-colors"
             >
               <X className="w-3.5 h-3.5" />
-              Clear All
+              {dict.ui.clearAll}
             </button>
           )}
         </div>
@@ -296,7 +298,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
       {/* Active Filter Banner */}
       {appliedProcedures.length > 0 && (
         <div className="bg-brand-blue/5 border border-brand-blue/20 rounded-xl px-5 py-3 flex items-center gap-3 flex-wrap">
-          <span className="text-sm font-medium text-brand-blue">Showing prices for:</span>
+          <span className="text-sm font-medium text-brand-blue">{dict.ui.showingPricesFor}</span>
           {appliedProcedureNames.map((name, i) => (
             <span
               key={i}
@@ -339,10 +341,10 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             className="px-3 py-2 border border-neutral-200 rounded-lg text-sm appearance-none bg-white cursor-pointer hover:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue"
           >
-            <option value="rating">Highest Rating</option>
-            <option value="reviewed">Most Reviewed</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
+            <option value="rating">{dict.ui.sortHighestRating}</option>
+            <option value="reviewed">{dict.ui.sortMostReviewed}</option>
+            <option value="price-low">{dict.ui.sortPriceLow}</option>
+            <option value="price-high">{dict.ui.sortPriceHigh}</option>
           </select>
         </div>
       </div>
@@ -368,13 +370,13 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
       ) : (
         <div className="text-center py-12">
           <p className="text-neutral-500 mb-4">
-            No providers found matching your criteria.
+            {dict.ui.noProvidersMatch}
           </p>
           <button
             onClick={handleClearFilters}
             className="text-brand-blue font-medium hover:underline"
           >
-            Clear filters
+            {dict.ui.clearFilters}
           </button>
         </div>
       )}
