@@ -156,6 +156,14 @@ check('an aggregator or social URL is not stored as the clinic website', () => {
     'https://clearcrossprogreso.com/dentists/dental-artistry',
     'https://instagram.com/dentalartistry',
     'https://wa.me/528999341234',
+    // ⛔ THE MEDICAL-TOURISM AGGREGATORS THIS SITE COMPETES WITH FOR HEAD TERMS.
+    // Three providers already hold a dentaldepartures.com link and two hold
+    // whatclinic.com, curated before this filter existed. Storing one sends our
+    // own visitor to a rival directory from a page carrying our provider name.
+    'https://www.dentaldepartures.com/mexico/nuevo-progreso/dental-artistry',
+    'https://medicaltourismco.com/dentist/nuevo-progreso',
+    'https://www.placidway.com/clinic/dental-artistry',
+    'https://bookimed.com/clinic/dental-artistry',
   ]) {
     assert.strictEqual(placeWebsite({ websiteUri: u }), null, u + ' should be refused');
   }
@@ -166,6 +174,9 @@ check('a real clinic site is kept, including on an unfamiliar TLD', () => {
     'https://dentalartistry.mx/',
     'http://clinicasonrisa.com.mx/precios',
     'https://sonrisa.dental',
+    // ⛔ fresha.com is the business's OWN booking diary, not a directory of its
+    // rivals. Four providers use it. Refusing it would delete a real link.
+    'https://www.fresha.com/a/spa-miranda-nuevo-progreso',
   ]) {
     assert.strictEqual(placeWebsite({ websiteUri: u }), u, u + ' should be kept');
   }

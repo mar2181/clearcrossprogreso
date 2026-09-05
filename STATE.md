@@ -3,6 +3,93 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 💲 2026-09-05 (later still) — THE PRICES WERE NOT GIVEN TO US BY THE PROVIDERS, AND THE PAGE SAID THEY WERE
+
+Continuing the same session. `npm run verify` **REAL_VERIFY_EXIT=0**, `tsc` clean —
+honest-claims **PASS (22 live claims caught, 15 honest sentences left alone)**,
+`_mutate_honest_pages` **14 caught / 0 missed / 0 skipped**, `_mutate_places_write`
+**16 caught / 0 missed / 0 skipped**, schema 1811, 273 pages.
+
+### 🔴 THE PRICE-HARVEST PLAN IS DISPROVEN, AND THAT IS THE MOST USEFUL THING HERE
+
+`STATE.md` proposes *"Firecrawl against each clinic's own site is the route"* to the 37
+missing price lists. **Measured, and it does not work.** Nine provider websites probed:
+
+| | |
+|---|---|
+| returned 200 | 9 |
+| **published any price** | **1** (a single `$400`) |
+| used the word price / precio / cost | **0** |
+| were JS shells (i.e. the fetch missed content) | **0** |
+
+⛔ **Followed the price/service subpages too** — `mustredentalclinic.com/services.html`
+returns 4,901 chars and **zero** prices; 3 of 5 have no such link at all. So this is a
+measured no, not a blind zero.
+
+⛔ **The March 2026 research had already found the same thing and written it down.**
+`lib/mock-data.ts:660` — *"Official website available but no public price list posted."*
+And `mock-data.ts:2` records the real source: *"official clinic websites, WhatClinic,
+DentalMexico, PlacidWay, ClinicBooking, Dental Departures"* — **three of which are the
+medical-tourism aggregators this site competes with for head terms.**
+
+⇒ **There is no automated route to the missing 37 price lists.** The 312 we have were
+hand-researched. The options are manual research, or a signed provider maintaining their
+own — which is what "sign one dentist" actually unlocks. ⚠️ 12 of the 37 have a website;
+25 have neither a site nor prices.
+
+### 🔴 AND THE PAGE MADE A CLAIM THAT FOLLOWS FROM IT
+
+On every priced provider page, in both languages:
+
+> **"These are the prices the provider gave ClearCross."**
+
+⛔ **No provider has given ClearCross anything.** None has signed; there is one quote
+request in the whole history of the database and it is still unanswered. For an unknown
+share of the 312 line items the number came from a competitor's directory. The sentence
+describes a supply relationship that does not exist, on a page naming a real business and
+quoting a figure a patient will act on. `savingsProvenance` said the same thing.
+
+⛔ **THIS REVERSES A DOCUMENTED PRIOR JUDGEMENT AND IT IS FLAGGED RATHER THAN QUIET.**
+That exact sentence sat in `CLAIM_QUIET` as honest copy, and the `by-us` rule's own
+comment asserted *"A provider gave us a number."* The prior call predates the evidence
+above. Both now say where the number came from — which is also the more useful sentence
+for the reader. New rule `provider-supplied`, **RED-proven: 3 failures** against the
+wording that was live an hour earlier, naming the file and the sentence.
+
+⛔ **The guard had a PRESERVATION CHECK ASSERTING THE FALSE SENTENCE**
+(`en: /prices? the provider gave ClearCross/i`). It is **rewritten to assert the true one,
+not deleted** — the property is real: the price table must still say where the figure came
+from, in both languages, and the component must still render the key.
+
+### 🔴 THE HARNESS THEN CAUGHT MY OWN FIX CREATING A BLIND SPOT
+
+`honest-claims.mjs:60` reads `if ((rule.denial || DENIAL).test(s)) continue` — a rule with
+no denial of its own inherits the **global** negation pattern. My first replacement read
+*"...they were not supplied or confirmed by the clinic, and they can change"* as one long
+sentence, which made that sentence a **safe harbour**: any claim written into it is
+invisible to every denial-less rule. The `materials` mutation went **13 caught / 1 MISSED**
+the moment its anchor was repaired; the guard on its own reported the tree clean.
+
+Fixed at both ends — the negation now sits in a short sentence of its own, and `materials`
+carries a targeted denial. ⚠️ **The other denial-less rules have the same exposure**; this
+is the one that was demonstrated, so it is the one that was fixed rather than a speculative
+rewrite of every rule.
+
+⛔ **And the SKIP is why this was noticed at all.** Rewriting the copy moved a harness
+anchor (`Ask` → `ask`, mid-clause), and the harness reported *"anchor matched 0 times,
+mutation NOT applied — proves nothing"* rather than scoring a catch it never made.
+
+### Also this round
+- `dentaldepartures.com`, `medicaltourismco.com`, `placidway.com`, `bookimed.com`,
+  `medigence.com` added to the website refusal list — **3 providers already hold a
+  dentaldepartures link and 2 hold whatclinic**, curated before the filter existed, so
+  `coalesce` correctly leaves them alone. That is a **data** decision, not something the
+  rule can undo. ⛔ `fresha.com` is deliberately NOT refused: 4 providers run their own
+  booking diary on it, and it is not a directory of their rivals.
+- ⚠️ **All 312 prices carry `updated_at = 2026-07-14`** (the seed date) and the page shows
+  no date at all. The research is dated March 2026 in `mock-data.ts`. Putting a six-month-old
+  date on every price is a commercial call, not a code fix — **flagged, not taken**.
+
 ## 📞 2026-09-05 (later) — THE HARVESTER WOULD HAVE ERASED CURATED HOURS, AND IT WAS ABOUT TO POINT PATIENTS AT TWO COMPETITORS
 
 Mario: *"having the right prices and services for each business from what they have

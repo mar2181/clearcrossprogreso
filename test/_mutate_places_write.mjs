@@ -66,6 +66,13 @@ const MUTATIONS = [
     find: "  catch { return null; }",
     replace: "  catch (e) { throw e; }",
   },
+  {
+    file: 'tools/verify/places-write.mjs',
+    label: 'a named medical-tourism competitor drops off the refusal list',
+    guard: 'test/places-write.mjs',
+    find: "'whatclinic.com', 'dentaldepartures.com', 'medicaltourismco.com',",
+    replace: "'whatclinic.com',",
+  },
   // -------------------------------------------------------- the contact gate
   {
     file: 'tools/verify/places-match.mjs',

@@ -459,6 +459,42 @@ const ADVICE = /\b(?:must|should|deben|debe|ask|pregunt\w*|look for|busque)\b/i
 
 const CLAIM_RULES = [
   {
+    /**
+     * ⛔ A PRICE ATTRIBUTED TO THE BUSINESS THAT DID NOT SUPPLY IT.
+     *
+     * ⛔ AND THIS REVERSES AN EARLIER JUDGEMENT, DELIBERATELY. The sentence
+     * "These are the prices the provider gave ClearCross." sat in CLAIM_QUIET
+     * below as honest copy, and the by-us rule's own comment asserted "A
+     * provider gave us a number."
+     *
+     * It is not true, and the evidence arrived after that call was made.
+     * lib/mock-data.ts:2 records the source as "official clinic websites,
+     * WhatClinic, DentalMexico, PlacidWay, ClinicBooking, Dental Departures" --
+     * three of which are the medical-tourism aggregators this site competes with
+     * for head terms. Measured 2026-09-05: of nine provider websites probed,
+     * EIGHT return 200 and publish no price at all, and not one uses the word
+     * price / precio / cost. The March 2026 research had already found the same
+     * thing and wrote it down (mock-data.ts:660, "Official website available but
+     * no public price list posted"). So for an unknown share of the 312 line
+     * items the number came from a third-party directory, not from the clinic.
+     *
+     * NO PROVIDER HAS SIGNED ANYTHING. There is one quote request in the whole
+     * history of the database and it is still unanswered. "The provider gave
+     * ClearCross" describes a supply relationship that does not exist, on a page
+     * naming a real business and quoting a figure a patient will act on.
+     *
+     * ⛔ It is the same shape as "Prices verified by ClearCross" and "Credentials
+     * Verified -- by our team, on-site", both removed on 2026-09-05. The honest
+     * version says where the number came from, which is the more useful sentence
+     * for the reader anyway.
+     */
+    id: 'provider-supplied',
+    re: /\b(?:price|prices|figures?|quote|precios?|cifras?)\b[^.!?]{0,60}\b(?:gave|given to|supplied to|provided to)\s+ClearCross\b|\b(?:le\s+)?di[oó]\s+a\s+ClearCross\b|\bproporcion[oó]\s+a\s+ClearCross\b/i,
+    advice: false,
+    denial: /\b(?:not|never|did\s+not|didn.?t)\s+(?:\w+\s+){0,3}(?:supplied?|provided?|give|given)\b|\bno\s+(?:fueron\s+)?proporcionad\w*\b|\bno\s+proporcion[oó]\b/i,
+    label: 'a price attributed to a provider who did not supply it',
+  },
+  {
     id: 'licensed',
     // An assertion that the people doing the work hold a credential.
     re: /\b(?:licen[sc]ed|board[- ]certified|fully certified|certified)\s+(?:and\s+\w+\s+)?(?:profession\w*|dentists?|doctors?|surgeons?|staff|practitioners?|clinics?)\b|\bprofesionales\s+(?:con\s+licencia|certificados|titulados)\b/i,
@@ -527,6 +563,25 @@ const CLAIM_RULES = [
     // cupboard in Nuevo Progreso.
     re: /\bsame\s+(?:quality\s+)?(?:materials?|brands?|standards?)\b|\bmismos\s+materiales\b/i,
     advice: false,
+    /**
+     * ⛔ A TARGETED DENIAL, BECAUSE THE GLOBAL ONE IS A SAFE HARBOUR.
+     * The sweep reads `if ((rule.denial || DENIAL).test(s)) continue`, so a rule
+     * with no denial of its own inherits the broad global negation pattern --
+     * and ANY honest sentence containing a negation then hides every claim
+     * written beside it.
+     *
+     * Measured 2026-09-05: rewriting the price provenance to read "The clinic
+     * did not supply these figures and they can change" made this rule blind to
+     * a materials claim inserted into that same sentence. The mutation harness
+     * caught it (13 caught / 1 MISSED); the guard on its own reported the tree
+     * clean. The copy was also split so the negation sits in a short sentence of
+     * its own -- both halves matter, and only one of them is in this file.
+     *
+     * ⚠️ The other denial-less rules carry the same exposure. This is the one
+     * that was demonstrated, so it is the one that is fixed rather than a
+     * speculative rewrite of every rule.
+     */
+    denial: /\b(?:not|never|cannot|no)\s+(?:\w+\s+){0,3}(?:the\s+)?same\s+(?:quality\s+)?(?:materials?|brands?|standards?)\b/i,
     label: 'an unsubstantiated "same materials/standards as the US" equivalence',
   },
 ]
@@ -557,12 +612,22 @@ const CLAIM_FIRES = [
   ['credentials-checked', 'Credentials Verified'],
   ['credentials-checked', 'By our team, on-site'],
   ['credentials-checked', 'Credenciales Verificadas'],
+  ['provider-supplied', 'These are the prices the provider gave ClearCross.'],
+  ['provider-supplied', 'Estos son los precios que el proveedor le dio a ClearCross.'],
+  ['provider-supplied', 'Worked out from the prices Dental Artistry gave ClearCross against average US self-pay prices.'],
 ]
 const CLAIM_QUIET = [
   'We have not inspected the clinic or checked professional licences - ask to see the Cedula Profesional at your appointment.',
   'Every dentist and doctor practising in Mexico must hold a Cedula Profesional, the professional licence.',
   'Ask to see it at your appointment, where it should be displayed in the office.',
-  'These are the prices the provider gave ClearCross.',
+  // ⛔ The wording that REPLACED "These are the prices the provider gave
+  // ClearCross." -- which is now a FIRES fixture for provider-supplied. The
+  // rule has to leave this alone or the honest version is unwritable.
+  'These prices were researched from the provider\u2019s own published price list and from public listings. They were not supplied or confirmed by the clinic. Prices can change \u2014 ask for a written quote before any work begins, and take it with you.',
+  'Estos precios fueron investigados a partir de la lista de precios publicada por el proveedor y de listados p\u00fablicos. No fueron proporcionados ni confirmados por la cl\u00ednica. Los precios pueden cambiar: pida una cotizaci\u00f3n por escrito antes de que empiece cualquier trabajo, y ll\u00e9vesela con usted.',
+  'The clinic did not supply these figures.',
+  'La cl\u00ednica no proporcion\u00f3 estas cifras.',
+  'Prices can change \u2014 ask for the final price in writing before any work begins.',
   'Precios segun los proveedores. ClearCross no verifica precios.',
   'ClearCross has not checked anybody licence.',
   // ⛔ OUR OWN commitment, in the privacy policy. A response-time rule broad
@@ -650,11 +715,17 @@ console.log('\n10. control: each surface still says where its numbers came from'
  */
 const PROVENANCE = [
   {
+    // ⛔ THIS ROW USED TO ASSERT THE FALSE SENTENCE. It read
+    //   en: /prices? the provider gave ClearCross/i
+    // so the guard was holding a claim in place that no provider ever made. It
+    // is REWRITTEN rather than deleted: the property is still worth guarding --
+    // the price table must say where the number came from, in both languages,
+    // and the component must render the key. Only the sentence changed.
     key: 'priceSourceNote',
     file: PRICE_TABLE,
-    en: /prices? the provider gave ClearCross/i,
-    es: /precios que el proveedor le dio a ClearCross/i,
-    label: 'the price table still says the provider supplied the prices',
+    en: /researched from the provider.{0,3}s own published price list/i,
+    es: /investigados a partir de la lista de precios publicada/i,
+    label: 'the price table still says where the prices came from',
   },
   {
     key: 'savingsBannerNote',

@@ -44,7 +44,12 @@ const MUTATIONS = [
   {
     name: 'the materials equivalence comes back',
     file: 'lib/i18n/dictionaries/en.ts',
-    find: 'Ask for the final price in writing before any work begins.',
+    // ⛔ ANCHOR MOVED 2026-09-05: savingsProvenance was rewritten (the old
+    // wording attributed the prices to the provider, which no provider gave us)
+    // and the sentence is now mid-clause, so the capital A no longer matches.
+    // The harness REFUSED to score this rather than silently mutating something
+    // else -- which is the only reason it was noticed. The property is unchanged.
+    find: 'ask for the final price in writing before any work begins.',
     repl: 'They use the same quality materials. Ask for the final price in writing before any work begins.',
     expect: 'same materials/standards',
   },

@@ -44,10 +44,24 @@ export const placePhone = (pl) =>
  * anything on a known aggregator host is dropped rather than saved.
  */
 const NOT_THEIR_SITE = [
+  // Social and generic pages: not a price list, and not a site the clinic controls.
   'facebook.com', 'instagram.com', 'business.site', 'sites.google.com',
-  'linktr.ee', 'wa.me', 'whatclinic.com', 'doctoralia.com', 'yelp.com',
-  'tripadvisor.com', 'clearcrossprogreso.com',
+  'linktr.ee', 'wa.me', 'yelp.com', 'tripadvisor.com',
+  // ⛔ DIRECT COMPETITORS. These are the medical-tourism aggregators that own the
+  // head terms this site is trying to take (see the positioning note in STATE.md).
+  // Storing one sends our own visitor to a rival directory, from a page carrying
+  // our provider's name. Found in the live data: 3 providers already hold a
+  // dentaldepartures.com link and 2 hold whatclinic.com, curated long before this
+  // filter existed -- coalesce correctly leaves those alone, so they are a DATA
+  // decision, not something this rule can undo.
+  'whatclinic.com', 'dentaldepartures.com', 'medicaltourismco.com',
+  'placidway.com', 'doctoralia.com', 'bookimed.com', 'medigence.com',
+  // And us.
+  'clearcrossprogreso.com',
 ];
+// ⛔ fresha.com is deliberately NOT here. It is a booking platform the business
+// itself runs its own diary on -- not a directory of its rivals. Four providers
+// use it. It is not a price list either, which is a separate problem.
 export const placeWebsite = (pl) => {
   const raw = (pl.websiteUri || '').trim();
   if (!raw) return null;
