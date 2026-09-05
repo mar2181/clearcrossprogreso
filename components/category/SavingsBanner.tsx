@@ -63,7 +63,12 @@ const SavingsBanner: React.FC<SavingsBannerProps> = ({ providers, categoryName, 
             💰 {headline}
           </h3>
           <p className="text-sm text-neutral-mid mt-1">
-            Compared to average US self-pay prices. All procedures by licensed professionals.
+            {/*
+              ⛔ "All procedures by licensed professionals." was live here on every
+              category page and we have checked nobody's licence. Attribute the
+              figures instead. See test/honest-claims.mjs section 9.
+            */}
+            Compared to average US self-pay prices. Figures come from the providers&rsquo; own price lists.
           </p>
         </div>
       </div>

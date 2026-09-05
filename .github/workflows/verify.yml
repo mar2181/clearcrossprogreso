@@ -15,17 +15,40 @@ jobs:
           cache: npm
       - name: Install
         run: npm ci
+      # ⛔ EVERY OFFLINE GUARD RUNS HERE. Until 2026-09-05 this step listed four
+      # of them, so honest-claims (medical-credential claims), places-match,
+      # seed-safety and schema had NEVER executed in CI -- a push could be green
+      # with the guard protecting the site's riskiest copy never run at all.
+      #
+      # ⛔ Each on its own line, NOT an && chain: with &&, one red hides every
+      # guard behind it, so a single failure reports one problem where there may
+      # be four. `set -e` (the default for a run block) still fails the build.
       - name: Guards
         run: |
           node test/strip-comments.mjs
+          node test/seed-safety.mjs
           node test/measurement.mjs
           node test/bilingual.mjs
           node test/quote-delivery.mjs
+          node test/honest-claims.mjs
+          node test/places-match.mjs
+
+      # The mutation harness proves the guard above can actually fail. A guard
+      # that cannot go red is not a guard, and this one is the only thing
+      # standing between a well-meaning edit and a false medical claim.
+      - name: Guards can fail (mutation)
+        run: node test/_mutate_honest_pages.mjs
       - name: Build (includes type check)
         run: npm run build
         env:
           # Build must succeed with no secrets configured (mock mode)
           USE_MOCK_DATA: mock
+
+      # Reads .next/server/app, so it needs the build and no server. 1811 checks
+      # over the structured data Google reads -- a policy violation on a health
+      # site is the kind that costs the whole domain.
+      - name: Structured data (reads the built HTML)
+        run: node test/schema.mjs
       # The link guard needs a running server: it reads SERVED html, because a
       # <Link href> to a route that does not exist type-checks perfectly. Two 404s
       # sat in the user menu of every page for weeks and only a human clicking

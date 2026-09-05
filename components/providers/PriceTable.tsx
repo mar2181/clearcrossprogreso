@@ -177,7 +177,17 @@ const PriceTable: React.FC<PriceTableProps> = ({ prices, providerName, providerI
         <div className="bg-gradient-to-r from-brand-green/5 to-brand-blue/5 border border-brand-green/20 rounded-lg p-4">
           <p className="text-sm text-neutral-dark">
             <span className="font-bold text-brand-green">💰 Save ${totalSaved.toLocaleString()}</span> on these {savingsCount} procedures compared to US prices.
-            All procedures at {providerName} are performed by licensed professionals using the same quality materials.
+            {/*
+              ⛔ This sentence used to read "All procedures at {providerName} are
+              performed by licensed professionals using the same quality
+              materials." Two claims, neither of which we can substantiate, on a
+              page whose own disclaimer says we have NOT checked any licence --
+              and it rendered in both language trees. Say where the number came
+              from instead; that part is true and is the part a reader needs.
+              Guarded by test/honest-claims.mjs sections 9 and 10.
+            */}
+            Worked out from the prices {providerName} gave ClearCross against average US
+            self-pay prices. Ask for the final price in writing before any work begins.
           </p>
         </div>
       )}

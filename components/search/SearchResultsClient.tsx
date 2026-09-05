@@ -378,7 +378,12 @@ export default function SearchResultsClient({ results, query }: SearchResultsCli
         </p>
         <div className="flex items-center justify-center gap-1.5 mt-2 text-xs text-neutral-300">
           <TrendingUp className="w-3 h-3" />
-          <span>Prices verified by ClearCross</span>
+          {/*
+            ⛔ This read "Prices verified by ClearCross". Nobody verifies a price
+            -- a provider gives us a number and we publish it. See
+            test/honest-claims.mjs section 9.
+          */}
+          <span>Prices as listed by each provider</span>
         </div>
       </div>
     </div>
