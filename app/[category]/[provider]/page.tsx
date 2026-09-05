@@ -153,6 +153,7 @@ export default async function ProviderPage({ params, locale = 'en' }: ProviderPa
     categoryLabel: categoryTrailLabel,
     homeLabel: t.home,
     homeUrl: locale === 'es' ? SITE_URL + '/es' : SITE_URL,
+    localePrefix: locale === 'es' ? '/es' : '',
   });
 
   return (

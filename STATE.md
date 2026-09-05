@@ -3,6 +3,215 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 🟢 2026-09-05 — THE SPANISH TREE IS SPANISH, AND SEVEN MORE LIVE CLAIMS ARE GONE
+
+Mario: *"continue with the work, push and merge and continue."* Phase 4 of the plan
+(Spanish) — and on the way to it, seven claims the site could not substantiate, all
+live in production, none of which any guard could see.
+
+✅ **PUSHED + DEPLOYED.** `main` **`322b694`** then **`40c5950`**, both sha-verified
+against GitHub with `git ls-remote` and by reading the fixes back **out of the pushed
+blobs**, not off the push output. ⛔ A push to `main` IS a production deploy.
+`npm run verify` **REAL_VERIFY_EXIT=0** before each — 8 guards, 273 pages, schema
+**1811/0**, mutation harness **14 caught / 0 missed / 0 skipped**.
+
+### 🔴 SEVEN CLAIMS, AND THE GUARD SCANNED SIX FILES
+
+`test/honest-claims.mjs` was already 383 lines of careful work. It missed all seven,
+and the reason is structural rather than sloppy: **sections 1-5 scan a HAND-WRITTEN
+LIST OF SIX FILES**, and its rules are literals for the four claims that were live in
+August. What was found:
+
+| where | what it said |
+|---|---|
+| `PriceTable` (every priced provider page, both languages) | *"All procedures at &lt;provider&gt; are performed by **licensed professionals** using the **same quality materials**."* — inches below the page's own *"we have not checked professional licences"* |
+| `SavingsBanner` (every category page) | *"All procedures by licensed professionals."* |
+| `SearchResultsClient` (every search) | *"Prices **verified by ClearCross**."* Nobody verifies a price; a provider gives us a number |
+| homepage `trustBar` | *"**Credentials Verified** / By our team, on-site"* |
+| homepage `trustBar` | *"**Real Patient Reviews** / From verified visitors"* — `clearcross_reviews` is EMPTY |
+| homepage + quote form + **the patient EMAIL** | *"Average response: &lt;2hrs"*, *"most providers respond within 2 hours"*, *"They typically respond within 24 hours"* |
+| quote form + quote detail + `/quote` meta description | *"Written price guarantee"*, *"Guaranteed Quote Price"*, *"Get a guaranteed price"*, *"No surprise fees — ever"* |
+
+⛔ **THE CREDENTIALS ONE IS THE AUGUST CLAIM IN NEW WORDS.** The 2026-08-30 sweep
+removed *"Cedula Profesional verified … checked by ClearCross"* from the provider
+tooltip. The homepage said the same thing without either banned phrase, under a
+heading reading **"Your Protection, Built In"**.
+
+⛔ **AND THE REVIEWS PILLAR ADVERTISED A FEATURE THAT DOES NOT EXIST.** Section 4 had
+already removed the average rating because there are no reviews; the trust pillar
+selling them stayed. It now describes the **312 published prices**, which are real and
+are the actual differentiator.
+
+⛔ **THE SPANISH HALF WAS WORSE THAN THE ENGLISH.** `writtenQuotesDetail` read
+*"El precio que ve es el precio que paga"* — **literally the sentence section 2 bans
+in English**, invisible because that rule had no Spanish twin. This file's own lesson,
+already written down: *retire an English term and its Spanish twin in the same commit.*
+
+⛔ **THE RESPONSE-TIME CLAIMS ARE THE SHARPEST, BECAUSE ONE IS IN AN EMAIL.** There is
+**ONE quote request in the entire history of the database**, submitted 2026-08-30 and
+still `pending`. No provider has ever answered one, because none has ever been signed.
+An email outlives the page it came from and gets forwarded.
+
+### The fix is structural: the sweep discovers its own corpus
+
+New **section 9** walks `components/`, `app/` and `lib/` — **121 files** — instead of a
+list. Six rules, each with fixtures in BOTH directions, and the scan is **SKIPPED
+loudly** if either half misclassifies. **19 live claims caught, 11 honest sentences
+left alone.** Section 10 is the control that a deleted sentence does not satisfy a
+deny-list: every surface must still say where its numbers came from, **in both
+languages**, and the component must render the key.
+
+⛔ **THE SELF-TEST CAUGHT THREE RULES NOT FIRING, AND THE CAUSE IS NOT OBVIOUS.** The
+shared `DENIAL` test skips any sentence containing a negative word, so a disclaimer
+cannot be mistaken for the claim it retracts. But *"**No** surprise fees"* and
+*"Free, **no** commitment — most providers respond within 2 hours"* use a negative word
+as part of the **promise**. A rule may now declare its own denial, one that governs the
+claim (*"do not guarantee"*, *"have not checked"*) rather than a word anywhere in the
+sentence.
+
+⛔ **AND SECTION 1'S SPANISH RULE FIRED ON A DISCLAIMER I HAD JUST WRITTEN.** Spanish
+conjugates without a pronoun, so *"No inspeccionamos la clínica ni las licencias"* is
+indistinguishable from a claim — the English rule escapes only by accident of word
+order (it needs *"we"* immediately before the verb, and a denial reads *"we have not
+inspected"*). Rewritten in the **passive**, mirroring the English, which is the better
+translation anyway. ⛔ **The blind spot is recorded AT the rule**, because the tempting
+fix is to delete the disclaimer.
+
+### The Spanish tree, measured on production before and after
+
+|  | before | after |
+|---|---|---|
+| `/dentists` | en-ui 84 · es-ui 0 | unchanged |
+| `/es/dentists` | **en-ui 83 · es-ui 1** | **en-ui 7 · es-ui 28** |
+| `/es/dentists/dental-artistry` | en-ui 38 | **en-ui 8** |
+| `/es/pharmacies` | en-ui 51 | **en-ui 7** |
+
+Identical trees before. **129 Spanish pages were live and in the sitemap and every one
+was the English page with a translated `<title>`**, in a market that is ~85% Hispanic.
+
+**Two causes, two fixes.** CLIENT components hardcoded English and could always have
+known the locale — `useI18n()` resolves from `usePathname()`, which runs during SSR, so
+the Spanish text is in the HTML a crawler reads. **SERVER components could not know it
+at all**: `app/es/**/page.tsx` re-exported the English component wholesale. Both the
+category and provider routes now take a `locale` prop defaulting to `'en'`, and the
+Spanish routes pass `'es'`.
+
+⛔ **STILL 273 PRERENDERED ROUTES — nothing became dynamic.** `headers()`/`cookies()`
+in a layout was deliberately NOT used: it opts the entire app out of static rendering,
+which this file already records as a far worse trade.
+
+**134 `ui` keys, EN/ES parity, none untranslated**, across 11 components + 2 server
+pages. ⛔ **Popular SEARCH TERMS are deliberately untranslated** — they are queries
+against English procedure names in the database, and translating the label without the
+index returns zero results. Provider and procedure names stay English for the same
+reason: that is a **data migration**, not copy.
+
+### 🔴 The schema guard caught me breaking an invariant the code documents
+
+Localising the visible breadcrumb left the **BreadcrumbList JSON-LD naming
+"Optometrists" while the page showed "Eye Care"** — 17 pages — and the provider page's
+own comment says *"the labels come from lib/schema.ts, which is also what the
+BreadcrumbList reads, so the trail on screen and the trail in the JSON-LD cannot
+disagree."* Fixed by resolving the label **once** and passing it into `providerGraph`,
+so they cannot drift in either language. ⛔ The home crumb follows the locale too, in
+**name AND url** — on `/es` the trail starts at `/es`, and a hardcoded `SITE_URL`
+pointed the crumb at the English home page. Verified in a browser:
+`everyCrumbIsVisible: true`, JSON-LD `["Inicio", "Dentistas", …]`, home item
+`https://clearcrossprogreso.com/es`.
+
+⛔ **AND VERIFYING IT ON PRODUCTION FOUND THE SAME BUG ONE CRUMB FURTHER OVER.** The
+Spanish page emitted Spanish crumb NAMES pointing at ENGLISH URLs
+(`…/optometrists`), and shared the English page's breadcrumb `@id` — two different
+trails claiming to be the same node. A `localePrefix` now drives the breadcrumb's own
+`@id` and its item URLs. ⛔ **The BUSINESS node deliberately keeps ONE `@id` across
+both trees**: two language pages describe one business and consolidating them is
+correct, while a BreadcrumbList describes THIS page's position in THIS tree. Those are
+opposite requirements and the split is on purpose. English is byte-identical — the
+prefix defaults to `''`, and the schema guard stayed at 1811/0.
+
+### 🔴 CI ran four of the eight guards
+
+`honest-claims`, `places-match`, `seed-safety` and `schema` had **never executed in
+CI** — so a push could be green with the guard protecting a medical-credential claim on
+a health directory never run at all, on a site about to be left unattended for two
+months. All offline guards now run, plus schema (1811 checks) after the build, plus the
+mutation harness. ⛔ Each on its own line, **not** an `&&` chain: one red must not hide
+the guards behind it.
+
+### Guards added
+
+- `test/honest-claims.mjs` sections 9 + 10 — the tree-wide sweep and its control.
+- `test/_mutate_honest_pages.mjs` — **14 caught / 0 missed / 0 skipped**, byte-restore
+  verified, guard green again on the restored tree.
+- `test/bilingual.mjs` section 5 (44 checks) — every shared component reads the
+  dictionary, is a client component, and routes its links through `localizedPath`; the
+  Spanish routes pass a locale rather than re-exporting; every `ui` key exists in both
+  dictionaries **and the Spanish is not the English**.
+
+⛔ **THE HARNESS'S OWN RESTORE CHECK CRIED WOLF FIRST.** It searched restored files for
+*"licensed professionals"* and reported three as NOT RESTORED — because the fix ships
+comments that QUOTE the removed claim in order to explain it. It compares **bytes**
+against a snapshot now. **A restore check that cries wolf is worse than none: the next
+person learns to ignore it, on the run where it is real.**
+
+⛔ **AND IT REFUSED TO SCORE FIVE MUTATIONS** whose anchors had moved into the
+dictionary — *"anchor matched 0 times, mutation NOT applied — proves nothing"* — rather
+than mutating whatever sat at the old position. Re-pointed, then 14/14.
+
+### Verified in a real browser, both trees
+
+`lang="es"`, h1 **"Dentistas en Nuevo Progreso"**, 24× *Ver perfil*, 24× *Pedir
+cotización*, quote form fully Spanish (*Su nombre*, *Correo electrónico*, *Solicitar
+cotización*), price table fully Spanish, all eight retired Spanish claims **gone**, all
+seven honest replacements rendering, **0 page console errors** (the only output was a
+Chrome extension), **0 horizontal overflow**, **0 broken images**. No hydration mismatch
+despite `SavingsBanner` becoming a client component.
+
+### ⚠️ Traps paid for again
+
+- ⛔ **The heredoc backslash trap, four times.** It turned `\\` into `\` (breaking a
+  regex into a syntax error) and `\n` into a real newline inside a JS string literal.
+  ⇒ **write escape-bearing files with the Write/Edit tool**, or build the character
+  with `chr(92)`.
+- ⛔ **`node --check` PASSES on an undefined identifier.** A generator emitted `+ NL`
+  where `NL` was a Python variable; the script was syntactically valid and would have
+  refused every anchor with a confusing "matched 0".
+- ⛔ **Git Bash MSYS path conversion mangled a `/es/dentists` argument** into
+  `C:/Program Files/Git/es/dentists`. Use `MSYS_NO_PATHCONV=1`.
+- ⛔ **`grep -c` exits 1 on a zero count**, killing an `&&` chain on a correct result.
+- ⛔ **The local server runs on MOCK data for reviews.** Local shows "Average Rating"
+  and dated reviews; production correctly shows "No reviews yet". A local measurement
+  is not a production measurement.
+- ⚠️ A patch script that writes at the END means a mid-run refusal leaves the file
+  untouched — which is right, but it also means a re-run double-applies anything
+  written before the refusal (the dictionary blocks). Check before re-running.
+
+### ⏭️ Open
+
+1. ⛔ **ON MARIO: Search Console** — create the property, paste the HTML-tag code.
+   `docs/MEASUREMENT.md` records this cannot be automated (the token carries only
+   `webmasters`, not `siteverification`). Until then organic performance is
+   unmeasurable, and this is what the AI Webmaster is waiting on.
+2. ⛔ **ON MARIO: enable Web Analytics** in the Vercel dashboard. Both API routes were
+   tried and refused.
+3. **GA4** — `NEXT_PUBLIC_GA_ID`. The component is written and inert without it.
+4. **The Places `--apply` phone harvest** — 30 numbers ready (coverage 36% → 64%),
+   blocked on identifying which of the vault's 8 Google keys is enabled for Places.
+5. **The remaining Spanish is DATA, not copy.** Procedure names ("Dental Cleaning") and
+   provider names come from the database in English. A `name_es` column and a
+   translation pass is the honest scope; nothing in the code is missing.
+   ⚠️ `/es` still ships `<html lang="en">` in the **server** HTML — `I18nBody` sets it
+   in a `useEffect`, so a browser sees `es` and a crawler sees `en`. The fix is a second
+   root layout; hreflang already tells Google the language.
+6. **The in-site quote loop** — a per-quote access token so `/quote/<id>` works for
+   anonymous submitters, and moving the provider's price response out of the browser so
+   the `quoted` email (fully written, currently **dead code**) actually fires.
+7. **Unchanged and not blocking:** the revenue model, and the **Texas Patient
+   Solicitation Act** gate before any per-patient commission.
+8. 🔴 **LaTonya Glaze is still an unanswered lead** (`glazegyrl@gmail.com`, 2026-08-30,
+   all-on-6 full mouth — the highest-value case this site can take). Nothing in the code
+   can answer her.
+
 ## 🟢 2026-09-04 — THE LEAD PATH WORKS, AND THERE WAS A REAL CUSTOMER SITTING IN IT
 
 Mario, after time away: *"the end goal was to have something that's already working that

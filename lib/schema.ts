@@ -136,6 +136,19 @@ export interface ProviderGraphInput {
   homeLabel?: string;
   homeUrl?: string;
   /**
+   * '' for the English tree, '/es' for the Spanish one.
+   *
+   * ⛔ USED BY THE BREADCRUMB ONLY, AND THAT SPLIT IS DELIBERATE. The business
+   * node keeps ONE @id across both trees -- two language pages describe one
+   * business, and consolidating them is correct. A BreadcrumbList is the
+   * opposite: it describes THIS page's position in THIS tree, Google requires
+   * it to match the trail the visitor sees, and before this the Spanish page
+   * emitted Spanish crumb NAMES pointing at English URLs while sharing the
+   * English page's breadcrumb @id -- two different trails claiming to be the
+   * same node.
+   */
+  localePrefix?: string;
+  /**
    * The label the PAGE renders for this category in the visitor's language.
    * ⛔ Google requires the BreadcrumbList to describe the trail the visitor
    * actually sees, so this must be the same string the markup shows -- which is
@@ -161,6 +174,7 @@ export function providerGraph({
   categoryLabel,
   homeLabel,
   homeUrl,
+  localePrefix = '',
 }: ProviderGraphInput) {
   const pageUrl = SITE_URL + '/' + category + '/' + provider.slug;
   const businessId = pageUrl + '#business';
@@ -224,14 +238,14 @@ export function providerGraph({
   // ⛔ Mirrors the visible breadcrumb exactly: Home > Category > Provider.
   const breadcrumb = {
     '@type': 'BreadcrumbList',
-    '@id': pageUrl + '#breadcrumb',
+    '@id': SITE_URL + localePrefix + '/' + category + '/' + provider.slug + '#breadcrumb',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: homeLabel || 'Home', item: homeUrl || SITE_URL },
       {
         '@type': 'ListItem',
         position: 2,
         name: categoryLabel || CATEGORY_LABEL_PLURAL[category] || category,
-        item: SITE_URL + '/' + category,
+        item: SITE_URL + localePrefix + '/' + category,
       },
       { '@type': 'ListItem', position: 3, name: provider.name },
     ],
