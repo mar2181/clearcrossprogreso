@@ -10,7 +10,12 @@
  * ⛔ The Places key in the vault is UNRESTRICTED. It is read from the
  * environment here and must never reach a NEXT_PUBLIC_ var or the browser.
  */
-import { chooseMatch, NAME_THRESHOLD } from './places-match.mjs';
+import {
+  chooseMatch, NAME_THRESHOLD, CONTACT_THRESHOLD, contactConfident, contactWritable,
+} from './places-match.mjs';
+import {
+  buildProviderUpdate, placePhone, placeWebsite, q,
+} from './places-write.mjs';
 
 const PAT = process.env.SUPABASE_PAT;
 const PLACES_KEY = process.env.GOOGLE_PLACES_KEY;
@@ -45,6 +50,11 @@ async function searchPlaces(textQuery) {
         'places.businessStatus', 'places.nationalPhoneNumber',
         'places.internationalPhoneNumber',
         'places.regularOpeningHours.weekdayDescriptions',
+        // The clinic's own site. Google publishes no medical prices and never
+        // will; what it publishes is the address of the page where the clinic
+        // publishes its own. Free to request -- rating and phone already bill
+        // this call at the top SKU tier and websiteUri sits below it.
+        'places.websiteUri',
       ].join(','),
     },
     body: JSON.stringify({ textQuery, maxResultCount: 5, languageCode: 'es' }),
@@ -54,25 +64,10 @@ async function searchPlaces(textQuery) {
   return j.places || [];
 }
 
-const q = (s) => `'${String(s).replace(/'/g, "''")}'`;
 
-/**
- * The phone number to store, or null.
- *
- * ⛔ INTERNATIONAL FORMAT IS PREFERRED, and it is not a style choice. The
- * audience is people in the Rio Grande Valley dialing ACROSS A BORDER. Places
- * returns `nationalPhoneNumber` in the number's OWN country format, so a Mexican
- * clinic comes back as "899 934 1234" -- which is not dialable from a US phone,
- * and fails in the worst way: it looks like a phone number and quietly does
- * nothing. `internationalPhoneNumber` carries the country code, so it is
- * dialable from either side for both the Mexican clinics and the several
- * providers on this strip that publish US (+1 956) numbers.
- */
-const placePhone = (pl) =>
-  (pl.internationalPhoneNumber || pl.nationalPhoneNumber || '').trim() || null;
 
 const rows = await sql(`
-  select p.id, p.name, p.slug, p.address, p.verified, p.phone, c.slug as category
+  select p.id, p.name, p.slug, p.address, p.verified, p.phone, p.website, c.slug as category
   from clearcross_providers p
   join clearcross_categories c on c.id = p.category_id
   order by c.slug, p.name
@@ -115,16 +110,38 @@ const toHide = results.filter((r) => !r.verdict.matched && r.p.verified);
 console.log(`\nwould reveal: ${toReveal.length} (currently hidden, matched)`);
 console.log(`would hide:   ${toHide.length} (currently visible, NO match)`);
 
+
+const contact = contactWritable(matched);
+if (contact.refused.length) {
+  console.log(`\ncontact details REFUSED for ${contact.refused.length} matched provider(s):`);
+  for (const [m, why] of contact.refused) {
+    console.log(`  x [${m.p.category}] ${m.p.name}  ->  ${m.verdict.place.displayName.text}`);
+    console.log(`      ${why}`);
+  }
+}
+
 // Phone coverage. We already pay for `nationalPhoneNumber` on every call and
 // have been discarding it, while two thirds of provider pages render no working
 // contact affordance at all.
 const hasPhone = (p) => Boolean(p.phone && String(p.phone).trim());
-const phoneFills = matched.filter(({ p, verdict }) => !hasPhone(p) && placePhone(verdict.place));
-const phoneKept = matched.filter(({ p, verdict }) => hasPhone(p) && placePhone(verdict.place));
+const phoneFills = matched.filter((m) => contact.ok.has(m) && !hasPhone(m.p) && placePhone(m.verdict.place));
+const phoneKept = matched.filter((m) => hasPhone(m.p) && placePhone(m.verdict.place));
 console.log(`\nwould fill phone: ${phoneFills.length} (matched, we hold no number)`);
 console.log(`would NOT touch:  ${phoneKept.length} (matched, we already hold a number -- ours wins)`);
 for (const { p, verdict } of phoneFills) {
   console.log(`  + [${p.category}] ${p.name}  ->  ${placePhone(verdict.place)}`);
+}
+
+// The website is the route to a price list: 37 of the 78 visible providers
+// publish no prices, and the reason we cannot go and read them is that we hold
+// no address for the page they are on.
+const hasSite = (p) => Boolean(p.website && String(p.website).trim());
+const siteFills = matched.filter((m) => contact.ok.has(m) && !hasSite(m.p) && placeWebsite(m.verdict.place));
+const siteKept = matched.filter((m) => hasSite(m.p) && placeWebsite(m.verdict.place));
+console.log(`\nwould fill website: ${siteFills.length} (matched, we hold no site)`);
+console.log(`would NOT touch:    ${siteKept.length} (matched, ours wins)`);
+for (const { p, verdict } of siteFills) {
+  console.log(`  + [${p.category}] ${p.name}  ->  ${placeWebsite(verdict.place)}`);
 }
 
 if (!APPLY) {
@@ -158,44 +175,11 @@ for (const { p, verdict } of results) {
     written++;
     continue;
   }
-  const pl = verdict.place;
-  const hours = pl.regularOpeningHours?.weekdayDescriptions
-    ? q(JSON.stringify(pl.regularOpeningHours.weekdayDescriptions)) : 'null';
-  const phone = placePhone(pl) ? q(placePhone(pl)) : 'null';
-  await sql(`
-    update clearcross_providers set
-      verified = true,
-      -- ⛔ FILL A BLANK, NEVER OVERWRITE. Our numbers came from the clinics'
-      -- own websites and WhatClinic (see lib/mock-data.ts); Places is a
-      -- SUPPLEMENT, not an authority, and it is measurably wrong about this
-      -- strip -- six real pharmacies all resolve to Linda Pharmacy. Writing
-      -- Google's number over a curated one would silently point a patient at
-      -- a different business.
-      --
-      -- The rule is a COALESCE rather than a JS conditional, so it is
-      -- structural (and note: no backticks in this comment -- it lives inside a
-      -- JS template literal, where one would terminate the string early). The
-      -- right-hand side reads the OLD row, so this statement CANNOT overwrite a
-      -- number that is already there even if the caller asks it to. A guard in
-      -- JS alone is one edit away from being bypassed.
-      phone = coalesce(nullif(phone, ''), ${phone}),
-      phone_source = case
-        when nullif(phone, '') is null and ${phone} is not null then 'google-places'
-        else phone_source end,
-      google_place_id = ${q(pl.id)},
-      verified_at = now(),
-      verification_source = 'google-places',
-      business_status = ${q(pl.businessStatus || 'UNKNOWN')},
-      hours = ${hours}::jsonb,
-      lat = ${pl.location?.latitude ?? 'lat'},
-      lng = ${pl.location?.longitude ?? 'lng'},
-      -- ⛔ Google's rating goes in Google's columns. Writing it to
-      -- avg_rating/review_count would render as an unattributed star row on a
-      -- page that says "No reviews yet" ten lines below. See migration 003.
-      google_rating = ${pl.rating ?? 'null'},
-      google_review_count = ${pl.userRatingCount ?? 'null'}
-    where id = ${q(p.id)}
-  `);
+  // ⛔ The gate is applied HERE, at the write, not only in the report above.
+  // A report that says "refused" over a statement that writes anyway is the
+  // worst of both -- it looks checked and is not.
+  const m = matched.find((x) => x.p.id === p.id);
+  await sql(buildProviderUpdate(verdict.place, p.id, { contact: contact.ok.has(m) }));
   written++;
 }
 console.log(`\nwrote ${written} rows.`);

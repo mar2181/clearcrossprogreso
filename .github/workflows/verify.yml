@@ -32,12 +32,16 @@ jobs:
           node test/quote-delivery.mjs
           node test/honest-claims.mjs
           node test/places-match.mjs
+          node test/places-write.mjs
 
       # The mutation harness proves the guard above can actually fail. A guard
       # that cannot go red is not a guard, and this one is the only thing
       # standing between a well-meaning edit and a false medical claim.
       - name: Guards can fail (mutation)
         run: node test/_mutate_honest_pages.mjs
+
+      - name: The Places write path cannot silently start overwriting curated data
+        run: node test/_mutate_places_write.mjs
       - name: Build (includes type check)
         run: npm run build
         env:

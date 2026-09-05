@@ -3,6 +3,133 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 📞 2026-09-05 (later) — THE HARVESTER WOULD HAVE ERASED CURATED HOURS, AND IT WAS ABOUT TO POINT PATIENTS AT TWO COMPETITORS
+
+Mario: *"having the right prices and services for each business from what they have
+on google is key to making our site a real gem."*
+
+⛔ **ONE HONEST CORRECTION FIRST, BECAUSE IT SETS THE PLAN.** Google publishes no
+medical prices and never will. Places gives name, address, **phone, website, hours,
+rating, types**. So "prices from Google" is two jobs: Places supplies the **website**,
+and the website is where the clinic publishes its own prices. Places is the INPUT to
+prices, not the source.
+
+`npm run verify` **REAL_VERIFY_EXIT=0** — places-match **33**, new places-write **18**,
+schema 1811, 273 pages. Harness `test/_mutate_places_write.mjs` **15 caught / 0 missed /
+0 skipped**, tree restored and re-verified.
+
+### 🔴 THE WRITE PATH HAD NO GUARD AT ALL, AND TWO OF ITS THREE RULES WERE WRONG
+
+`test/places-match.mjs` guards WHICH provider a Places result may touch. **Nothing
+guarded WHAT it then writes** — onto rows curated by hand from the clinics' own
+material. Of the three columns:
+
+| | rule | state |
+|---|---|---|
+| `phone` | coalesce | correct |
+| `hours` | **bare assignment** | 🔴 **erases ours whenever Google is quiet** |
+| `website` | — | 🔴 **never written; the field was never even requested** |
+
+⛔ **The hours defect fires on exactly the run this session was about to do.**
+`hours = ${hours}::jsonb` renders the literal `null` when Places returns no opening
+hours, so `--apply` would have blanked hours on every matched provider Google happens
+not to know — **53 of 78 visible providers hold hours**, on a directory whose job is
+telling somebody when a clinic is open. Silent, and invisible on the page until
+somebody drove to a closed shop.
+
+✅ **`tools/verify/places-write.mjs`** — the write path extracted as a pure function so
+it can be DRIVEN. ⛔ The rule stays expressed in SQL (`coalesce(nullif(col,''), new)`)
+rather than a JS conditional: the right-hand side reads the OLD row, so the statement
+**cannot** overwrite a curated value even if a future caller asks it to.
+
+🛡️ **`test/places-write.mjs` (18 checks), RED-proven: 5 fail against what shipped**,
+and the output names the defect in its own words — *"hours would be set without reading
+the old row: hours = null::jsonb"*.
+
+### 🔴 IT WAS ALSO ABOUT TO PUBLISH TWO COMPETITORS' PHONE NUMBERS
+
+The dry run's 30 phone fills included two matches at the 0.60 name floor that are
+different businesses on the same strip:
+
+```
+Fernando Rodriguez DDS  ->  BRACES Dr. Bernardo Rodriguez DDS-MS   (a different dentist)
+Angie's Pharmacy        ->  Angel's Pharmacy                       (a different pharmacy)
+```
+
+⛔ **The second one is provable rather than a judgement call**: `Angel's Pharmacy` was
+the best match for our `Angel's Pharmacy` at **1.00** AND for our `Angie's Pharmacy` at
+**0.60**. One Google place, two of our providers — at most one can be right. That is the
+documented failure mode of this API on this strip (`places-match.mjs` opens by recording
+six real pharmacies all resolving to Linda Pharmacy), and nothing checked for it.
+
+✅ **`contactConfident` + `contactWritable` + `CONTACT_THRESHOLD`.**
+⛔ **The principle: a match good enough to say "this business exists" is not good enough
+to say "this is its phone number."** The first shows a listing we already had; the second
+sends a patient somewhere. They should not share a threshold. A refused contact write
+does **not** refuse the match — the provider still verifies, still shows, still gets its
+hours and coordinates.
+
+Two independent refusals, neither covering the other's case:
+- **collision** — one place claimed by 2+ providers; the weaker loses, **and a TIE
+  refuses both**, because a tie is precisely when we cannot tell which business it is.
+- **weak name** — score > 0.60, **or** one name's distinctive tokens contain the other's.
+
+⛔ **The containment arm is load-bearing, not a nicety.** `SMILE MAKEOVERS / Stetic
+Implant & Dental Centers` ↔ `Stetic Implant and Dental Centers` also scores 0.60 and is
+genuinely the same clinic. A bare threshold raise would have dropped it. A shorter name
+contained in the longer is one business written two ways; two names each carrying a word
+the other lacks are two businesses.
+
+### 🔴 AND I SET THAT THRESHOLD FROM A ROUNDED REPORT, WHICH IS ITS OWN LESSON
+
+First value was **0.67**, read off the runner's two-decimal output. The true scores are
+`0.600000 / 0.666667 / 0.833333 / 0.857143 / 1.000000`, so 0.67 sat just **above** the
+second band and refused a correct match — `Nuevo Progreso Veterinary Specialists` ↔
+`Nuevo Progreso VetSpecialists`.
+
+⛔ **The refusal message gave it away by contradicting itself**: *"weak name 0.67
+(< 0.67)"*. Now **0.63**, inside the measured gap, and the report prints **three**
+decimals. ⚠️ The gap is only 0.0667 wide, so this cannot meet the 0.1 separation
+`NAME_THRESHOLD` is held to — the guard asserts the bar is strictly inside the gap and
+says why it cannot demand more. A mutation for **each end** of the gap is in the harness.
+
+### ✅ APPLIED TO PRODUCTION, AND THE VERIFICATION IS THE DIFF, NOT THE EXIT CODE
+
+Snapshotted all 104 rows before, re-read after:
+
+| | before | after |
+|---|---|---|
+| phone | 37 | **65** |
+| website | 27 | **31** |
+| hours | 53 | **53** (the coalesce held) |
+| verified | 78 | 78 |
+
+**0 curated values overwritten. 0 erased. 0 visibility changes.** Both refused providers
+still hold no phone and are still visible. Of the visible 78, phone coverage went
+**32 → 60**.
+
+⛔ `websiteUri` is **free** to request: rating and phone already bill this call at the
+top Places SKU tier and it sits below that.
+
+### ⛔ Traps paid for again
+
+- **A shell heredoc ate every double backslash in the new guard**, so `'\\s*='` became
+  `'\s*='` — which JavaScript reads as the literal `s*=`. The helper then matched nothing
+  and reported the **code** as broken: a specific, plausible, false accusation. Rewritten
+  with an editor. ⇒ regex-bearing files are never written through a heredoc.
+- **Backticks inside a JS template literal** terminated the SQL string — a trap the
+  original file's own comment warns about, walked into anyway.
+- **The harness found a real hole**: nothing drove the builder with the gate CLOSED, so
+  the gate could be computed perfectly and ignored at the write — *a report that says
+  "refused" over a statement that writes is the worst of both, because it looks checked.*
+  13 caught / 1 missed → 15 caught / 0 missed.
+- **My first RED proof was wrong for the wrong reason** and had to be discarded: the
+  guard failed against the FIX too. A guard that fails against both is measuring itself.
+
+⏭️ **Next, and it is what Mario actually asked for: prices and services.** 41 of 78
+visible providers publish prices; **31 now hold a website**, which is the route to the
+other 37. Google cannot supply a price — the clinic's own page can.
+
 ## 🟢 2026-09-05 — THE SPANISH TREE IS SPANISH, AND SEVEN MORE LIVE CLAIMS ARE GONE
 
 Mario: *"continue with the work, push and merge and continue."* Phase 4 of the plan

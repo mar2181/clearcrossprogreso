@@ -20,6 +20,7 @@ import assert from 'node:assert';
 import {
   normalize, distinctive, inNuevoProgreso, withinNuevoProgreso, nameScore,
   distinctiveSimilarity, chooseMatch, NAME_THRESHOLD,
+  CONTACT_THRESHOLD, contactConfident, contactWritable,
 } from '../tools/verify/places-match.mjs';
 
 let pass = 0, fail = 0;
@@ -213,6 +214,123 @@ check('chooseMatch never hands back a candidate that failed a gate', () => {
   const bad = chooseMatch({ name: 'X Clinic' }, [place('Totally Different', NP)]);
   assert.equal(bad.matched, false);
   assert.equal(bad.place, undefined, 'a rejected candidate was handed back as .place');
+});
+
+
+// ------------------------------------------------- 6. the contact-write gate
+/**
+ * ⛔ WHY THIS SECTION EXISTS. Clearing the name gate means "this business is the
+ * one we listed". Writing its phone number means "dial this to reach them" --
+ * a stronger claim, because it sends a patient somewhere. Every pair below is
+ * real output from the 104-provider run of 2026-09-05, and the two REFUSED ones
+ * are matches that would have published a competitor's number under our
+ * provider's name, on a health directory, looking entirely normal on the page.
+ */
+const cgPlace = (name, id) => ({ id: id || 'ChIJ' + name.replace(/\W/g, ''), displayName: { text: name } });
+const cgMatch = (ourName, theirName, score, id) => ({
+  p: { id: 'p-' + ourName.replace(/\W/g, ''), name: ourName, category: 'dentists' },
+  verdict: { score, place: cgPlace(theirName, id) },
+});
+
+check('a different dentist sharing a surname cannot supply a phone number', () => {
+  // Fernando Rodriguez is not Bernardo Rodriguez. Both are real, both are on
+  // this strip, and they scored 0.60 on "rodriguez" + "dds".
+  assert.ok(!contactConfident('Fernando Rodriguez DDS', 'BRACES Dr. Bernardo Rodriguez DDS-MS', 0.60));
+});
+
+check('a different pharmacy one letter apart cannot supply a phone number', () => {
+  assert.ok(!contactConfident("Angie's Pharmacy", 'Angel’s Pharmacy', 0.60));
+});
+
+check('a shorter name contained in ours is the same business and may supply one', () => {
+  // ⛔ This is the reason the gate is not simply a higher threshold: this pair
+  // also scored 0.60, and it is genuinely the same clinic.
+  assert.ok(contactConfident(
+    'SMILE MAKEOVERS / Stetic Implant & Dental Centers',
+    'Stetic Implant and Dental Centers', 0.60));
+});
+
+check('a strong-but-not-subset match may still supply one', () => {
+  // ⛔ TRUE scores, not the runner's two-decimal report. Writing 0.67 here
+  // instead of 2/3 is exactly the mistake that put the threshold above the
+  // band it was meant to admit, and the fixture would have agreed with it.
+  const TWO_THIRDS = 2 / 3;
+  assert.ok(contactConfident('Salazar Dental Implant Center', 'Salazar Dental Center', TWO_THIRDS));
+  assert.ok(contactConfident('Nuevo Progreso Veterinary Specialists', 'Nuevo Progreso VetSpecialists', TWO_THIRDS),
+    'a real vet clinic was refused its own phone number');
+  assert.ok(contactConfident('Tommy’s Pharmacy', 'Tommys Pharmacy', 5 / 6));
+  assert.ok(contactConfident('ALMITAS SPA', 'ALMITAS SPA', 1.00));
+});
+
+check('the bar sits inside the measured gap, touching neither population', () => {
+  // ⛔ The gap is only 0.0667 wide, so this cannot demand the 0.1 separation
+  // NAME_THRESHOLD is held to. What it CAN demand is that the bar is strictly
+  // inside it -- a value at either end silently admits or refuses a whole band.
+  const WORST_WRONG = 0.6;
+  const BEST_RIGHT = 2 / 3;
+  assert.ok(CONTACT_THRESHOLD > WORST_WRONG,
+    'the bar admits the wrong matches at ' + WORST_WRONG);
+  assert.ok(CONTACT_THRESHOLD <= BEST_RIGHT,
+    'the bar refuses the right matches at ' + BEST_RIGHT.toFixed(6));
+});
+
+check('a match that failed the name gate can never supply a contact detail', () => {
+  assert.ok(!contactConfident('LM Pharmacy', 'Linda Pharmacy', 0.20));
+  assert.ok(!contactConfident('Sundara Spa', 'Spa Las Flores Nuevo Progreso', 0.0));
+});
+
+check('a name with no distinctive tokens cannot ride the containment arm', () => {
+  // Two empty sets are trivially subsets of each other. If containment did not
+  // require both sides to carry something distinctive, every pair of purely
+  // generic names would qualify at the 0.60 floor.
+  assert.ok(!contactConfident('Dental Clinic', 'Dental Center', 0.60));
+});
+
+check('one Google place claimed by two providers refuses the weaker one', () => {
+  // The real collision: Angel's Pharmacy was the best match for our Angel's
+  // Pharmacy at 1.00 AND for our Angie's Pharmacy at 0.60.
+  const shared = 'ChIJangels';
+  const strong = cgMatch("Angel's Pharmacy", 'Angel’s Pharmacy', 1.00, shared);
+  const weak = cgMatch("Angie's Pharmacy", 'Angel’s Pharmacy', 0.60, shared);
+  const { ok, refused } = contactWritable([strong, weak]);
+  assert.ok(ok.has(strong), 'the exact-name provider should keep its contact write');
+  assert.ok(!ok.has(weak), 'the weaker claim on the same place must be refused');
+  assert.strictEqual(refused.length, 1);
+  assert.match(refused[0][1], /collision/);
+});
+
+check('a tie on the same place refuses BOTH, because neither can be told apart', () => {
+  const shared = 'ChIJtie';
+  const a = cgMatch('Clinica Uno', 'Clinica Dos', 0.70, shared);
+  const b = cgMatch('Clinica Tres', 'Clinica Dos', 0.70, shared);
+  const { ok, refused } = contactWritable([a, b]);
+  assert.strictEqual(ok.size, 0, 'a tie must not hand the number to whichever sorted first');
+  assert.strictEqual(refused.length, 2);
+});
+
+check('uncontested strong matches are all writable', () => {
+  const list = [
+    cgMatch('ALMITAS SPA', 'ALMITAS SPA', 1.00, 'a'),
+    cgMatch('Bucardo Dental Clinic', 'Bucardo Dental Clinic', 1.00, 'b'),
+    cgMatch('Salazar Dental Implant Center', 'Salazar Dental Center', 0.67, 'c'),
+  ];
+  const { ok, refused } = contactWritable(list);
+  assert.strictEqual(ok.size, 3, 'a clean run should refuse nothing');
+  assert.strictEqual(refused.length, 0);
+});
+
+check('an uncontested WEAK match is still refused, and says why', () => {
+  const only = cgMatch('Fernando Rodriguez DDS', 'BRACES Dr. Bernardo Rodriguez DDS-MS', 0.60, 'z');
+  const { ok, refused } = contactWritable([only]);
+  assert.strictEqual(ok.size, 0);
+  assert.match(refused[0][1], /weak name/);
+});
+
+check('the contact bar is strictly higher than the visibility bar', () => {
+  // ⛔ If these ever converge, the gate is decoration. The whole design is that
+  // a listing may show on a weaker match than a phone number may be written on.
+  assert.ok(CONTACT_THRESHOLD > NAME_THRESHOLD,
+    'CONTACT_THRESHOLD ' + CONTACT_THRESHOLD + ' must exceed NAME_THRESHOLD ' + NAME_THRESHOLD);
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

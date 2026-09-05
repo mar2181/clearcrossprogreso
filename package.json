@@ -10,7 +10,7 @@
     "concierge:kb": "node tools/build-concierge-kb.mjs",
     "concierge:provision": "node tools/provision-concierge.mjs --character leo",
     "preflight:concierge": "node tools/concierge-preflight.mjs",
-    "verify": "node test/strip-comments.mjs && node test/seed-safety.mjs && node test/measurement.mjs && node test/bilingual.mjs && node test/quote-delivery.mjs && node test/honest-claims.mjs && node test/_mutate_honest_pages.mjs && node test/places-match.mjs && next build && node test/schema.mjs",
+    "verify": "node test/strip-comments.mjs && node test/seed-safety.mjs && node test/measurement.mjs && node test/bilingual.mjs && node test/quote-delivery.mjs && node test/honest-claims.mjs && node test/_mutate_honest_pages.mjs && node test/places-match.mjs && node test/places-write.mjs && node test/_mutate_places_write.mjs && next build && node test/schema.mjs",
     "verify:strip": "node test/strip-comments.mjs",
     "verify:measurement": "node test/measurement.mjs",
     "verify:bilingual": "node test/bilingual.mjs",
@@ -20,7 +20,8 @@
     "verify:claims": "node test/honest-claims.mjs",
     "claims:mutate": "node test/_mutate_honest_pages.mjs",
     "verify:seed": "node test/seed-safety.mjs",
-    "verify:places": "node test/places-match.mjs"
+    "verify:places": "node test/places-match.mjs && node test/places-write.mjs",
+    "verify:places:mutate": "node test/_mutate_places_write.mjs"
   },
   "dependencies": {
     "@stripe/stripe-js": "^4.0.0",

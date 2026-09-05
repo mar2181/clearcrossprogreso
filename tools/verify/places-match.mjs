@@ -194,6 +194,131 @@ export function distinctiveSimilarity(ourName, theirName) {
 export const NAME_THRESHOLD = 0.6;
 
 /**
+ * Is this match strong enough to write a CONTACT DETAIL from -- a phone number
+ * or the clinic's own website?
+ *
+ * ⛔ THIS IS A HIGHER BAR THAN NAME_THRESHOLD ON PURPOSE, and the difference is
+ * the whole point. Clearing the name gate says "this business exists and is the
+ * one we listed". Writing its phone number says "dial this to reach them". The
+ * second claim sends a patient somewhere; the first only shows a listing we
+ * already had. They should not share a threshold.
+ *
+ * ⛔ THE NUMBER BELOW WAS FIRST SET FROM THE RUNNER'S PRINTED OUTPUT AND WAS
+ * WRONG. The report rounds to two places, so the scores read 0.60 / 0.67 / 0.83
+ * / 0.86 / 1.00 and a bar of 0.67 looked like it sat on top of the second band.
+ * The true values are 0.600000, 0.666667, 0.833333, 0.857143 and 1.000000, so
+ * 0.67 sat just ABOVE the second band and refused a correct match (Nuevo
+ * Progreso Veterinary Specialists <-> Nuevo Progreso VetSpecialists). The
+ * refusal message gave it away by printing "weak name 0.67 (< 0.67)".
+ * ⇒ never set a threshold from a rounded report.
+ *
+ * Measured on the full 104-provider run of 2026-09-05, the accepted matches sit
+ * at exactly 0.600000, 0.666667, 0.833333, 0.857143 and 1.000000. Both of the
+ * two WRONG matches in that run sat at exactly the 0.600000 floor:
+ *
+ *   Fernando Rodriguez DDS  ->  BRACES Dr. Bernardo Rodriguez DDS-MS   0.60
+ *   Angie's Pharmacy        ->  Angel's Pharmacy                       0.60
+ *
+ * Both are a shared surname or trade word carrying a different first word --
+ * a DIFFERENT dentist and a DIFFERENT pharmacy on the same strip. Writing
+ * either one's number would have pointed patients at a competitor, and it would
+ * have looked completely normal on the page.
+ *
+ * ⛔ But raising the floor alone would also have dropped a real one at 0.60:
+ *
+ *   SMILE MAKEOVERS / Stetic Implant & Dental Centers
+ *                           ->  Stetic Implant and Dental Centers      0.60
+ *
+ * That pair differs from the two above in a way that generalises: Google's name
+ * is entirely CONTAINED in ours. A shorter name that is a subset of the longer
+ * one is the same business written two ways; two names that each carry a word
+ * the other lacks are two businesses. So the rule is either/or, and both halves
+ * are load-bearing:
+ *
+ *   score > 0.60   OR   one name's distinctive tokens contain the other's
+ *
+ * ⛔ The score arm is what keeps Salazar Dental Implant Center <-> Salazar
+ * Dental Center and Nuevo Progreso Veterinary Specialists <-> Nuevo Progreso
+ * VetSpecialists, neither of which is a subset either way.
+ *
+ * ⛔ THE GAP IS NARROW AND THAT IS STATED RATHER THAN HIDDEN. test/places-match
+ * requires NAME_THRESHOLD to sit in a gap at least 0.1 wide; the gap here is
+ * 0.0667 (0.600000 -> 0.666667) and no honest value can be 0.1 from both sides.
+ * 0.63 is roughly centred in it: 0.03 above the highest wrong match and 0.037
+ * below the lowest right one. Anything in (0.60, 0.6667] behaves identically on
+ * the measured data; a value at either end does not.
+ */
+export const CONTACT_THRESHOLD = 0.63;
+
+/**
+ * Which matches may a contact detail be written from.
+ *
+ * ⛔ TWO INDEPENDENT REASONS TO REFUSE, and neither catches the other's case.
+ *
+ * 1. A COLLISION. If one Google place is the best match for two of our
+ *    providers, at most one of them can be right -- and this is the documented
+ *    failure mode of this exact API on this exact strip (places-match.mjs opens
+ *    by recording six real pharmacies all resolving to Linda Pharmacy). The
+ *    2026-09-05 run had one: Angel's Pharmacy was claimed by our own Angel's
+ *    Pharmacy at 1.00 AND by our Angie's Pharmacy at 0.60. The weaker claim
+ *    loses its contact write. Note this can only be seen across the WHOLE result
+ *    set, which is why it lives here and not inside chooseMatch.
+ *
+ * 2. A WEAK NAME. See contactConfident.
+ *
+ * ⛔ It is exported so it can be DRIVEN by test/places-match.mjs. While it
+ * lived inside the runner script -- which executes on import -- nothing could
+ * call it, so the rule that decides whether a patient gets the right phone
+ * number was the one piece of this file with no guard on it at all.
+ *
+ * Refusing a contact write does NOT refuse the match: the provider still
+ * verifies, still shows, still gets its hours and coordinates. All it loses is
+ * the one field that would send a patient to the wrong business.
+ */
+export function contactWritable(matched) {
+  const byPlace = new Map();
+  for (const m of matched) {
+    const k = m.verdict.place.id;
+    if (!byPlace.has(k)) byPlace.set(k, []);
+    byPlace.get(k).push(m);
+  }
+  const refused = [];
+  const ok = new Set();
+  for (const [, group] of byPlace) {
+    // Strongest claim first; on a tie nobody wins, because a tie is precisely
+    // the case where we cannot tell which of the two businesses it is.
+    const sorted = [...group].sort((a, b) => b.verdict.score - a.verdict.score);
+    const contested = sorted.length > 1;
+    const tied = contested && sorted[0].verdict.score === sorted[1].verdict.score;
+    sorted.forEach((m, i) => {
+      const loser = contested && (i > 0 || tied);
+      if (loser) {
+        refused.push([m, 'collision: this Google place is also claimed by ' +
+          sorted.filter((x) => x !== m).map((x) => x.p.name).join(', ')]);
+        return;
+      }
+      if (!contactConfident(m.p.name, m.verdict.place.displayName.text, m.verdict.score)) {
+        refused.push([m, 'weak name ' + m.verdict.score.toFixed(3) +
+          ' (< ' + CONTACT_THRESHOLD + ' and neither name contains the other)']);
+        return;
+      }
+      ok.add(m);
+    });
+  }
+  return { ok, refused };
+}
+
+export function contactConfident(ourName, theirName, score) {
+  if (!(score >= NAME_THRESHOLD)) return false;
+  if (score >= CONTACT_THRESHOLD) return true;
+  const a = new Set(distinctive(ourName));
+  const b = new Set(distinctive(theirName));
+  if (!a.size || !b.size) return false;
+  const subset = (x, y) => [...x].every((t) => y.has(t));
+  return subset(a, b) || subset(b, a);
+}
+
+/**
  * Pick the best legitimate candidate, or explain why there is none.
  * Never returns a candidate that fails a gate -- the caller cannot "use it anyway".
  */
