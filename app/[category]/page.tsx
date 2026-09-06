@@ -14,11 +14,14 @@ import {
   getProvidersForCategory,
   getProceduresForCategory,
   getActiveFlashDiscounts,
+  getPricedProcedures,
 } from '@/lib/data';
 import { bilingualAlternates } from '@/lib/hreflang';
 import { en, es, type Locale } from '@/lib/i18n';
 import { localizedPath } from '@/lib/i18n/get-locale';
 import { categoryLabel } from '@/lib/i18n/category-label';
+import { procedureLabel } from '@/lib/i18n/procedure-label';
+import { procedurePath } from '@/lib/procedure-pages';
 
 // Hero and fallback images keyed by slug — new categories without
 // an entry here will simply use the gradient background.
@@ -102,6 +105,17 @@ export default async function CategoryPage({ params, locale = 'en' }: CategoryPa
   const procedures = await getProceduresForCategory(categoryData.id, categoryData.slug);
   const flashDiscounts = await getActiveFlashDiscounts(categoryData.slug);
 
+  // The procedure comparison pages that belong to this category.
+  //
+  // ⛔ THIS STRIP IS THE ONLY INTERNAL PATH TO THOSE PAGES. Without it they
+  // are reachable from the sitemap and from each other and from nowhere on
+  // the site a reader or a crawler actually walks — orphans that render
+  // perfectly and collect nothing. The sitemap gets a URL discovered; an
+  // internal link is what makes it worth ranking.
+  const pricedProcedures = (await getPricedProcedures()).filter(
+    (p) => p.categorySlug === categoryData.slug
+  );
+
   const heroImage = CATEGORY_HEROES[category] || CATEGORY_FALLBACKS[category] || null;
   const categoryTitle = categoryLabel(categoryData.slug, dict, categoryData.name);
   const tagline = categoryData.description;
@@ -181,6 +195,28 @@ export default async function CategoryPage({ params, locale = 'en' }: CategoryPa
           </div>
         )}
 
+        {pricedProcedures.length > 0 && (
+          <section className="mb-10">
+            <h2 className="font-display font-semibold text-neutral-dark text-lg">
+              {dict.ui.procCompareHeading}
+            </h2>
+            <p className="text-sm text-neutral-mid mt-1 mb-4">{dict.ui.procCompareSub}</p>
+            <div className="flex flex-wrap gap-2">
+              {pricedProcedures.map((p) => (
+                <Link
+                  key={p.slug}
+                  href={localizedPath(procedurePath(p.slug), locale)}
+                  className="inline-flex items-center gap-2 bg-white border border-neutral-200 rounded-full pl-4 pr-3 py-2 text-sm font-medium text-neutral-dark hover:border-brand-blue hover:text-brand-blue transition-colors"
+                >
+                  {procedureLabel(p.slug, locale, p.name)}
+                  <span className="text-xs text-neutral-400 tabular-nums">
+                    {dict.ui.procClinicCount.replace('{n}', String(p.clinicCount))}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
           <div className="lg:col-span-2">

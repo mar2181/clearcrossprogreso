@@ -52,6 +52,17 @@ export default async function EsProviderPage({ params }: ProviderPageProps) {
 }
 
 export { generateStaticParams } from '@/app/[category]/[provider]/page';
-// Route segment config is read per route file, so the Spanish tree needs its
-// own export -- without it /es would stay build-time-only while / revalidates.
-export { revalidate } from '@/app/[category]/[provider]/page';
+// ⛔ DECLARED, NOT RE-EXPORTED — and the reason is narrower than it looks.
+// `export { revalidate } from '...'` makes Next warn on every build: "can't
+// recognize the exported `revalidate` field ... The default config will be
+// used instead".
+//
+// ⚠️ THAT WARNING OVERSTATES IT, and this was measured rather than assumed:
+// the route table printed `1h` for this route with the re-export in place,
+// exactly as it does now. So the re-export was NOT silently disabling ISR.
+// What the declared form buys is that the value is statically analysable and
+// the build stops emitting a warning nobody can act on — and a build that
+// cries wolf four times is a build whose real warnings get skimmed.
+//
+// ⛔ This value must match app/[category]/[provider]/page.tsx. Guarded in test/procedure-pages.mjs.
+export const revalidate = 3600;

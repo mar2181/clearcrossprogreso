@@ -3,6 +3,110 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 🔎 2026-09-06 (later) — 354 URLS AND NOT ONE TARGETED THE QUERY PEOPLE ACTUALLY TYPE
+
+Mario: *"forget about latonya, that is gone, lets concentrate on whats next to make sure this
+directory has the best odds of success for us."*
+
+### 🔴 THE GAP, MEASURED AGAINST THE LIVE SITEMAP AND AGAINST PAGE ONE
+
+The site published **354 URLs** in three shapes and **no procedure layer at all**:
+
+| shape | count | what it targets |
+|---|---|---|
+| provider page | 126 ×2 langs | a **brand** — *"Dental Artistry Nuevo Progreso"*, which nobody searches unless they already know the clinic |
+| category page | 8 | one broad head term |
+| blog post | 10 | editorial |
+| **procedure × location** | **0** | ⬅ the high-intent middle: *"dental implants nuevo progreso cost"* |
+
+⛔ **THAT IS NOT A GUESS ABOUT HOW THIS MARKET RANKS.** Every page-one result for the money
+query is a procedure × location page and **not one is a clinic profile**:
+`whatclinic.com/dentists/mexico/nuevo-progreso/all-on-4-dental-implants` ·
+`placidway.com/search-medical-pricings/dental-implants+dentistry/nuevo-progreso+mexico` ·
+`medicaltourismco.com/all-on-4-dental-implants-in-nuevo-progreso/` ·
+`mexicodental.co/nuevo-progreso-dentist-prices/`.
+
+⭐ **And every one of them publishes a RANGE** — *"$800 to $1,200"*, *"around $7,160"*. We hold
+**316 per-clinic figures**. The comparison IS the moat, and the page whose whole job is to show
+it did not exist. ⚠️ PlacidWay already ranks a page for **Dental Artistry's** own All-on-6
+package — a clinic in our directory. The aggregators are monetising our clinics while we sit
+out the query.
+
+### `/prices/<procedure>` — 31 procedures, both languages
+
+`lib/procedure-pages.ts` (pure) · `lib/data.ts` (mock + Supabase, one builder) ·
+`app/prices/[procedure]` + `app/es/prices/[procedure]` · `lib/i18n/procedure-label.ts`.
+
+Measured on the live DB: **31 procedures clear 3 clinics** (17 · 17 · 16 · 16 · 15 · 15 at the
+top), so **62 new URLs**. Local build **273 → 323 pages** on mock.
+
+- ⛔ **`MIN_CLINICS_FOR_PRICE_PAGE = 3`, DERIVED NOT PICKED.** One clinic is not a comparison,
+  it is a provider page with a worse title, and shipping dozens buries the ones with depth.
+  2 adds only thin pages; 5 would discard eye-exam, e-max crown and lumineer. **Do not lower
+  it to make the page count bigger — the count is not the product.**
+- ⛔ **`/prices/` IS A STATIC SEGMENT ON PURPOSE.** `app/[category]/[provider]` owns every
+  two-segment path, so a procedure there would be indistinguishable from a clinic slug. ⛔ No
+  category may ever use the slug `prices` — guarded.
+- ⛔ **THE SPANISH PATH IS `/es/prices/`, NOT `/es/precios/`.** Every route on this site mirrors
+  its English path and `lib/hreflang.ts` DERIVES the Spanish URL from the English one. A
+  translated segment would be the one route the pair cannot derive, and a non-reciprocal
+  hreflang annotation is discarded wholesale.
+- ⛔ **A null price is dropped; a zero is kept.** Null in a price table reads as free; zero is a
+  real deliberate value (free consultations) that `lib/pricing.ts` already renders as "Free".
+- ⛔ **No benchmark means SILENCE, never a 0% badge** — "Save 0%" asserts we ran the comparison
+  and found nothing, which is a different claim from having no US figure.
+- ⛔ **Ties break on NAME.** PostgREST guarantees no order, so an unsorted tie reshuffles the
+  table between builds and reads to a crawler as a page that keeps changing.
+- ⛔ **The disclosure is `priceSourceNote`, REUSED VERBATIM.** A gentler second sentence is how
+  the site ends up making two different claims about one number.
+- ⛔ **The category page carries the only internal path to these pages.** Sitemap gets a URL
+  discovered; an internal link is what makes it worth ranking. Without the strip they are
+  orphans that render perfectly and collect nothing.
+- ⚠️ **NO JSON-LD, deliberately.** `test/schema.mjs` walks the eight category directories only,
+  so markup here would be the one structured-data surface nobody guards — and this repo has
+  already shipped a policy violation of exactly that shape. Ship it with its own guard.
+
+### 🔴 A build warning that had been crying wolf on four routes
+
+`export { revalidate } from '...'` made Next warn on **every build**: *"can't recognize the
+exported `revalidate` field … The default config will be used instead."*
+
+⛔ **AND I WROTE THE OBVIOUS DIAGNOSIS INTO THREE SOURCE FILES BEFORE MEASURING IT.** I claimed
+the Spanish tree had been build-time-only. **False** — the route table printed `1h` for those
+routes *before* the change as well as after. The comments were corrected in place; what the
+declared form actually buys is a build that stops emitting four warnings nobody can act on.
+
+### Verified
+
+`REAL_VERIFY_EXIT=0`, 0 FAIL · schema **1811/0** · new `verify:procedures` **31 checks** ·
+`procedures:mutate` **16 caught / 0 missed / 0 skipped**, tree restored byte-for-byte ·
+`tsc --noEmit` clean · 0 control bytes · EOL preserved on every file.
+
+**Driven in a real browser**, EN and ES: `/prices/dental-implant` renders **17 clinics cheapest
+first**, $790 against a $3,500 US average, **Save up to 77%**, 17 clinic links, 10 tel: links,
+the disclosure, 9 sibling links. `/es/...` is **fully Spanish** — H1 *"Precios de implantes
+dentales en Nuevo Progreso"*, "Llamar", "Ver esta clínica", Spanish disclosure. At **390px:
+0 overflow, 0 spilling elements**, all 17 rows.
+**Controls**: `tummy-tuck` (1 clinic) **404s**, nonsense **404s**, `/dentists` still 200, and
+the sitemap's 50 procedure URLs match the built pages **exactly, both directions**.
+
+⛔ **MY OWN PROBE REPORTED THE HREFLANG MISSING ON A CORRECT PAGE.** Next emits `hrefLang`
+(camelCase); a lowercase regex found nothing. **The control settled it in one call** — the
+existing `/dentists` page reads identically. ⛔ And my first guard run FAILED on a correct file
+because the only `export { revalidate }` left in it is inside the comment explaining why the
+re-export was removed — *a guard that accuses its own explanation gets "fixed" by deleting the
+explanation.* Comments are stripped now.
+
+⚠️ **Recorded, not invented:** `price_notes` is a database column and stays English on the
+Spanish page (*"From $800"*), same class as provider names. `procedureLabel` covers the 31
+procedures that have pages and **falls back to the English database name** — a typo there is
+silent, so it is checked against the real slugs.
+
+⏭️ **Next, in order:** JSON-LD with its own guard · the 72 phone-but-no-price clinics (the call
+sheet) — every price collected turns a thin page into a comparison · **Vets is a dead category**
+(4 listings, **0 procedures defined**, so its pages can never carry a price) · 18 of 83
+procedures have zero priced clinics.
+
 ## 📈 2026-09-06 (later) — MEASUREMENT IS ON, AND THE OBVIOUS VERIFICATION METHOD WOULD HAVE FAILED
 
 The two items this file has listed as "blocked on Mario" for days are done. Both values were

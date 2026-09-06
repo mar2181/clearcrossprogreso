@@ -10,7 +10,7 @@
     "concierge:kb": "node tools/build-concierge-kb.mjs",
     "concierge:provision": "node tools/provision-concierge.mjs --character leo",
     "preflight:concierge": "node tools/concierge-preflight.mjs",
-    "verify": "node test/strip-comments.mjs && node test/seed-safety.mjs && node test/measurement.mjs && node test/bilingual.mjs && node test/quote-delivery.mjs && node test/honest-claims.mjs && node test/_mutate_honest_pages.mjs && node test/places-match.mjs && node test/places-write.mjs && node test/_mutate_places_write.mjs && node test/places-discover.mjs && node test/_mutate_places_discover.mjs && next build && node test/schema.mjs",
+    "verify": "node test/strip-comments.mjs && node test/seed-safety.mjs && node test/measurement.mjs && node test/bilingual.mjs && node test/quote-delivery.mjs && node test/honest-claims.mjs && node test/_mutate_honest_pages.mjs && node test/places-match.mjs && node test/places-write.mjs && node test/_mutate_places_write.mjs && node test/places-discover.mjs && node test/_mutate_places_discover.mjs && next build && node test/schema.mjs && node --import ./test/_ts-alias-hook-register.mjs test/procedure-pages.mjs",
     "verify:strip": "node test/strip-comments.mjs",
     "verify:measurement": "node test/measurement.mjs",
     "verify:bilingual": "node test/bilingual.mjs",
@@ -23,7 +23,9 @@
     "verify:places": "node test/places-match.mjs && node test/places-write.mjs",
     "verify:places:mutate": "node test/_mutate_places_write.mjs",
     "verify:discover": "node test/places-discover.mjs",
-    "verify:discover:mutate": "node test/_mutate_places_discover.mjs"
+    "verify:discover:mutate": "node test/_mutate_places_discover.mjs",
+    "verify:procedures": "node --import ./test/_ts-alias-hook-register.mjs test/procedure-pages.mjs",
+    "procedures:mutate": "node test/_mutate_procedure_pages.mjs"
   },
   "dependencies": {
     "@stripe/stripe-js": "^4.0.0",

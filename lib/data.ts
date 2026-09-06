@@ -795,3 +795,158 @@ export async function getVerifiedProvidersForPicker(limit = 20) {
     categorySlug: p.categories?.slug || 'dentists',
   }));
 }
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Procedure comparison pages  (/prices/<procedure>)
+ *
+ * ⛔ Both readers below feed the SAME pure builder in lib/procedure-pages.ts.
+ * The mock path and the Supabase path answer the same question, so if each
+ * applied its own idea of "which clinics count" the local build and production
+ * would quietly disagree about which pages exist — and only production matters.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/** One price row shaped for the builder, whichever source it came from. */
+type PriceRowForComparison = import('./procedure-pages').ComparisonInput['rows'][number];
+
+/**
+ * Every procedure that has enough priced, verified clinics to carry a page.
+ *
+ * Used by generateStaticParams AND by the sitemap, from one place — a sitemap
+ * that advertises a URL the router does not build is a 404 handed to Google.
+ */
+export async function getPricedProcedures(): Promise<
+  { slug: string; name: string; categorySlug: string; categoryName: string; clinicCount: number }[]
+> {
+  const { MIN_CLINICS_FOR_PRICE_PAGE } = await import('./procedure-pages');
+
+  if (shouldUseMock()) {
+    const out: { slug: string; name: string; categorySlug: string; categoryName: string; clinicCount: number }[] = [];
+    for (const proc of mockProcedures) {
+      const cat = mockCategories.find((c) => c.id === proc.category_id);
+      if (!cat) continue;
+      const seen = new Set<string>();
+      for (const pp of mockPrices) {
+        if (pp.procedure_id !== proc.id) continue;
+        if (pp.price_usd === null || pp.price_usd === undefined) continue;
+        const prov = mockProviders.find((p) => p.id === pp.provider_id);
+        if (!prov || !prov.verified) continue;
+        seen.add(prov.id);
+      }
+      if (seen.size >= MIN_CLINICS_FOR_PRICE_PAGE) {
+        out.push({ slug: proc.slug, name: proc.name, categorySlug: cat.slug, categoryName: cat.name, clinicCount: seen.size });
+      }
+    }
+    return out.sort((a, b) => b.clinicCount - a.clinicCount || a.slug.localeCompare(b.slug));
+  }
+
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
+  const { data } = await supabase
+    .from('clearcross_provider_prices')
+    .select(
+      `
+      price_usd,
+      procedure:procedure_id(id, slug, name, category:category_id(slug, name)),
+      provider:provider_id(id, verified)
+      `
+    )
+    .not('price_usd', 'is', null);
+
+  if (!data) return [];
+
+  const byProc = new Map<string, { slug: string; name: string; categorySlug: string; categoryName: string; providers: Set<string> }>();
+  for (const row of data as any[]) {
+    const proc = row.procedure;
+    const prov = row.provider;
+    if (!proc || !proc.slug || !prov || !prov.verified) continue;
+    const cat = proc.category;
+    if (!cat || !cat.slug) continue;
+    let e = byProc.get(proc.slug);
+    if (!e) {
+      e = { slug: proc.slug, name: proc.name, categorySlug: cat.slug, categoryName: cat.name, providers: new Set() };
+      byProc.set(proc.slug, e);
+    }
+    e.providers.add(prov.id);
+  }
+
+  return Array.from(byProc.values())
+    .filter((e) => e.providers.size >= MIN_CLINICS_FOR_PRICE_PAGE)
+    .map((e) => ({ slug: e.slug, name: e.name, categorySlug: e.categorySlug, categoryName: e.categoryName, clinicCount: e.providers.size }))
+    .sort((a, b) => b.clinicCount - a.clinicCount || a.slug.localeCompare(b.slug));
+}
+
+/**
+ * The comparison for one procedure, or null when it does not clear the bar.
+ *
+ * ⛔ Returning null is what makes the page 404 rather than render a table with
+ * one clinic in it. The threshold lives in the builder, not here, so the page,
+ * the params and the sitemap cannot disagree about which pages exist.
+ */
+export async function getProcedureComparison(slug: string) {
+  const { buildComparison } = await import('./procedure-pages');
+
+  if (shouldUseMock()) {
+    const proc = mockProcedures.find((p) => p.slug === slug);
+    if (!proc) return null;
+    const cat = mockCategories.find((c) => c.id === proc.category_id);
+    if (!cat) return null;
+    const rows: PriceRowForComparison[] = mockPrices
+      .filter((pp) => pp.procedure_id === proc.id)
+      .map((pp) => {
+        const prov = mockProviders.find((p) => p.id === pp.provider_id);
+        return {
+          price_usd: pp.price_usd,
+          price_notes: pp.price_notes,
+          provider: prov
+            ? {
+                id: prov.id,
+                slug: prov.slug,
+                name: prov.name,
+                verified: prov.verified,
+                phone: (prov as any).phone ?? null,
+                whatsapp: (prov as any).whatsapp ?? null,
+                avg_rating: prov.avg_rating,
+                review_count: prov.review_count,
+              }
+            : null,
+        };
+      });
+    return buildComparison({
+      procedure: { id: proc.id, slug: proc.slug, name: proc.name, category_id: proc.category_id },
+      category: { slug: cat.slug, name: cat.name },
+      rows,
+    });
+  }
+
+  const { createPublicSupabaseClient } = await import('./supabase/public');
+  const supabase = createPublicSupabaseClient();
+
+  const { data: procRows } = await supabase
+    .from('clearcross_procedures')
+    .select('id, slug, name, category_id, category:category_id(slug, name)')
+    .eq('slug', slug)
+    .limit(1);
+
+  const proc = (procRows || [])[0] as any;
+  if (!proc || !proc.category) return null;
+
+  // ⛔ `slug` MUST be in this embed. The whole price-comparison feature was dead
+  // once before because a provider embed selected everything except the slug,
+  // so every row resolved to a link with nowhere to go and nothing went red.
+  const { data } = await supabase
+    .from('clearcross_provider_prices')
+    .select(
+      `
+      price_usd,
+      price_notes,
+      provider:provider_id(id, slug, name, verified, phone, whatsapp, avg_rating, review_count)
+      `
+    )
+    .eq('procedure_id', proc.id);
+
+  return buildComparison({
+    procedure: { id: proc.id, slug: proc.slug, name: proc.name, category_id: proc.category_id },
+    category: { slug: proc.category.slug, name: proc.category.name },
+    rows: (data || []) as any,
+  });
+}

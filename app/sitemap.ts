@@ -6,7 +6,7 @@
 // Generated at build time, fs works and all 10 posts are emitted.
 import { MetadataRoute } from 'next';
 import { getAllPosts } from '@/lib/blog';
-import { getAllCategories, getAllProviderSlugs } from '@/lib/data';
+import { getAllCategories, getAllProviderSlugs, getPricedProcedures } from '@/lib/data';
 import { bilingualAlternates, enUrl, esUrl } from '@/lib/hreflang';
 
 type Entry = MetadataRoute.Sitemap[number];
@@ -89,6 +89,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   } catch (error) {
     console.error('Error fetching providers for sitemap:', error);
+  }
+
+  // Procedure comparison pages — /prices/<procedure>.
+  //
+  // ⛔ These come from getPricedProcedures(), the SAME reader
+  // generateStaticParams uses. A sitemap that advertises a URL the router
+  // does not build is a 404 handed straight to Google, and a router that
+  // builds a page the sitemap never mentions is a page nobody finds.
+  try {
+    const priced = await getPricedProcedures();
+    priced.forEach((p) => {
+      if (p.slug) {
+        // Priority above a provider page and level with a category: this is
+        // the layer that targets what people actually search for.
+        entries.push(...pair(`/prices/${p.slug}`, { changeFrequency: 'weekly', priority: 0.9 }));
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching priced procedures for sitemap:', error);
   }
 
   // Standing pages. Low ranking value individually, but they are what an E-E-A-T
