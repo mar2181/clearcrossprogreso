@@ -52,10 +52,23 @@ const MUTATIONS = [
     new: '    if (row.price_usd <= 0) continue;',
   },
   {
-    label: 'the duplicate-provider guard is removed (one clinic counted twice)',
+    // ⛔ ANCHOR REPAIRED, NOT DELETED. The de-duplication moved from a `seen`
+    // Set to a Map keyed on the provider id, so the old anchor stopped matching
+    // and the harness correctly refused to score it rather than crediting a
+    // catch it never made. The PROPERTY is unchanged and is the one that
+    // matters most on a pharmacy page — one pharmacy publishes nine
+    // pain-relief rows — and keying on the price is exactly the edit somebody
+    // makes wanting to "show every product a pharmacy lists".
+    label: 'the de-duplication key stops being the provider (one clinic counted many times)',
     file: 'lib/procedure-pages.ts',
-    old: '    if (seen.has(p.id)) continue;\n    seen.add(p.id);',
-    new: '    seen.add(p.id);',
+    old: '    cheapest.set(p.id, {',
+    new: "    cheapest.set(p.id + ':' + row.price_usd, {",
+  },
+  {
+    label: 'a multi-product provider keeps an ARBITRARY row instead of its cheapest',
+    file: 'lib/procedure-pages.ts',
+    old: '    if (held && held.priceUsd <= row.price_usd) continue;',
+    new: '    if (held) continue;',
   },
   {
     label: 'ties stop breaking on name (the table reshuffles between builds)',

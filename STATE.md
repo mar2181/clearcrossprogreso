@@ -37,8 +37,23 @@ out the query.
 `lib/procedure-pages.ts` (pure) · `lib/data.ts` (mock + Supabase, one builder) ·
 `app/prices/[procedure]` + `app/es/prices/[procedure]` · `lib/i18n/procedure-label.ts`.
 
-Measured on the live DB: **31 procedures clear 3 clinics** (17 · 17 · 16 · 16 · 15 · 15 at the
-top), so **62 new URLs**. Local build **273 → 323 pages** on mock.
+Measured on the live DB: **26 procedures clear 3 clinics** (17 · 17 · 16 · 16 · 15 · 15 at the
+top), so **52 new URLs** — production sitemap **354 → 406**. Local build 273 → 323 on mock.
+
+🔴 **I FIRST SAID 31, AND THAT WAS MY OWN MEASUREMENT ERROR — THE SHIPPED CODE IS RIGHT.**
+My probe counted PRICE ROWS; the code counts DISTINCT PROVIDERS, which is what a page saying
+"N clinics" has to count. The five that dropped out are all pharmacies listing several
+products under one heading: **pain-relief 9 rows / 1 pharmacy · erectile-dysfunction 8 / 1 ·
+acid-reflux 6 / 1 · ivermectin 6 / 2 · insulin 5 / 2**. Without the de-duplication
+`/prices/pain-relief` would have announced *"9 clinics publish a price"* above the same
+pharmacy printed nine times — the exact mutation the harness carries, hitting a real
+condition in live data rather than a hypothetical.
+
+⛔ **AND WHICH row survives had to be decided.** PostgREST guarantees no order, so keeping
+the first one seen made the figure shown for a multi-product pharmacy arbitrary — the $41
+pack or the $393 one, and the page SORTS on it. Now the **cheapest**, with its own note
+travelling with it: deterministic, consistent with the page's "from" framing, and already
+the rule `SavingsBanner` uses on this same data. Guarded + mutated.
 
 - ⛔ **`MIN_CLINICS_FOR_PRICE_PAGE = 3`, DERIVED NOT PICKED.** One clinic is not a comparison,
   it is a provider page with a worse title, and shipping dozens buries the ones with depth.
@@ -78,8 +93,8 @@ declared form actually buys is a build that stops emitting four warnings nobody 
 
 ### Verified
 
-`REAL_VERIFY_EXIT=0`, 0 FAIL · schema **1811/0** · new `verify:procedures` **31 checks** ·
-`procedures:mutate` **16 caught / 0 missed / 0 skipped**, tree restored byte-for-byte ·
+`REAL_VERIFY_EXIT=0`, 0 FAIL · schema **1811/0** · new `verify:procedures` **32 checks** ·
+`procedures:mutate` **17 caught / 0 missed / 0 skipped**, tree restored byte-for-byte ·
 `tsc --noEmit` clean · 0 control bytes · EOL preserved on every file.
 
 **Driven in a real browser**, EN and ES: `/prices/dental-implant` renders **17 clinics cheapest

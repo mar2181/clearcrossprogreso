@@ -99,12 +99,22 @@ export interface Comparison {
  * ⛔ Only VERIFIED providers count — the same gate every category page uses. An
  * unverified clinic must not reach a page through a side door.
  *
- * ⛔ One row per provider. A duplicate price row would otherwise let one clinic
- * appear twice and inflate the clinic count the page advertises.
+ * ⛔ ONE ROW PER PROVIDER, AND IT IS THE CHEAPEST ONE. This is not a
+ * hypothetical: measured on production, a pharmacy lists SEVERAL products under
+ * one heading — nine pain-relief rows from one pharmacy, five weight-loss rows,
+ * six ivermectin packs. Without the de-duplication `/prices/pain-relief` would
+ * have announced "9 clinics in Nuevo Progreso publish a price" above the same
+ * pharmacy printed nine times.
+ *
+ * ⛔ And WHICH row survives has to be decided, not left to arrive. PostgREST
+ * guarantees no order, so keeping the first one seen means the figure shown for
+ * a multi-product pharmacy is arbitrary — it could be the $41 pack or the $393
+ * one, and the page sorts on it. The cheapest is the only defensible choice: it
+ * is deterministic, it matches the page's own "from" framing, and it is already
+ * the rule SavingsBanner uses for exactly this data.
  */
 export function buildComparison(input: ComparisonInput): Comparison | null {
-  const seen = new Set<string>();
-  const entries: ComparisonEntry[] = [];
+  const cheapest = new Map<string, ComparisonEntry>();
 
   for (const row of input.rows) {
     const p = row.provider;
@@ -112,9 +122,11 @@ export function buildComparison(input: ComparisonInput): Comparison | null {
     if (row.price_usd === null || row.price_usd === undefined) continue;
     if (typeof row.price_usd !== 'number' || Number.isNaN(row.price_usd)) continue;
     if (row.price_usd < 0) continue;
-    if (seen.has(p.id)) continue;
-    seen.add(p.id);
-    entries.push({
+
+    const held = cheapest.get(p.id);
+    if (held && held.priceUsd <= row.price_usd) continue;
+
+    cheapest.set(p.id, {
       providerSlug: p.slug,
       providerName: p.name,
       priceUsd: row.price_usd,
@@ -126,6 +138,7 @@ export function buildComparison(input: ComparisonInput): Comparison | null {
     });
   }
 
+  const entries: ComparisonEntry[] = Array.from(cheapest.values());
   if (entries.length < MIN_CLINICS_FOR_PRICE_PAGE) return null;
 
   // Cheapest first. ⛔ Ties break on NAME, not on input order: a PostgREST

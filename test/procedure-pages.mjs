@@ -108,6 +108,25 @@ check('one clinic cannot appear twice and inflate the count', () => {
   assert.strictEqual(new Set(c.entries.map((e) => e.providerSlug)).size, 3);
 });
 
+check('a multi-product provider keeps its CHEAPEST row, not an arbitrary one', () => {
+  // ⛔ MEASURED ON PRODUCTION, not hypothetical: one pharmacy publishes nine
+  // pain-relief rows, five weight-loss rows and six ivermectin packs under
+  // one heading. PostgREST guarantees no order, so keeping whichever arrived
+  // first means the figure shown for that pharmacy — and the position it
+  // sorts into — is arbitrary.
+  const a = { ...clinic(1, 393), price_notes: 'the dear pack' };
+  const b = { ...clinic(1, 41), price_notes: 'the cheap pack' };
+  for (const rows of [[a, b], [b, a]]) {
+    const c = build([...rows, clinic(2, 200), clinic(3, 250)]);
+    assert.ok(c);
+    assert.strictEqual(c.entries.length, 3, 'the pharmacy was counted twice');
+    const kept = c.entries.find((e) => e.providerSlug === 'clinic-1');
+    assert.strictEqual(kept.priceUsd, 41, 'kept the dearer row');
+    // ⛔ The NOTE must travel with the price it belongs to, or the page shows
+    // one pack's price under another pack's description.
+    assert.strictEqual(kept.priceNotes, 'the cheap pack');
+  }
+});
 check('a negative price is refused', () => {
   const c = build([clinic(1, -50), clinic(2, 950), clinic(3, 1100), clinic(4, 1200)]);
   assert.ok(c);
