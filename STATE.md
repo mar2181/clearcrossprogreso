@@ -61,10 +61,50 @@ with counsel — not "wait for a lawyer before getting users".
 ⭐ **The tracked tel: click IS the inventory we sell.** Without it we have nothing to show a
 clinic. That makes analytics a revenue dependency, not housekeeping.
 
+### ⛔ CALL IS THE PRIMARY CTA NOW — AND THE MOBILE BAR IT LIVES IN WAS INVISIBLE
+
+Mario: *"yes please"* to flipping the hierarchy. The provider page said **"Get a Quote" 8
+times and "Call" once**, and the phone was not a button at all — just a text link in the
+metadata row. Now: **Call solid primary**, WhatsApp green, Website + Get a Quote outlined.
+`ProviderCard` flipped too (View Profile → primary, Get Quote → outline) because the card is
+the highest-traffic surface and its PRIMARY action was the broken promise.
+
+🔴 **AND THE STICKY MOBILE BAR HAD NO CALL BUTTON AT ALL** — on the one surface where a
+phone visitor converts, for a directory whose only working path is the telephone. It also
+hardcoded **"Chat" and "Get Quote" in English**, so they rendered untranslated on `/es`.
+New `ui.pCall` / `ui.pChat`; the bar reads `Llamar | Chatear | Pedir cotización` in Spanish.
+
+🔴 **THE BAR WAS 78% COVERED BY THE SITE'S OWN MOBILE DOCK, AND HAD BEEN ALL ALONG.**
+`MobileBottomNav` is `md:hidden fixed bottom-4 z-[80]` and 121px tall; the CTA bar is
+`z-40 bottom-0` and 73px. Measured at 390px: **57 of 73px covered — every button in it,
+including the one I had just added, sat behind the dock.** Pre-existing, invisible to every
+guard. Fixed with `bottom-[145px] md:bottom-0` (dock top 708, bar 626-699 ⇒ **0px overlap**),
+and the name is hidden below `sm` because three buttons left ~80px, truncating a provider to
+**"Alph…"**. ⚠️ 145 is tied to the dock's CONTENT height — the proper fix is a shared
+`--dock-h`, which the house mobile-shell template has and this project does not.
+
+⛔ **I ALMOST SHIPPED 101px OF HORIZONTAL OVERFLOW, and only a control caught it.** The action
+stack is `flex-row` until `lg`, so four buttons on a phone ran off the document. The control
+is what made it actionable rather than alarming: **as shipped 114px · remove Call 13px · hide
+stack −15px** ⇒ I added 101, and **13px was already broken with three buttons**. `flex-wrap`
+fixes both, measured −15px at 360 and 390, desktop column untouched.
+
+⛔ **`lib/mock-data.ts` still carried all 60 fabricated ratings** — so a deploy that ever lost
+its Supabase env would fall back to mock and put the fake stars straight back. Nulled there
+too (60 ratings, 104 counts), verified on a real local render.
+
+⭐ **The bilingual guard earned its keep**: it failed the build on `pChat: 'Chat'` being
+identical in both dictionaries — *"every ui string is actually translated"*. Fixed the
+translation (`Chatear`) rather than adding an exception.
+
 ### Verified
 
-`npm run verify` **REAL_VERIFY_EXIT=0**, 1811 schema checks, both mutation harnesses green,
-`next build` clean. CRLF preserved on the edited component (415/415), 0 control bytes.
+`npm run verify` **REAL_VERIFY_EXIT=0** on every iteration, 1811 schema checks, both mutation
+harnesses green, `next build` clean. Measured in a real browser via a same-origin iframe (the
+documented workaround — `resize_window` reports success without resizing) at **360 / 390 /
+768 / 1024 / 1440, EN and ES**: 0 document overflow, 0 bar-vs-dock overlap, Call primary in
+both stacks, and at 768 the bar correctly returns to `bottom-0` because the dock is hidden.
+CRLF preserved on every CRLF file, LF on the LF one, 0 control bytes.
 
 ## 🏥 2026-09-05 (later still ×2) — 48 MORE BUSINESSES, AND THE PRICE ROUTE WAS RE-MEASURED AND THE OLD ANSWER WAS WRONG
 

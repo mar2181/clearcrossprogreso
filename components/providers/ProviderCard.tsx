@@ -244,12 +244,18 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
             {isInCompare ? <Check className="w-4 h-4" /> : <GitCompareArrows className="w-4 h-4" />}
           </button>
         )}
+        {/* ⛔ VIEW PROFILE IS PRIMARY AND THE QUOTE IS SECONDARY — flipped 2026-09-06.
+            The quote was the primary action on the highest-traffic surface on the site,
+            and it promises a price FROM THE CLINIC that no clinic has agreed to give.
+            The profile is where the price table and the working Call button live, so
+            sending people there is both the honest action and the one that shows our
+            actual differentiator. See docs/GO_TO_MARKET.md */}
         <Link
           href={localizedPath(`/${categorySlug}/${provider.slug}`, locale)}
           className="flex-1"
         >
           <Button
-            variant="outline"
+            variant="primary"
             size="sm"
             className="w-full"
           >
@@ -261,7 +267,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
           className="flex-1"
         >
           <Button
-            variant="primary"
+            variant="outline"
             size="sm"
             className="w-full"
           >

@@ -309,8 +309,31 @@ export default async function ProviderPage({ params, locale = 'en' }: ProviderPa
               )}
             </div>
 
-            {/* Right: Action buttons */}
-            <div className="flex flex-row lg:flex-col gap-3 flex-shrink-0">
+            {/* Right: Action buttons
+                ⛔ CALL IS PRIMARY AND THE QUOTE IS SECONDARY — flipped 2026-09-06.
+                The quote form promises a price FROM THE CLINIC, and no clinic has signed
+                anything, so a submission lands in a queue nobody reads. That is not
+                hypothetical: the one real lead this site has ever received sat unanswered
+                for seven days. The phone works TODAY for 110 of 152 providers with no
+                dependency on anybody agreeing to anything, so it is the path that
+                converts. Restore the quote to primary the day clinics actually answer.
+                Reasoning + the milestone that flips it: docs/GO_TO_MARKET.md */}
+            {/* ⛔ flex-wrap is LOAD-BEARING, not tidiness. This stack is a ROW until lg
+                (1024px), so on a phone it lays four buttons side by side and runs off the
+                screen: measured at 390px, 4 buttons overflowed the document by 114px.
+                It was ALREADY overflowing by 13px with three, so adding Call exposed a
+                pre-existing bug rather than creating one. Wrapping fixes both -- measured
+                -15px (no overflow) at 390 and 360, and the lg column is untouched. */}
+            <div className="flex flex-row flex-wrap lg:flex-col lg:flex-nowrap gap-3 flex-shrink-0">
+              {providerData.phone && (
+                <a
+                  href={`tel:${providerData.phone}`}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-blue text-white rounded-xl hover:bg-brand-navy transition-colors font-semibold text-sm shadow-sm"
+                >
+                  <Phone size={18} />
+                  {u.pCall}
+                </a>
+              )}
               {providerData.whatsapp && (
                 <a
                   href={`https://wa.me/${providerData.whatsapp.replace(/\D/g, '')}`}
@@ -335,7 +358,7 @@ export default async function ProviderPage({ params, locale = 'en' }: ProviderPa
               )}
               <a
                 href="#quote-form"
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-blue text-white rounded-xl hover:bg-brand-navy transition-colors font-semibold text-sm shadow-sm"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 border-2 border-brand-blue text-brand-blue rounded-xl hover:bg-brand-blue hover:text-white transition-colors font-semibold text-sm"
               >
                 <MessageSquare size={18} />
                 {t.getQuote}
@@ -549,10 +572,29 @@ export default async function ProviderPage({ params, locale = 'en' }: ProviderPa
         </div>
       </div>
 
-      {/* Sticky Mobile CTA */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-neutral-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <div className="flex-1 min-w-0">
+      {/* Sticky Mobile CTA
+          ⛔ THE OFFSET IS NOT COSMETIC — WITHOUT IT THIS WHOLE BAR IS INVISIBLE ON A PHONE.
+          MobileBottomNav is `md:hidden fixed bottom-4 ... z-[80]` and is 121px tall, so it
+          sits at 16-137px from the bottom and paints OVER this bar (z-40). Measured at
+          390px: 57px of this bar's 73px were covered, i.e. every button in it — including
+          Call — was behind the dock. Pre-existing; it predates the Call button.
+          145px clears it (dock top 708, bar 626-699 => 0px overlap, measured). From `md`
+          the dock is hidden, so the bar returns to bottom-0 and nothing is wasted.
+          ⚠️ 145 is tied to MobileBottomNav's CONTENT height (search bar + tab row). If that
+          component grows, this number is wrong and the bar goes back under it. The proper
+          fix is a shared --dock-h variable, which the house mobile-shell template uses and
+          this project does not have yet. */}
+      <div className="lg:hidden fixed bottom-[145px] md:bottom-0 left-0 right-0 z-40 bg-white border-t border-neutral-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        {/* max-sm:justify-between spreads the three buttons edge to edge once the name is
+            hidden below sm — without it they bunch left with ~80px of dead space on the
+            right, which reads as a layout mistake rather than a decision. */}
+        <div className="flex items-center gap-3 px-4 py-3 max-sm:justify-between">
+          {/* ⛔ The name is HIDDEN on the narrowest screens on purpose. With three buttons
+              (~254px + gaps) there is about 80px left on a 390px phone, which truncated
+              "Alpha Dental Implant Center" to "Alph…" — a label that communicates nothing
+              while taking room from the buttons that do. The visitor is already on that
+              provider's page and the name is in the header above. It returns at sm. */}
+          <div className="hidden sm:block flex-1 min-w-0">
             <p className="font-display font-bold text-neutral-dark text-sm truncate">
               {providerData.name}
             </p>
@@ -566,22 +608,35 @@ export default async function ProviderPage({ params, locale = 'en' }: ProviderPa
               </div>
             )}
           </div>
+          {/* ⛔ CALL FIRST HERE TOO — and this bar mattered most, because it had no call
+              button at all. This is the CTA a phone visitor actually sees, on a directory
+              whose only working conversion path is the telephone. "Chat" and "Get Quote"
+              were also hardcoded English and rendered untranslated on the /es tree. */}
+          {providerData.phone && (
+            <a
+              href={`tel:${providerData.phone}`}
+              className="flex items-center gap-1.5 px-4 py-3 bg-brand-blue text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-brand-navy transition-colors"
+            >
+              <Phone className="w-4 h-4" />
+              {u.pCall}
+            </a>
+          )}
           {providerData.whatsapp && (
             <a
               href={`https://wa.me/${providerData.whatsapp.replace(/\D/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-4 py-3 bg-[#25D366] text-white rounded-lg font-semibold text-sm shadow-sm"
+              className="flex items-center gap-1.5 px-3.5 py-3 bg-[#25D366] text-white rounded-lg font-semibold text-sm shadow-sm"
             >
               <MessageCircle className="w-4 h-4" />
-              Chat
+              {u.pChat}
             </a>
           )}
           <a
             href="#quote-form"
-            className="flex items-center gap-1.5 px-5 py-3 bg-brand-blue text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-brand-navy transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-3 border-2 border-brand-blue text-brand-blue rounded-lg font-semibold text-sm hover:bg-brand-blue hover:text-white transition-colors"
           >
-            Get Quote
+            {u.getQuote}
           </a>
         </div>
       </div>

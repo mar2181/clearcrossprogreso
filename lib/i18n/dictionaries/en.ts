@@ -354,6 +354,8 @@ export const en = {
     rAverageRating: 'Average Rating',
     rNoVerified: 'No verified reviews yet.',
     pOutOf5: 'out of 5',
+    pCall: 'Call',
+    pChat: 'Chat',
     pUsCharges: 'US charges up to {n}% more for this procedure at comparable providers',
     pListingChecked: 'Listing details checked. Clinic and licences not inspected.',
     pServicesListed: '{n} Services Listed',
