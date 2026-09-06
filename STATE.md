@@ -3,6 +3,196 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## ⭐ 2026-09-06 — THE FABRICATED RATINGS ARE GONE, AND THE STRATEGY IS SETTLED: PHONE-FIRST DIRECTORY
+
+Mario: *"push and deploy everything and remove any fake ratings"* + *"should we leave it
+open so people can start using it and we can get users on it, and then as soon as we hit a
+certain milestone we turn on the profit?"* Both answered. **The strategic answer is YES, and
+the evidence is stronger than the instinct** — see `docs/GO_TO_MARKET.md`.
+
+### 🔴 53 LIVE PAGES SHOWED A STAR RATING BUILT FROM ZERO REVIEWS
+
+`clearcross_reviews` held **0 rows** while **60 providers carried an `avg_rating`** and 54 a
+`review_count` — seeded placeholder data rendering as ours on real, named Mexican clinics, on
+a health directory. Dental Artistry read **"4.6 out of 5 · 98 reviews"** at the top of its page
+and **"No reviews yet"** further down: the page contradicted itself. Same class as the RGV Reef
+fabricated donor testimonials.
+- ✅ **All 152 rows nulled** (`avg_rating: null`, `review_count: 0`), **proven by re-reading**
+  — 0 with a rating, 0 with a count, control confirms all 152 providers still exist.
+  Backup: `~/clearcross-ratings-backup-2026-09-06.json` (152 rows), so it is reversible.
+- ⛔ **The JSON-LD was already clean** — 0 `aggregateRating`, 0 `ratingValue` on the live page,
+  because the 09-01 fix gated schema on RENDERED reviews rather than the seeded column. Only
+  the visible UI was lying. **Do not "fix" schema again; it was right.**
+- ⛔ **Every render site is guarded by `{avg_rating && …}`**, so nulling degrades cleanly — but
+  the sort dropdown did NOT degrade: "Highest Rating" was the **default** and "Most Reviewed"
+  its neighbour, so nulling the data alone would have shipped two dead controls and an
+  arbitrary default order. Both options removed, default → **`price-low`**.
+  ⭐ That is the better default anyway: `price-low` sinks unpriced providers to the bottom, so
+  the **42 priced providers — the actual moat — surface first**, and being unpriced becomes a
+  reason for a clinic to give us prices.
+  ⛔ The switch cases are deliberately KEPT: restore the two options the day real reviews exist.
+
+### 🔴 I REPORTED THE ONE REAL LEAD AS DELETED. IT IS NOT. THE ANON KEY LIED.
+
+I read the database with a key grepped out of the vault, got **`quote_requests: 0`**, and told
+Mario the site's only real lead had been deleted since 09-04. **Wrong.** The key decoded to
+`role: anon`, and `clearcross_quote_requests` is admin-only — so RLS returned an empty array
+with **HTTP 200**, identical to a genuinely empty table.
+⛔ **MY CONTROLS DID NOT DISCRIMINATE FOR THAT TABLE.** A bogus table errored and
+`clearcross_providers` returned rows — but providers has a **public read policy** and quotes
+does not, so the control proved only that the key worked on the tables that need no privilege.
+⇒ **a control must exercise the same permission class as the thing it is vouching for.**
+⛔ The same key made every WRITE return `[]` with 200 — a blocked update and a matched-nothing
+update are indistinguishable. Decode the JWT (`role` claim) before trusting a read OR a write.
+✅ Re-read with `role: service_role`: **1 quote request, `status: pending`, `responded_at: null`.**
+**LaTonya Glaze · glazegyrl@gmail.com · 281-772-1926 · "Extraction of broken teeth and all on
+6 full mouth" · Dental Artistry (956-742-8735) · submitted 2026-08-30.** Seven days unanswered.
+
+### ⛔ THE STRATEGY: PHONE-FIRST DIRECTORY, AND THE QUOTE FORM IS THE THING THAT IS BROKEN
+
+The quote form promises a price **from the clinic**. **No clinic has signed anything**, so a
+submission today enters a queue nobody reads — which is exactly what happened to LaTonya. That
+is worse than no form: it is a promise we cannot keep, on a health decision.
+Meanwhile **110 of 152 providers carry a phone number** and that path converts today with zero
+dependencies. ⇒ lead with the phone, keep the form as a **concierge** WE answer by hand.
+⛔ **The flat listing / featured fee needs no attorney; the per-patient commission does**
+(Texas Patient Solicitation Act). So the sequencing is traffic → flat fee → *maybe* commission
+with counsel — not "wait for a lawyer before getting users".
+⭐ **The tracked tel: click IS the inventory we sell.** Without it we have nothing to show a
+clinic. That makes analytics a revenue dependency, not housekeeping.
+
+### Verified
+
+`npm run verify` **REAL_VERIFY_EXIT=0**, 1811 schema checks, both mutation harnesses green,
+`next build` clean. CRLF preserved on the edited component (415/415), 0 control bytes.
+
+## 🏥 2026-09-05 (later still ×2) — 48 MORE BUSINESSES, AND THE PRICE ROUTE WAS RE-MEASURED AND THE OLD ANSWER WAS WRONG
+
+Mario: *"please perform both, add the extra businesses and gett the pricing for the ones
+that we find."* Both done. **104 → 152 providers, 78 → 126 visible.** 4 real prices added.
+`REAL_VERIFY_EXIT=0`; new `test/places-discover.mjs` **72 checks**; harness
+`test/_mutate_places_discover.mjs` **22 caught / 0 missed / 0 skipped**, tree restored.
+
+| | before | after |
+|---|---|---|
+| providers | 104 (78 visible) | **152 (126 visible)** |
+| dentists · spas · doctors | 30 · 8 · 4 | **50 · 19 · 12** |
+| pharmacies · optometrists · vets | 16 · 8 · 2 | **22 · 9 · 4** |
+| price rows / providers priced | 312 / 41 | **316 / 42** |
+
+### ⛔ THE DISCOVERY GATE IS places-match POINTED THE OTHER WAY
+
+`tools/verify/places-discover.mjs` + `run-places-discover.mjs`. Every gate is a REFUSAL —
+operational · locality (address AND coordinate, reused verbatim) · category · name quality ·
+not already ours. A strong name match against something we list is a **reason to refuse**.
+⛔ 20 searches, 154 distinct places harvested, **106 refused**: every bar, taquería, OXXO,
+shopping mall and lounge on the strip, correctly.
+
+### 🔴 FOUR REAL BUGS, EVERY ONE FOUND BY RUNNING IT
+
+1. **The first dry run proposed adding `Dental Artistry` — a live provider, and the one
+   holding this site's ONLY real lead.** `nameScore` is directional BY DESIGN (places-match
+   asks whether OUR name appears in THEIRS, because when *verifying* a row Google carries the
+   longer name). **Discovery reverses which side is longer**: ours is the compound
+   `Dental Artistry / World Dental Center`, theirs is `Dental Artistry`. Measured — forward
+   **0.333**, reverse **1.000**, similarity 0.421. At 0.6 the forward score alone MISSES it.
+   Now scored both ways. ⛔ The cost is accepted and printed: `Farmacia Rodriguez` scores
+   1.000 against our dentist `Fernando Rodriguez DDS` and is refused though they are
+   different businesses. A refusal is recoverable; duplicating a live provider on a unique
+   slug is not.
+2. **Google types real opticians `store` and real clinics `health`.** A name fallback fires
+   ONLY when every type is generic; a real type (`bar`, `restaurant`) is never overturned by
+   a word on a sign. ⛔ Two specific signals = refused, not guessed — `Dental Farmacia Texas`
+   and `Farmacia Texas - Consultorio Dental` are both real listings here.
+3. **`service` was missing from the generic set and blocked the whole fallback**, keeping
+   four opticians and a dental clinic refused. I built that set from the runner's PRINTED
+   summary, which truncates the types array. **Read the whole value, not the summary** —
+   same family as never setting a threshold from a rounded report.
+4. **The name rules ran on the RAW name while Google returns `Odontológicas`, `Óptica`,
+   `Médico`, `Estética`.** `/\bodontolog/` cannot match `Odontológ`. My fixtures were
+   accent-free, so they passed while the live run kept filing a dental clinic under Doctors.
+   Now normalised. ⛔ **Accents are the real data, not an edge case.**
+
+⛔ **AND THE GUARD CAUGHT MY OWN FIX BEING UNREACHABLE.** The general-type-yields-to-name
+rule sat after an early `return` in the primaryType branch — and every place it was written
+for carries `primaryType: doctor`. Nothing about the output looked wrong.
+
+⛔ **THE HARNESS FOUND FOUR VACUOUS CHECKS AND TWO VACUOUS MUTANTS**, which is its whole
+value. Two mutants changed nothing observable (swapping two TYPE_ORDER entries that both map
+to `doctors`; reordering NAME_RULES when a `filter` does the work). Two checks could not
+fail: nothing exercised the coordinate gate (all three locality rows are refused on their
+ADDRESS alone), and no control made a specific type and a name actually disagree.
+⛔ Specificity is **defence in depth** — order and filter are redundant, each alone suffices —
+so the harness gained multi-edit mutations and breaks the pair. That is also the realistic
+mistake: the tidy-up that deletes "the redundant check" twice.
+
+### 🔴 THE PRICE ROUTE: THE PREVIOUS CONCLUSION IS CORRECTED
+
+`STATE.md` recorded, from a 9-site sample, *"There is no automated route to the missing 37
+price lists."* Re-measured across **19 sites** now that Places has filled in more websites:
+**16 answered, 7 carried a `$` amount.** So the route exists. **But reading the words around
+those numbers, only ONE was a real price list:**
+
+- **Aury Dental** — an unfinished template still carrying the theme's demo content:
+  *"Flight London to Bratislava - $55"*, *"4 to 5 nights in Hungary"*, *"innovate
+  open-source infrastructures via inexpensive materials"*.
+- **ALMITAS SPA** and **Erika's Salon Spa** — **Fresha's OWN SaaS pricing** ($19.95/month per
+  team member, 2.79% + $0.20 per transaction, terminals from $139). The booking host's
+  footer, not the salon's services. ⛔ `fresha.com` is deliberately NOT in `NOT_THEIR_SITE`
+  (4 providers run their diary there) — correct for the WEBSITE field, and exactly why price
+  harvesting needs its own judgement.
+- **Similares** — `$ 0.00`, an empty shopping cart. **Dr. De Leon Cantu** — a bundled
+  consultation package, not a listed procedure.
+
+⇒ **three of seven would have published another company's subscription fees or Hungarian
+dental-tourism demo content as Nuevo Progreso medical prices**, and none of it is detectable
+from the number. `tools/verify/price-harvest.mjs` **measures and never writes**, and prints
+the surrounding words because they are the only thing that makes a number attributable.
+
+⛔ **EVEN THE GOOD SITE COULD NOT BE READ FROM FLATTENED TEXT.** It renders as
+*"…Empezando desde $3,000 USD Tummy Tuck Empezando desde $2,990 USD Implantes de Seno…"* —
+which reads equally well as the price coming BEFORE or AFTER its label. Two plausible
+readings, one position apart, on a $3,000 operation. Resolved from the **markup**, where each
+price and its label sit in links sharing one `href`, then **confirmed on each procedure's own
+page**. Two independent corroborations per price.
+
+**4 prices added** (`tools/verify/apply-published-prices.mjs`, decisions in the file,
+idempotent by provider+procedure): Tummy Tuck $3,000 · Breast Augmentation $2,990 · Facelift
+$5,000 · Mommy Makeover $5,800, all for State of Art Medical Center.
+⛔ **Refused and recorded so nobody re-derives it:** Liposucción carries FOUR different
+published prices across two of the clinic's own pages — the clinic itself lists more than one.
+Mastopexia $4,500, Bichectomía $400, Rinoplastia $2,800 and Blefaroplastia $1,200 are real
+and unambiguous with **no matching procedure**; inventing a procedure row to hold a price is
+how a category's vocabulary stops meaning anything. ⛔ Every note says **"starting price"**,
+because the clinic writes *"Empezando desde"* and publishing a from-price as the price is the
+most misleading thing this table can do.
+
+### Verified live, each reading with a control (a nonsense slug 404s)
+
+- New provider pages render **now** — `dynamicParams` serves them on demand.
+- **All 4 prices live** on State of Art with the starting-price note AND the US comparison,
+  and **liposuction correctly absent**. The new providers carry **no star rating**.
+- **0 existing rows modified, 0 duplicate slugs, 0 invented ratings, 0 invented descriptions**
+  — proven by snapshotting all 104 rows before and diffing after.
+
+### ⚠️ Three things found on the way, none of them asked for
+
+1. 🔴 **`avg_rating` IS SET ON 60 PROVIDERS AND THE LIVE PAGE RENDERS IT.**
+   `STATE.md` records this as *"measured off the built artifact: ZERO of 104 pages render a
+   star row, so avg_rating is null on every provider"*. **That is false.**
+   `/dentists/dental-artistry` shows **"4.6 out of 5 · 98 reviews"** at the top and
+   **"No reviews yet"** further down — seeded mock ratings presented as ours, on a page
+   contradicting itself. **Pre-existing, NOT fixed** — changing 60 providers' displayed
+   ratings on a live health directory is a product decision. My new rows carry none.
+2. ⚠️ **The local gate's build+schema half tests MOCK DATA, not the directory.** There is no
+   `.env.local`, so `shouldUseMock()` is true and `npm run build` generates 273 pages from
+   `lib/mock-data.ts` regardless of the database. Production builds from the real DB. Worth
+   knowing before reading a local page count as evidence about the live site.
+3. ⚠️ **The sitemap is static and will not include the 48 new pages until a deploy.** Live it
+   is **258 URLs, `Age: 37149`**, no `revalidate`. Category listings DO self-update
+   (`revalidate = 3600`; measured `Age: 1292` against that window), so they need nothing —
+   but **Google cannot discover the new providers until the site is redeployed.**
+
 ## 💲 2026-09-05 (later still) — THE PRICES WERE NOT GIVEN TO US BY THE PROVIDERS, AND THE PAGE SAID THEY WERE
 
 Continuing the same session. `npm run verify` **REAL_VERIFY_EXIT=0**, `tsc` clean —
@@ -32,7 +222,12 @@ And `mock-data.ts:2` records the real source: *"official clinic websites, WhatCl
 DentalMexico, PlacidWay, ClinicBooking, Dental Departures"* — **three of which are the
 medical-tourism aggregators this site competes with for head terms.**
 
-⇒ **There is no automated route to the missing 37 price lists.** The 312 we have were
+⇒ **There is no automated route to the missing 37 price lists.**
+⛔ **CORRECTED 2026-09-05 (later still ×2) — THIS WAS DRAWN FROM A 9-SITE SAMPLE AND IS
+TOO STRONG.** Re-measured across 19 sites once Places had filled in more websites: 16
+answered and **7 carried a `$` amount**, so a route does exist. It is simply a very poor
+one -- reading the context, three of those seven were another company’s SaaS pricing or a
+template’s Hungarian demo content, and only ONE was a real price list. See the newest entry. The 312 we have were
 hand-researched. The options are manual research, or a signed provider maintaining their
 own — which is what "sign one dentist" actually unlocks. ⚠️ 12 of the 37 have a website;
 25 have neither a site nor prices.
@@ -677,6 +872,11 @@ A chain ending in `tail` reports *tail's* exit and a failed suite reads as 0. Hi
   purpose). Needs real Places photos or honest relabelling.
 - ⚠️ **26 providers failed Places verification** — still prerendered and in the sitemap, but
   unlinked from category pages. Not demoted; taking a live listing down is a louder decision.
+- 🔴 **UN-RETIRED 2026-09-05: the retirement below is WRONG and the hazard is LIVE.**
+  Measured on the live database and the live page: **60 providers hold a non-zero
+  `avg_rating`**, and `/dentists/dental-artistry` renders **“4.6 out of 5 · 98 reviews”**
+  above a section reading **“No reviews yet”**. Seeded mock ratings, presented as ours, on a
+  page contradicting itself. Not fixed -- it is a product decision. Original note follows:
 - ✅ **RETIRED 2026-09-01: the "60 providers carry a seeded `avg_rating`" item is STALE.**
   Measured off the built artifact: **ZERO of 104 pages render a star row**, so `avg_rating`
   is null on every provider and the unattributed-rating hazard is already gone. Found by a

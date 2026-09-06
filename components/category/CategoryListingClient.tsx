@@ -31,7 +31,7 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
   const [selectedProcedures, setSelectedProcedures] = useState<string[]>([]);
   // Applied filter (what's actually filtering results)
   const [appliedProcedures, setAppliedProcedures] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<SortOption>('rating');
+  const [sortBy, setSortBy] = useState<SortOption>('price-low');
   const [minExperience, setMinExperience] = useState<number>(0);
   const [flashDealsOnly, setFlashDealsOnly] = useState(false);
 
@@ -341,8 +341,11 @@ const CategoryListingClient: React.FC<CategoryListingClientProps> = ({
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             className="px-3 py-2 border border-neutral-200 rounded-lg text-sm appearance-none bg-white cursor-pointer hover:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue"
           >
-            <option value="rating">{dict.ui.sortHighestRating}</option>
-            <option value="reviewed">{dict.ui.sortMostReviewed}</option>
+            {/* Sort by rating / review count REMOVED 2026-09-06. We hold ZERO
+                reviews (clearcross_reviews is empty), so every provider rating was
+                seeded placeholder data shown as ours on a real named business. The
+                data is nulled; these two options would be dead controls. Restore
+                them the day real reviews exist -- the switch cases still handle them. */}
             <option value="price-low">{dict.ui.sortPriceLow}</option>
             <option value="price-high">{dict.ui.sortPriceHigh}</option>
           </select>
