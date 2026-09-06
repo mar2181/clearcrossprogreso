@@ -3,6 +3,68 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 📈 2026-09-06 (later) — MEASUREMENT IS ON, AND THE OBVIOUS VERIFICATION METHOD WOULD HAVE FAILED
+
+The two items this file has listed as "blocked on Mario" for days are done. Both values were
+captured by a browser agent under **marioelizondo81@gmail.com** — the only correct account.
+
+| what | value |
+|---|---|
+| GA4 account | **Antigravity Digital** — `407054990` (new; no client account touched) |
+| GA4 property | **ClearCross Progreso** — `552956750` |
+| GA4 measurement ID | `G-XHFPHCHFJK` → `NEXT_PUBLIC_GA_ID`, **production only** |
+| Search Console token | `p2ipu20Ael70qOXt26AwE7A-VVCfp3Yet2JhcBWKRTc` → `GOOGLE_SITE_VERIFICATION`, **production only** |
+
+⛛ **THE BRIEF NAMED THE WRONG GOOGLE ACCOUNT AND THE AGENT CAUGHT IT.** It said
+`hssolutions2181@gmail.com` — the session/app-login identity (Mission Control, Cloudflare,
+Resend). **Every Google property this business owns lives under `marioelizondo81@gmail.com`**,
+`google_oauth_tokens` holds exactly one row (`mario_personal` = that account) with **no
+fallback**, and `gsc_pull.py` auths as the siteOwner of all properties. A property created
+under the other identity would be **invisible to every automated pull we have**.
+
+⛛ **DO NOT VERIFY SEARCH CONSOLE VIA GOOGLE ANALYTICS — measured, not assumed.** It is the
+tempting route (the GA tag is already live, so it verifies with zero deploys). But
+`components/analytics/GoogleAnalytics.tsx` uses `next/script` with `strategy="afterInteractive"`,
+and the served HTML carries only a **`<link rel="preload" as="script">`** for
+`googletagmanager.com/gtag/js` — the real `<script>` and the whole `ga4-init` inline block are
+**absent from server HTML** (`ga4-init` index = **-1**) and injected client-side after
+hydration. Google's verifier reads raw HTML. ⇒ it would look for a tag that is not there.
+
+⛛ **The HTML FILE method is also refused, for a different reason**: it needs
+`google166d6ee3b3902bd6.html` (53 bytes) committed into `public/` — a code change, a push, a
+production deploy, and a permanently odd file in the repo, to buy nothing.
+
+✅ **HTML TAG is the route.** `app/layout.tsx:54-56` already gates `metadata.verification.google`
+on `GOOGLE_SITE_VERIFICATION`, and the Next Metadata API guarantees it lands in `<head>`. One
+env var + a redeploy of the same commit — no code change, nothing to commit.
+
+⛛ **Both env vars are production-only on purpose.** On preview, our own testing would land in
+the live GA4 property and pollute the numbers the go-to-market decision is made on.
+⛛ **The redeploy is not optional** — Vercel snapshots env at build time.
+
+🟢 **PROVEN END TO END, each reading with a control** (bogus env id → 404; fake measurement
+ID `G-ZZZZZZZZZZ` → 0 hits; nonsense host → 0 requests):
+- Tag renders on `/` **and** `/es`; `gtag` is a **function**; script loaded with the right ID
+- **A real `/g/collect` hit reached Google** — present, not merely queued
+- **A simulated phone tap fired `contact_phone` and transmitted it** (2 collect hits total).
+  ⭐ That is the number `docs/GO_TO_MARKET.md` says the entire revenue plan rests on.
+
+⛛ **TWO OF MY OWN INSTRUMENTS REPORTED NOTHING ON A WORKING SITE.** Chrome's network reader
+captured **4 requests, all extension chunks** — not even the page's own HTML — so its "no GA
+hits" was the instrument, not the product. Had I trusted it I would have reported Analytics
+dead while it worked perfectly. `performance.getEntriesByType('resource')` saw **31** and told
+the truth. ⚠️ It also **blocks any return value containing a query string**, so read counts,
+never URLs.
+
+⚠️ **One synthetic `contact_phone` was fired into the live property on day zero.** It was me,
+not a customer.
+
+⚠️ **Flagged, not touched:** `SUPABASE_SERVICE_ROLE_KEY` is on **preview and development** as
+well as production — a second door into the live database that nothing watches.
+
+⏭️ **The numeric property ID `552956750` is the thing that unblocks Mission Control's GA4
+pull** (`ga4_audits` has 1 row ever). It is recorded here so nobody has to log in and find it.
+
 ## ⭐ 2026-09-06 — THE FABRICATED RATINGS ARE GONE, AND THE STRATEGY IS SETTLED: PHONE-FIRST DIRECTORY
 
 Mario: *"push and deploy everything and remove any fake ratings"* + *"should we leave it
