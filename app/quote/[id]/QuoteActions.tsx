@@ -178,7 +178,7 @@ export function QuoteActions({
               Quote Request Submitted
             </h3>
             <p className="text-sm text-amber-800 mb-4">
-              Your request has been sent to the provider. We'll notify you by email when they respond with a price quote. This typically takes 1-2 business days.
+              We have your request. We contact the clinic ourselves and email you as soon as they come back with a price.
             </p>
             <div className="space-y-2 text-xs text-amber-800">
               <div className="flex items-center gap-2">

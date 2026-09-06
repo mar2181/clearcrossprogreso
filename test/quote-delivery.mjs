@@ -148,6 +148,64 @@ check(!/has been sent to\s*\n?\s*<strong>\$\{esc\(providerName\)/.test(email),
 check(/We have your request for/.test(email),
   'it says what is true in both branches instead')
 
+// --------------------------------------------------------------- section 4b
+// ⛔ THE TWO CHECKS ABOVE WERE VACUOUS AGAINST THE WORDING THAT ACTUALLY
+// SHIPPED, and that is worth stating plainly because the shape recurs.
+//
+// The first bans "has been sent to <strong>${esc(providerName)". The live text
+// said "we are getting it to <strong>...</strong>. They reply to you directly
+// with their own price." — a different phrasing of the same false claim, so the
+// ban matched nothing and the check passed. The second only asks that the words
+// "We have your request for" appear somewhere, which the false version also did.
+//
+// So the guard caught the PREVIOUS wording and was blind to the current one,
+// while printing two green lines about exactly this property. Both checks are
+// kept (they still pin a regression to the older phrasing) and the real claim
+// is asserted below.
+//
+// The rule these encode: today `providerReached` is false for EVERY clinic,
+// because none is onboarded. So nothing customer-facing may promise a reply
+// FROM the clinic — the screen and the email must promise a callback from US.
+const en = readFileSync('lib/i18n/dictionaries/en.ts', 'utf8')
+const es = readFileSync('lib/i18n/dictionaries/es.ts', 'utf8')
+// Read a second time under its own name: section 6 declares `form` from the
+// same file, and a const is not usable before its declaration. Do NOT merge
+// these into one — hoisting it up here is fine, reusing that one down there
+// from up here is a TDZ error at load, which stops EVERY check in the file.
+const quoteForm = stripComments(readFileSync('components/quotes/QuoteForm.tsx', 'utf8'))
+
+check(!/repl(y|ies) to you directly/i.test(email),
+  'the patient email does not claim the clinic replies to them directly')
+check(/We contact\b/.test(email),
+  'the patient email says WE go to the clinic')
+
+const grab = (src, key) => (src.match(new RegExp(key + ":\\s*'([^']*)'")) || [])[1] || ''
+
+for (const [lang, src] of [['en', en], ['es', es]]) {
+  const concierge = grab(src, 'qfSentTo')
+  const onboarded = grab(src, 'qfSentToProvider')
+
+  // Without this the four checks below pass on an empty string, i.e. on nothing.
+  check(concierge.length > 0, `control: ${lang} qfSentTo is readable`)
+  check(onboarded.length > 0,
+    `${lang} keeps qfSentToProvider for the day a clinic IS onboarded`)
+  check(!/direct(ly|amente)/i.test(concierge),
+    `${lang} qfSentTo does not promise a direct reply from the clinic`)
+  // The control: the other sentence DOES promise it, so the check above is
+  // discriminating on the claim rather than on a word nobody uses.
+  check(/direct(ly|amente)/i.test(onboarded),
+    `control: ${lang} qfSentToProvider DOES promise one`)
+}
+
+check(/\{ id: quoteRequest\.id, providerReached \}/.test(route),
+  'the route tells the browser whether the clinic was actually reached')
+check(/const \[providerReached, setProviderReached\] = useState\(false\)/.test(quoteForm),
+  'the form defaults to false — an unexpected response shape degrades to the promise we can keep')
+check(/setProviderReached\(Boolean\(data\.providerReached\)\)/.test(quoteForm),
+  'the form stores what the server reported, not an assumption')
+check(/providerReached \? dict\.ui\.qfSentToProvider : dict\.ui\.qfSentTo/.test(quoteForm),
+  'the success screen picks the sentence from that flag, never a fixed one')
+
 // ---------------------------------------------------------------- section 5
 // A quote survives a provider that has no price list.
 //

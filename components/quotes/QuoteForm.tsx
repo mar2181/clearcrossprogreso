@@ -30,6 +30,10 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
   const [status, setStatus] = useState<SubmitStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [quoteId, setQuoteId] = useState<string>('');
+  // What the SERVER reported, never an assumption. False for every clinic
+  // today (none is onboarded), which is why the default is false: a response
+  // shape we did not expect must degrade to the promise we can keep.
+  const [providerReached, setProviderReached] = useState(false);
 
   const [form, setForm] = useState<FormState>({
     procedureId: '',
@@ -93,6 +97,7 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
       }
 
       setQuoteId(data.id);
+      setProviderReached(Boolean(data.providerReached));
       setStatus('success');
 
       // The one conversion this form produces.
@@ -125,6 +130,7 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
     });
     setStatus('idle');
     setQuoteId('');
+    setProviderReached(false);
     setErrorMessage('');
     setErrors({});
   }
@@ -138,7 +144,10 @@ export default function QuoteForm({ providerId, providerName, procedures, hasPro
             <CheckCircle className="w-16 h-16 mx-auto mb-4 text-white" />
             <h3 className="text-xl font-bold mb-2">{dict.ui.qfSubmitted}</h3>
             <p className="text-green-100 text-sm mb-4">
-              {dict.ui.qfSentTo.replace('{provider}', providerName)}
+              {(providerReached ? dict.ui.qfSentToProvider : dict.ui.qfSentTo).replace(
+                '{provider}',
+                providerName
+              )}
             </p>
             <div className="bg-white/10 rounded-lg p-3 mb-4">
               <p className="text-xs text-green-100">

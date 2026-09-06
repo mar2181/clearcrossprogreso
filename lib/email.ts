@@ -106,15 +106,15 @@ export async function sendQuoteConfirmation({
           </div>
           <p style="color: #2C2C2A;">Hi ${esc(patientName)},</p>
           <p style="color: #2C2C2A;">
-            We have your request for <strong>${esc(procedureName)}</strong> and we are getting it
-            to <strong>${esc(providerName)}</strong>. They reply to you directly with their own price.
+            We have your request for <strong>${esc(procedureName)}</strong>. We contact
+            <strong>${esc(providerName)}</strong> ourselves and come back to you with their price.
           </p>
           <div style="background: #F5F5F0; border-radius: 8px; padding: 20px; margin: 24px 0;">
             <p style="margin: 0 0 4px; color: #5F5E5A; font-size: 13px;">Quote ID</p>
             <p style="margin: 0; font-weight: 600; color: #2C2C2A;">${quoteId.slice(0, 8).toUpperCase()}</p>
           </div>
           <p style="color: #2C2C2A;">
-            We will email you the moment the clinic comes back with a price. If you
+            We will email you the moment we have a price from the clinic. If you
             need to reach us before then, just reply to this message.
           </p>
           <p style="color: #5F5E5A; font-size: 13px; margin-top: 32px;">

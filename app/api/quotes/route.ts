@@ -266,7 +266,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ id: quoteRequest.id }, { status: 201 });
+    // providerReached travels to the browser so the success screen can say what
+    // is TRUE rather than a fixed sentence that is right in only one of two
+    // states. Today it is false for every clinic (none is onboarded), so the
+    // screen promises a callback from us, not a reply from them.
+    return NextResponse.json(
+      { id: quoteRequest.id, providerReached },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json(

@@ -103,8 +103,15 @@ const MUTATIONS = [
   {
     name: 'an invented response time comes back in the patient EMAIL',
     file: 'lib/email.ts',
-    find: 'They reply to you directly with their own price.',
-    repl: 'They typically respond within 24 hours.',
+    // Re-pointed 2026-09-06: the old anchor was the sentence that claimed the
+    // clinic replies directly, which was removed as false. The PROPERTY is
+    // unchanged -- an invented response time must never reach the patient email.
+    find: 'ourselves and come back to you with their price.',
+    // The replacement must be a claim about the PROVIDER, not about us: the
+    // rule is deliberately scoped that way so the privacy policy can keep
+    // saying "we will respond within 30 days". A first re-point used
+    // "we come back to you within 24 hours" and was correctly NOT caught.
+    repl: 'ourselves, and they typically respond within 24 hours.',
     expect: 'invented provider response time',
   },
   {
