@@ -3,6 +3,137 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 🤖 2026-09-07 (later still ×3) — THE DISMISS BUTTON WAS NEVER MISSING, IT WAS INVISIBLE — AND HE COULD NOT REACH A SINGLE PRICE PAGE
+
+Mario: *"Find a way to remove the pet buddy if user doesn't want it on the screen. We are
+missing that feature… refresh its knowledge base… press on things for me… make sure that
+that is true and make sure that it works."*
+
+✅ **PUSHED + DEPLOYED — `main` `a53770b`**, verified against GitHub with `git ls-remote`
+(**exactly one head, at that sha**, so the push IS the merge) and by reading `la-dismiss`,
+`44px`, `live-agent-recall`, `localizedPath`, `PRICED_PROCEDURES`, *"You have hands"* and
+*"Never submit a form"* back **out of the pushed blobs**, with a control string returning 0.
+⛔ A push here **IS** a production deploy: it produced
+**`dpl_DBprVhp3EwpKR9ZuzP6AWWfbUhwf`** on its own — READY, `target=production`, `src=git`,
+sha-matched (bogus-token control **403**).
+`PORT=3252 npm run verify` **REAL_VERIFY_EXIT=0, 0 FAIL**; `tsc --noEmit` clean.
+
+### 🔴 1. THE FEATURE SHIPS IN THE PLATFORM AND NOBODY COULD SEE IT
+
+`live-agent.js` already carries the whole thing: `.la-dismiss`, `sendAway()` — which calls
+`PetConcierge.end()` **FIRST**, so the mic is released rather than left open behind a hidden
+body — `#live-agent-recall`, and `recallAgent()`.
+
+⛔ **SO A SECOND CLOSE BUTTON WAS NOT BUILT.** Two implementations of one behaviour, and the
+one that drifts is always the one that forgets to hang up the call.
+
+Measured on production, two reasons it was unreachable:
+1. **`opacity:0`, lifted only by `#live-agent:hover`.** A touch device has no hover, so on a
+   phone it is **permanently invisible while still `pointer-events:auto`** — 26×26 at
+   x1205 y316, opacity 0. Not merely undiscoverable: an invisible live tap target sitting on
+   him, so the only way a phone visitor ever meets this feature is by triggering it by
+   accident and having him vanish. On desktop it appears only while hovering the thing you
+   want gone.
+2. **26px is under the 44px minimum touch target.**
+
+**Live on production now:** 44×44, opacity 0.62, `pointer-events:auto`, and
+`elementFromPoint` at its own centre returns **THE BUTTON** — nothing covers it. Clicked it:
+agent hidden, `pb-live-agent-dismissed=1`, pill appears; clicked the pill: **agent back, flag
+cleared, pill `display:none`** — and never both on screen at once.
+
+### 🔴 2. AND THE WAY BACK WAS WORSE THAN THE PROBLEM
+
+`showRecallTab()` renders at `bottom:18px`, z-index **2147483601** — correct on a page with
+no bottom furniture, and this site has three pieces of it.
+
+Measured at 390×844: the pill landed **y789-826** against `MobileBottomNav`'s **y708-828** —
+**94% of the pill on the site's own navigation**, and 2147483601 beats the nav's **80**, so
+the pill WINS and covers two nav items. Dismissing him left a bar you did not ask for over
+your own menu.
+
+**Proven fixed on production, with the real competition rather than a guess:** in a genuine
+390px iframe (⛔ `resize_window` reports success without resizing), a probe carrying the
+platform's own **inline `bottom:18px`** resolves to **`150px`** — our `!important` rule wins —
+so the pill sits **y655-694** against the nav's **y708-828**: **0px overlap, 0% of the pill,
+14px of clearance.**
+
+### 🔴 3. HIS KNOWLEDGE WAS A THIRD SHORT
+
+| | he said | live |
+|---|---|---|
+| providers | 78 | **126** |
+| dentists | 30 | **50** |
+| spas | 8 | **19** |
+
+Rebuilt from the database and pushed to `agent_clearcrossprogreso938b30ece5`. ⛔ Verified by
+**reading the row back**, not by the tool reporting success — and my first read said
+`persona: 0` because I read `custom_prompt_addendum`; the persona is in **`base_prompt`**
+(5,076 chars). The control is the only reason that became a follow-up rather than a reported
+failure.
+
+### 🔴 4. HE COULD NOT REACH THE PRICE PAGES AT ALL — 47 PHRASES, `/prices` IN ZERO OF THEM
+
+26 pages, the best thing on the site, built to answer *how much does this cost*, and
+unreachable. Worse: `how much would it cost` and `cuanto cuesta` both pointed at `/quote`,
+which still renders **placeholder data** — so every price question went to the weakest page.
+
+**Live on production: 178 nav keys, 131 price keys, 26 distinct price pages, 87 routes
+published, 52 price labels.**
+
+⛔ **DERIVED, NEVER TYPED.** `lib/concierge-routes.generated.ts` comes from the same query
+and the same `MIN_CLINICS_FOR_PRICE_PAGE` that `generateStaticParams` uses, so he can never
+offer a 404 and a 27th page reaches him with one command. **A hand-kept list is exactly what
+went stale here.** The threshold is **parsed from source, never guessed** (it throws), and
+the Spanish parser **refuses if it reads fewer than 20 entries** rather than silently
+shipping English-only phrases.
+
+### 🔴 5. EVERY SPANISH PHRASE POINTED AT AN ENGLISH PAGE
+
+Same defect as the provider cards. `navigate_to` now routes through `localizedPath()`.
+
+**Proven end to end on production, both directions, which is what makes it evidence:**
+
+| from | said | landed | title |
+|---|---|---|---|
+| `/es/dentists` | *precio de implantes dentales* | **`/es/prices/dental-implant`** | *"…17 clínicas comparadas"* |
+| `/dentists` | *dental implant cost* | **`/prices/dental-implant`** | *"…17 Clinic Prices Compared"* |
+
+⛔ The English control is what kills the alternative explanation: *"always prefix `/es`"*
+would pass the Spanish case and fail this one.
+
+### 6. HE HAS HANDS AND NOTHING EVER TOLD HIM
+
+`builtinClientTools()` registers all 26 tools for every agent — `click_element`,
+`find_on_page`, `scroll_to`, `highlight_element`, `go_back` — **ungated**. His persona
+described somebody who answers questions and moves between pages and never mentioned he
+could press a button. Added, with two limits: ⛔ **he never submits a form** (a quote carries
+a real name and number to a real clinic, and that send is the visitor's to press), and
+⛔ **he acts when asked, not on a hunch.**
+
+### 🛡️ A guard went red and was made STRONGER, not worked around
+
+`test/honest-claims.mjs`'s drift check compares his page list against the generated one — the
+check that caught spas and doctors being missing. It knew only `LIVE_CATEGORIES`, so the 26
+new routes failed it. ⛔ **Filtering `/prices` out would have silently stopped guarding 26 of
+33 pages.** It reads both sources now — **33 pages instead of 7** — RED-proved by deleting a
+procedure and watching it name the missing route.
+
+### ⛔ Four of my own probes returned confident wrong answers
+
+Every one read as a broken product:
+- **`/prices/dental-implant` → 0 hits in the shipped bundle.** The path is built at runtime
+  (`"/prices/".concat(t.slug)`), so the literal never exists. **Read the real shape.**
+- **`dental-crown` → 0.** Not a slug we have — the real ones are `zirconia-crown`,
+  `emax-crown`, `metal-porcelain-crown`. **A wrong id and a missing route are the same output.**
+- **`/es/dentistas` → 404.** Category slugs are **not** translated; it is `/es/dentists`.
+- **`stayedEnglish: false`.** A 3,000 ms wait that expired before the SPA push completed —
+  `feedback_a_bounded_wait_cannot_prove_never`, walked into. Polling gives `true`.
+
+⚠️ **Recorded, not fixed:** `__PetConciergeNavigate` takes a **path**; handed a phrase it
+produces `/esprecio de implantes dentales`. Not reachable through `navigate_to` (which
+resolves the phrase to a path first), so it is garbage-in-garbage-out on a contract nothing
+violates — but it is one cheap guard away from being impossible.
+
 ## 🔴 2026-09-07 (later still ×2) — SEVEN INVENTED NUMBERS ON ALL FOURTEEN POSTS, AND A PARKING GUIDE WITH A DENTAL SAVINGS CALCULATOR
 
 Mario: *"continue with the work."* Phase 2 of the SERP plan is the Spanish tree.
@@ -1597,7 +1728,25 @@ A chain ending in `tail` reports *tail's* exit and a failed suite reads as 0. Hi
   me?" cannot be answered. Gated on the revenue decision.
 
 ## Last verified
-**2026-09-01** — structured data shipped. `npm run verify` **REAL_VERIFY_EXIT=0**, all guards;
+**2026-09-07 (concierge)** — the dismiss button, his knowledge, and his hands. `main`
+**`a53770b`** → production **`dpl_DBprVhp3EwpKR9ZuzP6AWWfbUhwf`**, READY, sha-matched;
+`REAL_VERIFY_EXIT=0`, `tsc --noEmit` clean. **Verified on production BY BEHAVIOUR, every
+reading with a control** (a bogus path 404s, a bogus token 403s, a control string reads 0):
+- dismiss **44×44, opacity 0.62, and `elementFromPoint` at its own centre returns THE
+  BUTTON**; clicked → he goes and the pill appears; clicked the pill → he is back, the flag
+  is cleared, the pill is `display:none`, and never both on screen at once.
+- the recall pill was covering **94% of the site's own mobile nav**. Measured in a real
+  390px frame against the platform's own inline `bottom:18px`, our rule wins at **`150px`**
+  → pill y655-694 vs nav y708-828: **0px overlap, 14px clearance**.
+- **178 nav keys / 131 price keys / 26 distinct pages / 87 routes**, up from 47 with
+  `/prices` in **zero** of them. KB **78 → 126 providers**, 30 → 50 dentists.
+- Spanish stays Spanish (`/es/prices/dental-implant`, *17 clínicas comparadas*) **and
+  English stays English** — the control that kills the *"always prefix /es"* explanation.
+⛔ **Four of my own probes accused the product first**: a runtime-concatenated path read as
+0 hits in the bundle, an invented slug (`dental-crown`), an invented `/es/dentistas`, and a
+3,000 ms wait that expired before the SPA push landed. Every one looked like a live defect.
+
+Prior — **2026-09-01** — structured data shipped. `npm run verify` **REAL_VERIFY_EXIT=0**, all guards;
 schema guard **1811 checks, 0 failed**; `test/_mutate_schema.py` **8 caught / 0 missed / 0
 skipped** plus **2 recorded unprovable with measured reasons**. Coverage read off the built
 artifact: **104 pages, 312 Offers, 11 Free rows, 104 with real coordinates, 28 with a rating**.
