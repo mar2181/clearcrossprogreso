@@ -258,7 +258,12 @@ for (const [needle, label] of CONCIERGE_CLAIMS) {
 const US = /\b(?:we|our|us|clearcross|providers? (?:are|is|were|was)|listings? (?:are|is|were|was)|verificamos|revisamos|inspeccionamos)\b/i
 const VERIFY = /\b(?:verif\w*|check\w*|inspect\w*|vett?ed|confirm\w*|validat\w*)\b/i
 const CREDENTIAL = /\b(?:cedula|licen[sc]es?|licencias?|credentials?|board[- ]certified|accredit\w*)\b/i
-const DENIAL = /\b(?:not|never|no|nor|neither|cannot|without|nunca|ningun\w*|sin)\b/i
+// ⛔ 'nobody' / 'nadie' / 'none' were MISSING until 2026-09-07, and the gap is
+// the dangerous kind. "Nobody at ClearCross has inspected a clinic" is a
+// DISCLAIMER, and without them the tree sweep flagged it as the very claim it
+// disclaims. A guard that fires on a disclaimer gets "fixed" by deleting the
+// disclaimer -- which is how the claim comes back.
+const DENIAL = /\b(?:not|never|no|nobody|none|nor|neither|cannot|without|nunca|nadie|ningun\w*|sin)\b/i
 
 const sentences = (t) => t.split(/(?<=[.!?:])\s+|\s+-\s+|\s\|\s/).filter((s) => s.trim())
 const licenceClaims = (t) =>
@@ -440,7 +445,17 @@ const walkTree = (dir, out = []) => {
   return out
 }
 
-const PAGE_TREE = ['components', 'app', 'lib'].flatMap((d) => walkTree(d))
+// ⛔ 'content' IS LOAD-BEARING. The blog MDX was outside every guard's walk
+// until 2026-09-07, and it held the two worst claims on the site -- including
+// "we verify credentials, inspect facilities" on the page that ranks #2.
+const PAGE_TREE = ['components', 'app', 'lib', 'content'].flatMap((d) => walkTree(d))
+
+// ⛔ MARKDOWN MUST NOT GO THROUGH stripComments. See the block above section 6:
+// that helper is a JS/TS parser, and over prose a bare https:// truncates the
+// line while a stray apostrophe opens a string that never closes. The moment
+// content/ entered PAGE_TREE, every consumer of it had to pick its stripper by
+// extension -- markdown has no JS comments, it has HTML ones.
+const readPage = (p) => (p.endsWith('.mdx') || p.endsWith('.md') ? readProse(p) : read(p))
 
 // CONTROL. A walk that returns nothing reports the same all-green as a walk over
 // a clean tree, and it is the single most likely way this section dies quietly.
@@ -448,6 +463,8 @@ chk(PAGE_TREE.length > 50, 'control: the sweep discovered the tree (' + PAGE_TRE
 chk(PAGE_TREE.includes(PRICE_TABLE), 'control: the sweep reaches ' + PRICE_TABLE)
 chk(PAGE_TREE.includes('components/search/SearchResultsClient.tsx'),
   'control: the sweep reaches components/search/SearchResultsClient.tsx (it was outside SOURCES)')
+chk(PAGE_TREE.some((f) => f.startsWith('content/')),
+  'control: the sweep reaches content/ (the blog MDX was unguarded until 2026-09-07)')
 
 /*
  * ⛔ ADVICE IS NOT A CLAIM, and telling them apart is the whole difficulty — the
@@ -489,7 +506,12 @@ const CLAIM_RULES = [
      * for the reader anyway.
      */
     id: 'provider-supplied',
-    re: /\b(?:price|prices|figures?|quote|precios?|cifras?)\b[^.!?]{0,60}\b(?:gave|given to|supplied to|provided to)\s+ClearCross\b|\b(?:le\s+)?di[oó]\s+a\s+ClearCross\b|\bproporcion[oó]\s+a\s+ClearCross\b/i,
+    // ⛔ `us` AND THE SPANISH `nos ... dio` ARE HERE BECAUSE THE BRAND NAME
+    // WAS NOT ENOUGH. On 2026-09-07 fifteen sentences carried this claim as
+    // "the prices they gave us" -- seven of them written the same day while
+    // removing forty claims of this class. A deny-rule keyed to one wording
+    // is a deny-rule the next synonym walks past.
+    re: /\b(?:price|prices|figures?|quote|precios?|cifras?)\b[^.!?]{0,60}\b(?:gave|given to|supplied to|provided to)\s+(?:ClearCross|us)\b|\b(?:le\s+)?di[oó]\s+a\s+ClearCross\b|\bproporcion[oó]\s+a\s+ClearCross\b|\bnos\s+(?:lo\s+|los\s+|la\s+|las\s+)?di[oó]\b/i,
     advice: false,
     denial: /\b(?:not|never|did\s+not|didn.?t)\s+(?:\w+\s+){0,3}(?:supplied?|provided?|give|given)\b|\bno\s+(?:fueron\s+)?proporcionad\w*\b|\bno\s+proporcion[oó]\b/i,
     label: 'a price attributed to a provider who did not supply it',
@@ -615,6 +637,12 @@ const CLAIM_FIRES = [
   ['provider-supplied', 'These are the prices the provider gave ClearCross.'],
   ['provider-supplied', 'Estos son los precios que el proveedor le dio a ClearCross.'],
   ['provider-supplied', 'Worked out from the prices Dental Artistry gave ClearCross against average US self-pay prices.'],
+  // ⛔ THE PRONOUN FORMS. These are verbatim sentences that were LIVE on
+  // 2026-09-07 and that the brand-name-only rule could not see.
+  ['provider-supplied', 'Every price is the one the provider gave us.'],
+  ['provider-supplied', "Every listing carries the provider's name, address and the prices they gave us."],
+  ['provider-supplied', 'Cada precio es el que nos dio el proveedor.'],
+  ['provider-supplied', 'Cada listado incluye los precios que nos dio.'],
 ]
 const CLAIM_QUIET = [
   'We have not inspected the clinic or checked professional licences - ask to see the Cedula Profesional at your appointment.',
@@ -675,7 +703,7 @@ if (!claimRulesSound) {
       // stripComments, so a file explaining WHY the claim was removed cannot
       // accuse its own explanation -- the tempting fix for which is to delete
       // the reason.
-      for (const s of sentences(flatten(read(f)))) {
+      for (const s of sentences(flatten(readPage(f)))) {
         if (!rule.re.test(s)) continue
         if ((rule.denial || DENIAL).test(s)) continue
         if (rule.advice && ADVICE.test(s)) continue
@@ -754,19 +782,185 @@ for (const p of PROVENANCE) {
  * satisfied by deleting them, and four empty pillars under that heading is its
  * own kind of dishonest -- so each replacement must still say a true thing.
  */
+// ⛔ EACH PILLAR NAMES ITS OWN KEY. These used to test the whole dictionary
+// FILE for a phrase, which means the pillar could be emptied and the check
+// stayed green off any other string that happened to share the words. The
+// mutation harness proved it reachable on 2026-09-07 once two keys were
+// rewritten to the same wording -- and pillar 1 had the same hole all along
+// (the Spanish pattern also matches adv2Desc).
 const TRUST_PILLARS = [
-  [/Ask for an itemized written quote/i, /cotizaci[oó]n detallada por escrito/i,
+  ['writtenQuotesDetail', /Ask for an itemized written quote/i, /cotizaci[oó]n detallada por escrito/i,
     'the written-quote pillar still tells the visitor to ask for one'],
-  [/We have not checked anybody/i, /no hemos revisado ninguna/i,
+  ['credentialsDetail', /We have not checked anybody/i, /no hemos revisado ninguna/i,
     'the credentials pillar states plainly that we checked nobody licence'],
-  [/given to us by the provider who charges it/i, /nos lo dio el proveedor que lo cobra/i,
-    'the prices pillar attributes every price to the provider'],
-  [/replies to you directly with their own price/i, /le responde directamente con su propio precio/i,
+  // ⛔ REPOINTED 2026-09-07, NOT REMOVED. This used to pin "given to us by the
+  // provider who charges it" under the label "attributes every price to the
+  // provider" -- i.e. the preservation check was holding the false claim in
+  // place. The property is unchanged and still matters: the pillar must say
+  // where the number came from rather than going quiet. It now pins the true
+  // statement, the same one priceSourceNote makes.
+  ['reviewsDetail', /researched from published price lists/i, /se investig[oó] de listas publicadas/i,
+    'the prices pillar says where the number actually came from'],
+  ['quotesDetail', /replies to you directly with their own price/i, /le responde directamente con su propio precio/i,
     'the quote pillar describes what actually happens'],
 ]
-for (const [reEn, reEs, label] of TRUST_PILLARS) {
-  chk(reEn.test(src[EN]), label + ' (en)')
-  chk(reEs.test(src[ES]), label + ' (es)')
+const pillarValue = (source, key) => {
+  const m = source.match(new RegExp('^\\s*' + key + ": (['\"])(.*)\\1,\\s*$", 'm'))
+  return m ? m[2] : null
+}
+for (const [key, reEn, reEs, label] of TRUST_PILLARS) {
+  const en = pillarValue(src[EN], key)
+  const es = pillarValue(src[ES], key)
+  // CONTROL. A lookup that silently finds nothing would fail every check below
+  // for the wrong reason, and somebody would "fix" it by loosening the regex.
+  chk(en !== null, 'control: ' + key + ' was found in en.ts')
+  chk(es !== null, 'control: ' + key + ' was found in es.ts')
+  chk(en !== null && reEn.test(en), label + ' (en)')
+  chk(es !== null && reEs.test(es), label + ' (es)')
+}
+
+
+/*
+ * -- 11. THE SAME CLAIM, SAID A DIFFERENT WAY -------------------------------
+ *
+ * ⛔ WHY THIS SECTION EXISTS, AND IT IS THE MOST IMPORTANT COMMENT IN THE FILE.
+ * Every rule above bans a WORDING. On 2026-09-07 a sweep found FORTY live claims
+ * that were all synonyms of a banned wording, and therefore invisible:
+ *
+ *     section 1 bans   /\bwe (?:verify|check|inspect)\b [^.!?]{0,90} licen[sc]e/
+ *     the site said    "We CONFIRM credentials, clinic conditions ..."
+ *
+ * Same sentence, one verb apart, and this guard printed PASS over it for months.
+ * Proven with a control: swap "confirm" for "verify" in that exact sentence and
+ * section 1 fires immediately.
+ *
+ * The Spanish was worse. Section 1's Spanish rule looks for
+ * "condiciones del consultorio" as its OBJECT -- and the live copy contained
+ * that exact phrase. It matched the object and missed only the verb
+ * ("Confirmamos" rather than "verificamos").
+ *
+ * ⛔ So these rules describe the CLAIM, never the phrasing. Each carries FIRE
+ * fixtures (the real strings removed that day) and KEEP fixtures (the real
+ * replacements shipped that day, plus honest copy that already existed). The
+ * self-test runs FIRST and SKIPS THE SCAN LOUDLY if any rule misclassifies --
+ * the same shape section 6 uses, because a rule that cannot tell a claim from
+ * its own disclaimer is worse than no rule at all.
+ *
+ * ⛔ DO NOT ADD A BANNED PHRASE HERE. Add the claim. If the next miss is
+ * "we validate every clinic", the answer is another verb in the alternation,
+ * not a seventh literal.
+ */
+console.log('\n11. the same claim, said a different way')
+
+const SYNONYM_RULES = [
+  {
+    id: 'we-assure',
+    label: 'a first-person claim that we vetted a credential, licence, clinic or quality',
+    re: /\b(?:we|our team)\s+(?:verif\w*|confirm\w*|inspect\w*|check\w*|vet|vetted|screen\w*|validat\w*|audit\w*)\b[^.!?]{0,90}(?:credential|licen[sc]e|c[eé]dula|clinic|quality|condition|steriliz|reference)/i,
+    reEs: /\b(?:verificamos|confirmamos|inspeccionamos|revisamos|validamos|auditamos|comprobamos)\b[^.!?]{0,90}(?:credencial|licencia|c[eé]dula|consultorio|calidad|condicion|esteriliz)/i,
+    fire: [
+      'We confirm credentials, clinic conditions, and pricing transparency before listing any provider.',
+      'This is where ClearCross comes in: we verify credentials, inspect facilities, and only list providers that meet our quality standards.',
+      'Confirmamos credenciales, condiciones del consultorio y transparencia de precios antes de listar cualquier proveedor.',
+    ],
+    keep: [
+      "Use ClearCross to see each provider's name, address and the prices they gave us. Clinics and licences are not inspected by ClearCross — ask to see the Cedula Profesional at your appointment.",
+      'Los consultorios y las licencias no están inspeccionados por ClearCross — pida ver la Cedula Profesional en su cita.',
+      'No hemos revisado ninguna licencia — pida ver la Cedula Profesional cuando llegue.',
+    ],
+  },
+  {
+    id: 'verified-price',
+    label: 'a price described as verified by us rather than given to us',
+    re: /\b(?:price|prices|pricing)\b[^.!?]{0,25}\bverified\b|\bverified,?\s+(?:transparent\s+)?(?:price|prices|pricing)\b/i,
+    reEs: /\bprecios?\s+verificados?\b|\bverificado por nuestro equipo\b/i,
+    fire: [
+      'Every listed price is verified by our team',
+      'Every provider shows transparent, verified prices so you can compare instantly.',
+      'Cada precio listado es verificado por nuestro equipo',
+    ],
+    keep: [
+      'Every price is the one the provider gave us',
+      'Cada precio es el que nos dio el proveedor',
+      'Every listing shows the prices that clinic gave us, so you can compare instantly.',
+    ],
+  },
+  {
+    id: 'price-locked',
+    label: 'a promise that the price is locked, guaranteed or will not change',
+    re: /\bprice\b[^.!?]{0,25}(?:is locked|locked in|will not change|won'?t change|is guaranteed)\b|\bwhat you see is what you pay\b/i,
+    reEs: /\bprecio\b[^.!?]{0,25}(?:bloqueado|asegurado|garantizado|no cambia)\b|\blo que ve es lo que paga\b/i,
+    fire: [
+      'Your provider is expecting you, the price is locked in, and your care is in good hands.',
+      'What you see is what you pay.',
+      'Su proveedor lo está esperando, el precio está asegurado y su atención está en buenas manos.',
+    ],
+    keep: [
+      'Walk across the bridge with your written quote in hand, so you know the number before you sit down.',
+      'Cruce el puente con su cotización por escrito en la mano, para saber el número antes de sentarse.',
+      'The price is set by the clinic, not by an insurer.',
+    ],
+  },
+  {
+    id: 'no-surprises-on-arrival',
+    label: 'a promise that nothing will change when they arrive',
+    // ⛔ NO DENIAL TEST, DELIBERATELY. This claim is PHRASED as a negative
+    // ("no surprises"), so the shared DENIAL guard silences the rule against the
+    // very sentence it exists to catch. Measured: with the denial test on, both
+    // fire fixtures below pass.
+    noDenial: true,
+    re: /\bno surprises?\b[^.!?]{0,30}(?:when you arrive|on arrival|at the clinic)\b/i,
+    reEs: /\bsin sorpresas\b[^.!?]{0,30}(?:cuando llegue|al llegar)\b/i,
+    fire: [
+      'Receive a detailed quote — no surprises when you arrive',
+      'Reciba una cotización detallada — sin sorpresas cuando llegue',
+    ],
+    keep: [
+      'Receive a detailed quote from the provider, in writing',
+      'Reciba una cotización detallada del proveedor, por escrito',
+    ],
+  },
+  {
+    id: 'all-verified',
+    label: 'a flat claim that every provider is verified or licensed',
+    re: /\ball (?:providers|listings|clinics)\b[^.!?]{0,45}\b(?:verified|licensed|vetted)\b/i,
+    reEs: /\btodos los (?:proveedores|consultorios|listados)\b[^.!?]{0,45}\b(?:verificados|con licencia)\b/i,
+    fire: [
+      'All providers are verified for credentials and quality',
+      'Todos los proveedores están verificados en credenciales y calidad',
+    ],
+    keep: [
+      'Ask to see the Cedula Profesional at your appointment',
+      'Pida ver la Cedula Profesional en su cita',
+    ],
+  },
+]
+
+const synFires = (r, s) =>
+  (r.re.test(s) || r.reEs.test(s)) && (r.noDenial || !DENIAL.test(s))
+
+// SELF-TEST FIRST. If a rule cannot tell the claim from its replacement, the
+// scan below means nothing, so it is skipped loudly rather than run.
+let synBroken = 0
+for (const r of SYNONYM_RULES) {
+  for (const s of r.fire) if (!synFires(r, s)) { synBroken++; console.log('  self-test MISS  [' + r.id + '] ' + s.slice(0, 80)) }
+  for (const s of r.keep) if (synFires(r, s)) { synBroken++; console.log('  self-test FALSE [' + r.id + '] ' + s.slice(0, 80)) }
+}
+chk(synBroken === 0, 'control: all ' + SYNONYM_RULES.length + ' synonym rules classify their own fixtures correctly')
+
+if (synBroken !== 0) {
+  console.log('  ⛔ SCAN SKIPPED -- the rules misclassify, so a clean scan would prove nothing')
+} else {
+  for (const r of SYNONYM_RULES) {
+    const bad = []
+    for (const f of PAGE_TREE) {
+      for (const s of sentences(flatten(readPage(f)))) {
+        if (synFires(r, s)) { bad.push(f + ' :: ' + s.trim().slice(0, 90)); break }
+      }
+    }
+    chk(bad.length === 0, 'nowhere in ' + PAGE_TREE.length + ' files makes ' + r.label +
+      (bad.length ? ' -- ' + bad.slice(0, 3).join(' | ') : ''))
+  }
 }
 
 console.log(fails === 0

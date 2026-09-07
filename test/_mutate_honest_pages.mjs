@@ -129,11 +129,30 @@ const MUTATIONS = [
     expect: 'states plainly that we checked nobody licence',
   },
   {
-    name: 'the prices pillar stops attributing its prices',
+    // REPOINTED 2026-09-07 with the pillar itself. The old anchor was the
+    // FALSE claim (nos lo dio el proveedor) that the check used to pin; the
+    // property is unchanged -- the pillar must not go quiet about provenance.
+    name: 'the prices pillar stops saying where the number came from',
     file: 'lib/i18n/dictionaries/es.ts',
-    find: 'nos lo dio el proveedor que lo cobra',
+    // ⛔ The FULL sentence: the short phrase now appears twice (reviewsDetail
+    // and step2Detail1 share it), and the harness refused to score an
+    // ambiguous anchor rather than mutating whichever it reached first.
+    find: 'Cada precio en este sitio se investigó de listas publicadas',
     repl: 'es competitivo',
-    expect: 'attributes every price to the provider',
+    expect: 'says where the number actually came from',
+  },
+  {
+    // ⛔ NARROW THE RULE BACK TO THE BRAND NAME. On 2026-09-07 fifteen live
+    // sentences said "the prices they gave us" -- the same claim with a
+    // pronoun -- and the ClearCross-only rule could not see any of them.
+    name: 'the provider-supplied rule goes back to needing the brand name',
+    file: 'test/honest-claims.mjs',
+    find: '(?:ClearCross|us)',
+    repl: 'ClearCross',
+    // Narrowing it makes the pronoun fixtures stop firing, so the SELF-TEST
+    // is what goes red -- and the sweep refuses to run at all rather than
+    // reporting a clean tree it never scanned.
+    expect: 'did NOT fire on a claim that was live',
   },
 ]
 

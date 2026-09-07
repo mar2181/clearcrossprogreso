@@ -51,7 +51,7 @@ export function QuoteActions({
 
       setSubmitStatus({
         type: 'success',
-        message: 'Quote accepted! Your price is now locked in.',
+        message: 'Quote accepted. The provider has your answer.',
       });
       setShowConfirmDialog(null);
 
@@ -278,7 +278,7 @@ export function QuoteActions({
               </h3>
               <p className="text-sm text-neutral-600 mb-6">
                 {showConfirmDialog === 'accept'
-                  ? 'By accepting, you confirm that you will proceed with the procedure at the quoted price. This price is locked in.'
+                  ? 'By accepting, you are telling the provider you want to go ahead at the price they quoted. Confirm it with them directly before you travel.'
                   : 'You can request another quote from a different provider anytime.'}
               </p>
               <div className="flex gap-3">
@@ -322,7 +322,7 @@ export function QuoteActions({
           <div>
             <h3 className="font-semibold text-green-900">Quote Accepted!</h3>
             <p className="text-sm text-green-800 mt-1">
-              Your price is locked in at <span className="font-bold">${quotedPrice?.toFixed(2)}</span>
+              The provider quoted <span className="font-bold">${quotedPrice?.toFixed(2)}</span>
             </p>
           </div>
         </div>

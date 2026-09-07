@@ -56,7 +56,7 @@ const BLOG_POSTS_ES = [
   {
     slug: 'dental-implants-progreso-mexico-cost',
     title: 'Implantes Dentales en Progreso México — Guía de Costos',
-    excerpt: 'Implantes dentales desde $790 en Nuevo Progreso vs $3,500+ en EE.UU. Compare precios de 15+ dentistas verificados.',
+    excerpt: 'Implantes dentales desde $790 en Nuevo Progreso vs $3,500+ en EE.UU. Compare precios de más de 15 dentistas.',
     date: 'Mar 2026',
     readTime: '7 min',
     tags: ['dental', 'costos'],

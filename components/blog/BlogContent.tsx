@@ -517,7 +517,7 @@ export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
           <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-brand-green/10 rounded-full blur-3xl" />
           <div className="relative z-10">
             <h3 className="text-3xl sm:text-4xl font-bold font-display mb-4">Ready to Find Your Provider?</h3>
-            <p className="text-white/50 text-lg mb-8 max-w-lg">Compare prices, read verified reviews, and book with confidence on ClearCross Progreso.</p>
+            <p className="text-white/50 text-lg mb-8 max-w-lg">Compare the price every clinic published, side by side, before you cross.</p>
             <div className="flex flex-wrap gap-4">
               <Link href="/search" className="px-8 py-4 bg-white text-brand-navy font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-xl shadow-black/20">
                 Find a Provider →

@@ -3,6 +3,245 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 🩺 2026-09-07 — FORTY CLAIMS THE SITE COULD NOT SUBSTANTIATE, AND `content/` HAD NEVER BEEN GUARDED
+
+Mario asked how to drown out the competition in search. Step one of the plan was to verify the
+facts on `/safety` before writing anything. On the way there I found something else.
+
+**The site was telling people we verify credentials, inspect clinics, and confirm clinic
+conditions before listing anybody.** We do none of those things — we match listings against
+Google Maps. **Forty claims, both languages.** The three worst:
+
+- `/safety`: *"We confirm credentials, clinic conditions, and pricing transparency before
+  listing any provider."*
+- `/how-it-works`: *"All providers are verified for credentials and quality"*, *"Every listed
+  price is verified by our team"*, *"the price is locked in"*.
+- 🔴 **The blog post currently ranking #2 for a money query**: *"Not every clinic meets these
+  standards… This is where ClearCross comes in: we verify credentials, inspect facilities, and
+  only list providers that meet our quality standards."* That tells a reader they are protected
+  from an unsafe clinic because we inspected it.
+
+⛔ **THE SITE WAS CONTRADICTING ITSELF.** One page already said, correctly, that ClearCross does
+not inspect clinics and has not checked anybody's licence — ask to see the Cédula at your
+appointment. Another said all providers are verified for credentials and quality. Both live.
+
+### ⛔ WHY THE GUARD MISSED ALL FORTY — TWO CAUSES
+
+1. **It bans WORDINGS, and every one of these was a synonym.** The rule bans *"we verify"*; the
+   site said *"we confirm"*. Proven with a control rather than argued: taking the live sentence
+   and swapping one word made the guard fire immediately. ⚠️ The Spanish was worse — the ES rule
+   looks for *"condiciones del consultorio"* as the OBJECT, and our copy contained that exact
+   phrase. It matched the object and missed only the verb.
+2. 🔴 **`content/` — every blog post — was outside every guard's walk.** So the single most
+   dangerous sentence on the site sat in the one directory nothing was looking at.
+
+### What shipped
+
+All forty rewritten in both languages. ⛔ **Nothing was merely deleted** — an empty space under
+a heading about safety is its own kind of dishonest. Each became something true and more
+useful: instead of claiming we inspected the clinic, `/safety` now tells a reader to ask to see
+the Cédula, ask what materials the clinic uses, and ask how instruments are sterilized.
+
+- `PAGE_TREE` now walks `content/` — which immediately found **five more claims**, including one
+  hidden in image ALT TEXT where no human would read it.
+  ⛔ **Markdown must NOT go through `stripComments`** — that helper is a JS/TS parser, and over
+  prose a bare `https://` truncates the line while a stray apostrophe opens a string that never
+  closes. Each consumer picks its stripper by extension.
+- **New section 11: five rules that describe the CLAIM, not the wording**, each carrying `fire`
+  fixtures (the real removed sentences) and `keep` fixtures (the real shipped replacements),
+  with a self-test that runs FIRST and **skips the scan loudly** if either half misclassifies.
+- `DENIAL` widened — it was missing *nobody* / *nadie* / *none*, so *"Nobody at ClearCross has
+  inspected a clinic"* read as the very claim it disclaims. ⛔ A guard that fires on a
+  disclaimer gets "fixed" by deleting the disclaimer.
+
+### ⛔ THE HARNESS CAUGHT ME DISARMING A GUARD MID-FIX
+
+One of my honest replacements reused the exact phrase §10 pins to detect tampering, taking it
+from one occurrence to two and silently disarming that mutation — **13 caught / 1 missed**.
+Reworded; back to 14/14.
+
+⚠️ **CORRECTION TO SOMETHING I TOLD MARIO EARLIER.** Google's snippet showed *"verifies
+credentials, inspects facilities"* and I reported it as a stale crawl after checking one page.
+**It was live**, in the blog post; my check looked at the wrong file.
+
+## 🌉 2026-09-07 (later) — PHASE 0 OF THE SERP PLAN: THE PAGE THAT WINS THE OPEN SERP WAS WRONG ABOUT THE BRIDGE
+
+Mario: *"continue with your plan."* Plan: `~/.claude/plans/tidy-toasting-kazoo.md`. Phase 0
+BLOCKS Phase 1, and it is the gate for a reason — `/safety` targets the one field around
+Nuevo Progreso that no aggregator holds (the logistics queries, currently held by Wikivoyage,
+a 2017 TripAdvisor thread and one clinic's FAQ), and it is the one page type where every fact
+is checkable by a reader standing at the bridge. Winning that SERP on a wrong toll is worse
+than not ranking.
+
+`npm run verify` **REAL_VERIFY_EXIT=0**, 323 static pages, 0 FAIL lines;
+`border-wait` **17 checks across 10 sections**; `_mutate_border_wait` **17 caught / 0 missed /
+0 skipped**, tree restored byte-identical; `tsc --noEmit` clean.
+
+### 🔴 TWO OF THE FOUR FACTS WERE WRONG, AND ONE BELONGED TO A DIFFERENT BRIDGE
+
+Five independent sources, all converging:
+
+| fact | the page said | what the sources say |
+|---|---|---|
+| walking toll | **"Bridge toll is $0.50"** | **$1.00 into Mexico**, 25-50c back — Wikipedia, bordercrxing, the tourist guide (*"the machine only takes quarters x4"*), the Port Isabel paper (Jul 2025) |
+| bridge hours | **"open daily from 6:00 AM to midnight"** | 🔴 **CBP's own feed says `"hours": "24 hrs/day"`** |
+| parking | "$3-5/day" | $2 (tourist site) / $4 (Port Isabel, bordercrxing) — different lots |
+| vehicle toll | not mentioned at all | **$4 → $5, effective 2025-08-01** (KRGV) |
+
+⛔ **THE TOLL ERROR IS SMALL AND EMBARRASSING IN THE WORST PLACE.** A reader who trusts the
+page arrives at a turnstile that wants four quarters holding two. That reader is standing at
+the bridge, on the strength of our page, and it is wrong about the first thing they touch.
+
+⛔ **AND THE HOURS ERROR HAS A TELL THAT NAMES ITS OWN CAUSE.** The same CBP feed carries a
+SECOND port called Progreso — **230902, the Donna International Bridge, `"6 am-10 pm"`**. The
+page was carrying a garbled version of *a different bridge's* hours. That is also why
+`lib/border-wait.ts` selects by **port number and never by name**: a substring match on
+"Progreso" returns both (measured, 2 matches), so the obvious implementation would have
+rebuilt the exact same error out of the authoritative source.
+
+Every figure now ships attributed, dated and hedged — *"the bridge sets these rates, not
+ClearCross, so confirm at the booth"* — and where the sources genuinely disagree the copy
+says so rather than inventing a precise number. Both languages, same commit.
+
+### ⭐ THE LIVE CBP WAIT — the one thing on that page no competitor has
+
+`https://bwt.cbp.gov/api/waittimes` — **200, JSON, 85 ports, no key**, and it answers
+`Access-Control-Allow-Origin: *`. New `lib/border-wait.ts` (pure) +
+`app/api/border-wait/route.ts` + `components/safety/BorderWait.tsx`.
+
+🔴 **THE TRAP IS THAT THE FEED IS MOSTLY SILENCE, AND SILENCE READS AS ZERO.** Measured across
+all 595 lane records: **494 are some form of "we do not know"** — `Update Pending` (287),
+`N/A` (146), `Lanes Closed` (61) — and **every one carries `delay_minutes: ""`**. An empty
+string coerces to 0, so `Number(delay_minutes)` turns the MAJORITY STATE OF THE FEED into
+*"no wait"*, including the lanes CBP is explicitly saying are closed. Nothing on screen would
+look wrong.
+
+The rules that follow from it, each against a specific way of lying to somebody:
+- ⛔ **Only `no delay` and `delay` carry a reading.** Anything else is UNKNOWN, and
+  `Lanes Closed` is reported SEPARATELY — on the wire they are identical (both empty), and to
+  somebody deciding whether to walk over they mean opposite things.
+- ⛔ **A genuine `"0"` must still report.** Refusing every zero to dodge the empty string
+  throws away the most common good reading on the feed.
+- ⛔ **The timestamp is CBP's own `date` + `time`, never our clock.** If CBP stops updating,
+  our clock keeps advancing and a stale reading looks fresh.
+- ⛔ **There is no "last known" fallback, deliberately.** A failed call renders as a failed
+  call. A wait time you cannot date is worse than none, because the reader cannot tell which
+  one they are looking at.
+- ⛔ **We proxy rather than letting the browser call CBP**, even though CORS permits it: one
+  call per 5 min serves every visitor at an endpoint that sends `no-store`, their CORS header
+  is not a promise, and the "an empty delay is not zero" rule stays in ONE place.
+- ⛔ **The route is dynamic and the UPSTREAM FETCH is what is cached.** A statically-cached
+  route caches a FAILURE for the whole window — one bad minute at CBP and the panel says
+  "unavailable" for five minutes after it recovered.
+
+### 🔴 AND /safety WAS SHIPPING UNDER THE HOMEPAGE'S TITLE
+
+Found while wiring the panel, and it is coupled: the page is now the most authoritative
+logistics page on the site and it inherited the root layout's
+*"Best Dentists & Medical Services in Nuevo Progreso Mexico | ClearCross"* — a directory
+title, shared verbatim with nine other URLs, on the page about parking and bridge tolls.
+Making the page good and leaving it under a title describing a different page wastes the
+whole investment.
+
+Split into a server wrapper (`app/safety/page.tsx`, which can export metadata) plus the
+client body (`app/safety/SafetyClient.tsx`).
+⛔ **`/es/safety` could not stay a bare re-export** — it inherited the ENGLISH metadata, so a
+Spanish page carried an English title in a market that is ~85% Hispanic. Both routes render
+the same client body and differ only in metadata.
+⚠️ This is one of the five standing pages the plan's Phase 4 names; the other four
+(`/how-it-works`, `/about`, `/contact`, `/faq`) still share two titles between them.
+
+### ⛔ THE MUTATION HARNESS FOUND TWO REAL GAPS AND ONE BAD ANCHOR
+
+First run: **11 caught, 2 missed, 1 skipped.**
+
+1. **"every status is treated as a reading" was MISSED, and it is the documented
+   extensionally-equal case rather than laziness.** On the live feed a non-reporting status
+   NEVER carries a number, so the status check and the "an empty delay is not zero" check
+   catch exactly the same rows and neither is provable from real data.
+   ⛔ **The fix is COVERAGE, not a weaker mutation:** the guard now drives the state CBP
+   *could* send and that would actually hurt — a lane it has stopped reporting on still
+   carrying its last number. Without the status rule that renders as a live wait.
+2. **"the panel collapses unknown into no delay" was MISSED** because the check asserted the
+   *string* `kind === 'unknown'` appears in the file. The mutation kept the string and changed
+   what it returns. `laneText` is now **lifted out of the shipped component and EXECUTED**,
+   asserting all four states render differently.
+3. The SKIP was my own anchor written from memory with two spaces too little indentation —
+   the harness **refused to score it** rather than crediting a catch it never made.
+
+⛔ **AND THE GUARD ACCUSED ITS OWN EXPLANATION.** The `/es/safety` re-export check read the
+raw file and fired on the page's own comment, which QUOTES the banned line in order to explain
+why it is gone. Comments are stripped now; the tempting fix was to delete the explanation.
+
+⛔ **Traps paid for again:** the heredoc/`node -e` backslash trap **twice** — once turning a
+`\n` into a real newline inside a JS string literal (a syntax error), once eating an escape.
+Both times the patcher's exact-match, all-or-nothing rule meant nothing was written. And
+`];` matched three times as an anchor; the harness refused rather than mutating the wrong one.
+
+### ⏭️ What Phase 0 unblocks
+
+Phase 1 (the guide cluster) is now writable — the facts it would have been built on are
+correct, and the live wait panel gives those posts something to link to that nobody else has.
+⚠️ Still true: MDX in `content/` is swept by `honest-claims` §9 as of 2026-09-07, so new guide
+copy IS guarded — that was not the case when the plan was written.
+
+### 🔴 AND THEN THE SAME CLASS AGAIN — "THE PRICES THEY GAVE US", AND SEVEN OF THEM WERE MINE
+
+Found by LOOKING at the rendered `/safety` page, not by any assertion. The Do list said
+*"Check the ClearCross reviews for your provider"* — and `clearcross_reviews` is **empty**,
+with the ratings nulled on 2026-09-06. Pulling that thread found five separate claims about
+features that do not exist, and then a sixth that is worse.
+
+| claim | reality |
+|---|---|
+| *"Check the ClearCross reviews for your provider"* | **0 reviews**, both languages |
+| *"See provider ratings, reviews, and years of experience"* | ratings nulled 2026-09-06; **`years_experience` appears in ZERO files** |
+| *"Featured providers are highlighted for quality and transparency"* | we assess neither |
+| *"check years of experience on ClearCross"* | as above |
+| 🔴 *"Every price is the one the provider gave us"* | **the banned claim, wearing a pronoun** |
+
+⛔ **THE LAST ONE IS THE IMPORTANT ONE AND I WROTE IT MYSELF, EARLIER THE SAME DAY.** The
+`provider-supplied` rule bans *"the prices the provider gave **ClearCross**"* — its own comment
+records why: *"NO PROVIDER HAS SIGNED ANYTHING… 'the provider gave ClearCross' describes a
+supply relationship that does not exist"*, backed by a measurement that **eight of nine
+provider websites publish no price at all**. The rule required the brand name. While removing
+forty claims of exactly this class I replaced *"verified by ClearCross"* with *"the prices they
+gave us"* — the same assertion, one pronoun over, invisible to the rule.
+
+**A dry run of the widened rule found FIFTEEN live sentences**, seven of them written that day.
+And the site was contradicting itself again: `priceSourceNote` has said all along that the
+prices *"were **not supplied or confirmed by the clinic**"*. Every one now moves to the verb
+that note already uses — **we researched it** — which is a claim about our own work and is the
+more useful sentence anyway.
+
+### 🛡️ THE GUARD'S OWN PRESERVATION CHECK WAS HOLDING THE FALSE CLAIM IN PLACE
+
+⛔ `TRUST_PILLARS[2]` pinned *"given to us by the provider who charges it"* under the label
+**"the prices pillar attributes every price to the provider"**. It exists so a removed claim is
+not replaced by silence — a good property — and it had locked in the wrong sentence to do it.
+**Repointed, not deleted:** the pillar must still say where the number came from, it just has
+to say the true thing.
+
+🔴 **AND THE MUTATION HARNESS THEN FOUND THE PRESERVATION-SIDE VERSION OF THIS REPO'S
+MOST-RECORDED BUG.** All four pillar checks tested the **whole dictionary file** for a phrase,
+so a pillar could be emptied and the check stayed green off any other string sharing the words.
+It became reachable the moment two keys were rewritten to the same wording — the mutation
+scored **MISSED**. ⚠️ It was already true of pillar 1 before today: its Spanish pattern matches
+`adv2Desc` as well as `writtenQuotesDetail`, so that pillar has never been individually
+protected. All four are now scoped to their own key, with a control that the key was found at
+all — and the control immediately caught a **fourth pillar I had not seen** in the table.
+
+**`_mutate_honest_pages`: 13 caught / 0 missed / 1 skipped → 15 caught / 0 missed / 0
+skipped.** The new mutation narrows `provider-supplied` back to the brand name; the self-test
+then refuses to run the sweep at all rather than reporting a clean tree it never scanned.
+
+⛔ **The harness refused to score twice before it scored once**, and both refusals were right:
+first the anchor had moved with the copy, then the replacement anchor matched **twice** because
+I had used identical phrasing in two keys. It reported *"mutation NOT applied — proves
+nothing"* rather than mutating whichever it reached first.
+
+---
+
 ## 🔎 2026-09-06 (later) — 354 URLS AND NOT ONE TARGETED THE QUERY PEOPLE ACTUALLY TYPE
 
 Mario: *"forget about latonya, that is gone, lets concentrate on whats next to make sure this
