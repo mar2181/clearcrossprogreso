@@ -101,7 +101,10 @@ export default async function BlogPage() {
                 {/* Meta Info */}
                 <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
                   <time dateTime={post.date}>
+                    {/* timeZone: 'UTC' -- an ISO date is UTC midnight; formatting it locally
+                        renders the previous day for every reader west of UTC. */}
                     {new Date(post.date).toLocaleDateString('en-US', {
+                      timeZone: 'UTC',
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',

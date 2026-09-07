@@ -346,7 +346,7 @@ export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
   const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
 
-  const formattedDate = new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const formattedDate = new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">

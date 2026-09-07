@@ -9,24 +9,16 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-// Spanish blog slugs map to English slugs for now
-const SPANISH_BLOG_SLUGS = [
-  'buying-ozempic-nuevo-progreso-mexico',
-  'is-it-safe-dentist-mexico-border',
-  'pharmacies-nuevo-progreso',
-  'best-dentists-nuevo-progreso-mexico',
-  'botox-cosmetic-surgery-nuevo-progreso',
-  'how-much-does-a-dental-crown-cost-in-nuevo-progreso',
-  'dental-implants-progreso-mexico-cost',
-  'crossing-border-medical-care-progreso',
-  'dental-work-nuevo-progreso-mexico-2026-price-guide',
-  'save-money-medical-care-nuevo-progreso',
-];
-
+/*
+ * ⛔ DERIVED, NOT LISTED. This was ten slugs typed out by hand, so a new post
+ * had no Spanish page at all until somebody remembered to add it here -- and
+ * nothing went red when they did not, because a missing entry looks exactly
+ * like a post that was never written. Four posts landed on 2026-09-07 and
+ * would have been English-only by omission.
+ */
 export async function generateStaticParams() {
-  return SPANISH_BLOG_SLUGS.map((slug) => ({
-    slug,
-  }));
+  const posts = await getAllPosts();
+  return posts.map((post) => ({ slug: post.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -50,6 +42,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     'crossing-border-medical-care-progreso': 'Cruzando la Frontera para Cuidado Médico en Progreso',
     'dental-work-nuevo-progreso-mexico-2026-price-guide': 'Trabajo Dental en Nuevo Progreso — Guía de Precios 2026',
     'save-money-medical-care-nuevo-progreso': 'Ahorre Dinero en Cuidado Médico en Nuevo Progreso',
+    'parking-and-walking-across-the-progreso-bridge': 'Estacionamiento en Progreso y Cruce a Pie del Puente',
+    'what-you-can-bring-back-from-nuevo-progreso': 'Qué Puede Traer Legalmente de Nuevo Progreso',
+    'first-time-in-nuevo-progreso-checklist': 'Primera Vez en Nuevo Progreso: La Lista Antes de Cruzar',
+    'progreso-border-wait-times-when-to-cross': 'Tiempos de Espera en el Puente de Progreso: Cuándo Cruzar',
   };
 
   const spanishTitle = spanishTitles[slug] || post.title;
