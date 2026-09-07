@@ -14,6 +14,37 @@ than the forty claims removed that morning.
 `verify:spanish` **65 checks**; `_mutate_spanish_blog` **16 caught / 0 missed /
 0 skipped**, tree restored byte-identical, guard green after; `tsc --noEmit` clean.
 
+✅ **PUSHED + DEPLOYED — `main` `3a82c5a`**, verified against GitHub with
+`git ls-remote` (**exactly one head at that sha**, so the push IS the merge) and by
+reading `TOPICS.find`, `timeZone: 'UTC'`, `getSpanishPostBySlug`, `SAFE_SLUG.test`,
+the repaired `\s*read\s*$` and `const shown = es ?? post` back **out of the pushed
+blobs**. ⛔ A push here **IS** a production deploy.
+
+⛔ **AND MY OWN READ-BACK ACCUSED THE FIX — a raw grep of the pushed blob returned
+`7,350` ×2, `3,150` ×2, `Total Savings Potential`, `max-w-4xl`.** Every hit is inside
+the ⛔ comment recording the removal. Settled by **reading the lines**, then
+structurally: the guard's own stripper removes 4,535 b and **0 retired strings
+survive**, against a control (`compareHeading` ×3) proving it left real code. The
+guard also carries the inverse control — it asserts the comment *does* still name the
+figure — so the two halves discriminate. **Read the line, never the count.**
+
+✅ **VERIFIED ON PRODUCTION, every reading with a discriminating control** (a bogus
+NON-blog path 404s; ⚠️ `/blog/<nonsense>` is a **soft 404**, 200 + "Post Not Found",
+so blog URLs must be judged on CONTENT):
+- **The gating is proven by three posts, not by absence.** Parking guide
+  (`travel,guides`) → **no band, no topic link**, all 8 invented figures **0**, page
+  demonstrably rendered (`turnstile` 1). Dental post → **band + dentist link, 0
+  pharmacy link**. Pharmacy post → **band + pharmacy link, 0 dentist link**.
+- **ES translated**: Spanish title, Spanish body, Spanish chrome, date
+  *"7 de septiembre de 2026"*, **notice absent**, `All Articles` **0**.
+- **ES untranslated**: notice present, Spanish chrome, no invented figures.
+- **EN index still 14 posts**, ES index 14, sitemap **414 locs / 28 blog URLs / 0
+  `/blog/es` leaks** — `content/blog/es/` did not leak onto the English tree.
+- ⚠️ `Bring quarters` reads 1 on the Spanish page and is **not** an English-body
+  leak: both hits are the *parking guide's* related-post CARD, which has no
+  translation yet and correctly falls back. Found by reading the offsets, not the
+  count — the same lesson twice in one session.
+
 ### 🔴 THE FIND: TWO HARDCODED BANDS, SEVEN FIGURES, NOTHING BEHIND ANY OF THEM
 
 `BlogContent` rendered these on **every post, unconditionally, in both languages**,
@@ -134,12 +165,39 @@ Re-run: **16 caught / 0 missed / 0 skipped.**
 ### ⏭️ Open
 
 1. **Nine posts still await translation** (~15,000 words). The machinery is proven
-   and each is a drop-in file; the notice is honest until then.
-2. **The route-group refactor is still not done** — `/es` emits `lang="en"` in the
+   and each is a drop-in file; the notice is honest until then. ⚠️ Until they land, a
+   Spanish reader gets a Spanish article under **English related-post cards**.
+2. 🔴 **`test/_strip-comments.mjs` CANNOT STRIP `BlogContent.tsx`, AND IT IS
+   PRE-EXISTING.** Measured on the pushed blob: the guard's own inline stripper
+   removes **4,535 b**; the shared helper removes **231 b** and all 10 retired
+   strings survive. It removed **exactly 231 b before my commit too**, so I did not
+   cause it — I enlarged the comment block, which made it visible. It stops making
+   progress at output offset ~3776, just before `function Expandable`.
+   ⚠️ `honest-claims.mjs` walks 143 files through that helper **including this one**,
+   so its §9/§11 sweep currently reads `BlogContent.tsx` with comments intact. The
+   failure direction is **under**-stripping ⇒ a false FAIL on an explanatory comment,
+   never a false pass — the safe direction, and the guard is green today. But it is
+   one banned word in a comment away from a red build nobody can explain, and the
+   tempting fix would be to delete the explanation. ⛔ Not touched: it is a shared
+   helper whose own header records two prior bugs of exactly this class, and it wants
+   its own guard and its own session.
+3. **`docs/ADVERTISING.md`** — whether the site's origin changes what we may
+   advertise. It does not; the platforms key on the audience, and misrepresenting
+   location is itself a terminal Google violation the FTC has separately litigated
+   (Best Priced Brands, 2011). ⭐ Two findings that change the plan: we are **not** a
+   pharmacy, so LegitScript-class certification does not attach; and the **flat
+   listing fee is an express carve-out** in 22 TAC 108.58 (*"set in advance"*, *"fair
+   market value"*, *"not based on the volume or value of any patient referrals"*),
+   which puts flat-fee-now / commission-after-counsel on the law rather than on
+   caution. ⛔ **Never advertise the pharmacy or prescription pages** — the blocker
+   there is the FDA's own framing of its importation policy, not the ad platform.
+   ⛔ **Ad copy has no guard**: `honest-claims` sweeps the site, and an ad headline is
+   typed into a console and never touches this repo.
+4. **The route-group refactor is still not done** — `/es` emits `lang="en"` in the
    **server** HTML (`I18nBody` patches it in a `useEffect`, so a browser sees `es`
    and a crawler sees `en`). That is the risky half of Phase 2 and wants its own
    session.
-3. Unchanged and still Mario's call: the **Fernando Rodriguez DDS** database
+5. Unchanged and still Mario's call: the **Fernando Rodriguez DDS** database
    description, and the **soft 404** on `/blog/<nonsense>`.
 
 ## 🩺 2026-09-07 — FORTY CLAIMS THE SITE COULD NOT SUBSTANTIATE, AND `content/` HAD NEVER BEEN GUARDED
