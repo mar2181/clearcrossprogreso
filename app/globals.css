@@ -169,6 +169,69 @@
   }
 }
 
+/* ── Letting a visitor send him away ───────────────────────────────────────
+ *
+ * ⛔ THE FEATURE IS NOT MISSING — IT IS INVISIBLE, AND THE FIX BELONGS HERE
+ * RATHER THAN IN A SECOND IMPLEMENTATION. `live-agent.js` already ships the
+ * whole thing: a `.la-dismiss` button, `sendAway()` (which correctly calls
+ * `PetConcierge.end()` FIRST, so the microphone is released rather than left
+ * open behind a hidden body), a `#live-agent-recall` pill, and `recallAgent()`.
+ * Writing our own close button would be two implementations of one behaviour,
+ * and the one that drifts is always the one that forgets to end the call.
+ *
+ * Two measured reasons nobody has ever found it (production, 2026-09-07):
+ *
+ *   1. The button is `opacity:0`, lifted to 1 only by `#live-agent:hover`.
+ *      A touch device has no hover, so on a phone it is PERMANENTLY invisible
+ *      — while still `pointer-events:auto`. Measured live: 26x26 at x1205 y316,
+ *      opacity 0. That is not merely undiscoverable, it is an invisible live
+ *      tap target sitting on him, so the only way a phone visitor ever meets
+ *      this feature is by triggering it by accident and having him vanish.
+ *      On desktop it appears only while hovering the thing you want gone.
+ *
+ *   2. 26x26 is below the 44px minimum touch target.
+ *
+ * So: always visible, and big enough to hit. Held at 0.62 rather than 1 so it
+ * reads as a control on his shoulder and not as a badge.
+ */
+#live-agent .la-dismiss {
+  opacity: 0.62 !important;
+  width: 44px !important;
+  height: 44px !important;
+  font-size: 16px !important;
+}
+
+#live-agent:hover .la-dismiss,
+#live-agent .la-dismiss:hover,
+#live-agent .la-dismiss:focus-visible {
+  opacity: 1 !important;
+}
+
+/* ⛔ AND THE WAY BACK HAS TO BE REACHABLE, OR "SEND HIM AWAY" IS "DELETE HIM".
+ * `showRecallTab()` renders `#live-agent-recall` at `right:18px; bottom:18px`
+ * with z-index 2147483601 — the platform's default, correct on a page with no
+ * bottom furniture. This site has three pieces of it, which is why #live-agent
+ * is lifted above.
+ *
+ * MEASURED at 390x844 on production: the pill's box lands at y789-826 and
+ * MobileBottomNav occupies y708-828. Overlap 37px tall x 192px wide — **94% of
+ * the pill sits on the site's own navigation**, and because 2147483601 beats
+ * the nav's z-index of 80 the pill WINS, covering two nav items. So the state
+ * a visitor is left in after dismissing him is worse than the one they were
+ * trying to escape.
+ *
+ * Lifted onto the same measured bands as #live-agent, for the same reasons.
+ */
+#live-agent-recall {
+  bottom: 96px !important;
+}
+
+@media (max-width: 767px) {
+  #live-agent-recall {
+    bottom: 150px !important;
+  }
+}
+
 /* Shown only after a session starts and produces no sound — see the note in
    SiteConcierge.tsx about why the mint cannot tell us this. */
 .concierge-notice {

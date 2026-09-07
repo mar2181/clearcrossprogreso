@@ -10,16 +10,16 @@ any of the providers listed, and it does not take payment for treatment.
 
 ## What is listed right now
 
-- **Dentists** — 30 listed, at `/dentists`
-- **Pharmacies** — 16 listed, at `/pharmacies`
-- **Spas** — 8 listed, at `/spas`
-- **Optometrists** — 8 listed, at `/optometrists`
+- **Dentists** — 50 listed, at `/dentists`
+- **Pharmacies** — 22 listed, at `/pharmacies`
+- **Spas** — 19 listed, at `/spas`
+- **Optometrists** — 9 listed, at `/optometrists`
 - **Cosmetic Surgery** — 10 listed, at `/cosmetic-surgery`
-- **Doctors** — 4 listed, at `/doctors`
-- **Vets** — 2 listed, at `/vets`
+- **Doctors** — 12 listed, at `/doctors`
+- **Vets** — 4 listed, at `/vets`
 
-Total listed publicly: **78 providers**, across 7 categories,
-with **312 individual prices** on file covering 83 procedures.
+Total listed publicly: **126 providers**, across 7 categories,
+with **316 individual prices** on file covering 83 procedures.
 
 Not every record is shown. A provider reaches a category page only once its
 listing details have been checked; the rest are held back. That is why the

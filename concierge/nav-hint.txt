@@ -61,3 +61,134 @@ nosotros -> /about
 list my business -> /auth/register
 i am a provider -> /auth/register
 soy proveedor -> /auth/register
+dental implant -> /prices/dental-implant
+dental implant price -> /prices/dental-implant
+dental implant cost -> /prices/dental-implant
+implantes dentales -> /prices/dental-implant
+precio de implantes dentales -> /prices/dental-implant
+zirconia crown -> /prices/zirconia-crown
+zirconia crown price -> /prices/zirconia-crown
+zirconia crown cost -> /prices/zirconia-crown
+coronas de zirconia -> /prices/zirconia-crown
+precio de coronas de zirconia -> /prices/zirconia-crown
+porcelain veneer -> /prices/porcelain-veneer
+porcelain veneer price -> /prices/porcelain-veneer
+porcelain veneer cost -> /prices/porcelain-veneer
+carillas de porcelana -> /prices/porcelain-veneer
+precio de carillas de porcelana -> /prices/porcelain-veneer
+root canal -> /prices/root-canal
+root canal price -> /prices/root-canal
+root canal cost -> /prices/root-canal
+endodoncia -> /prices/root-canal
+precio de endodoncia -> /prices/root-canal
+dental cleaning -> /prices/dental-cleaning
+dental cleaning price -> /prices/dental-cleaning
+dental cleaning cost -> /prices/dental-cleaning
+limpieza dental -> /prices/dental-cleaning
+precio de limpieza dental -> /prices/dental-cleaning
+teeth whitening -> /prices/teeth-whitening
+teeth whitening price -> /prices/teeth-whitening
+teeth whitening cost -> /prices/teeth-whitening
+blanqueamiento dental -> /prices/teeth-whitening
+precio de blanqueamiento dental -> /prices/teeth-whitening
+composite filling -> /prices/composite-filling
+composite filling price -> /prices/composite-filling
+composite filling cost -> /prices/composite-filling
+resinas dentales -> /prices/composite-filling
+precio de resinas dentales -> /prices/composite-filling
+dentures -> /prices/dentures
+dentures price -> /prices/dentures
+dentures cost -> /prices/dentures
+braces -> /prices/braces
+braces price -> /prices/braces
+braces cost -> /prices/braces
+all-on-4 implants -> /prices/all-on-4
+all on 4 -> /prices/all-on-4
+all-on-4 implants price -> /prices/all-on-4
+all-on-4 implants cost -> /prices/all-on-4
+implantes All-on-4 -> /prices/all-on-4
+precio de implantes All-on-4 -> /prices/all-on-4
+deep cleaning -> /prices/deep-cleaning
+deep cleaning price -> /prices/deep-cleaning
+deep cleaning cost -> /prices/deep-cleaning
+limpieza profunda -> /prices/deep-cleaning
+precio de limpieza profunda -> /prices/deep-cleaning
+tooth extraction -> /prices/tooth-extraction
+tooth extraction price -> /prices/tooth-extraction
+tooth extraction cost -> /prices/tooth-extraction
+extracción dental -> /prices/tooth-extraction
+precio de extracción dental -> /prices/tooth-extraction
+bone graft -> /prices/bone-graft
+bone graft price -> /prices/bone-graft
+bone graft cost -> /prices/bone-graft
+injerto de hueso -> /prices/bone-graft
+precio de injerto de hueso -> /prices/bone-graft
+composite veneer -> /prices/composite-veneer
+composite veneer price -> /prices/composite-veneer
+composite veneer cost -> /prices/composite-veneer
+carillas de resina -> /prices/composite-veneer
+precio de carillas de resina -> /prices/composite-veneer
+consultation / exam -> /prices/consultation-exam
+consultation exam -> /prices/consultation-exam
+consultation / exam price -> /prices/consultation-exam
+consultation / exam cost -> /prices/consultation-exam
+consulta dental -> /prices/consultation-exam
+precio de consulta dental -> /prices/consultation-exam
+3-unit dental bridge -> /prices/3-unit-bridge
+3 unit bridge -> /prices/3-unit-bridge
+3-unit dental bridge price -> /prices/3-unit-bridge
+3-unit dental bridge cost -> /prices/3-unit-bridge
+puente dental de tres piezas -> /prices/3-unit-bridge
+precio de puente dental de tres piezas -> /prices/3-unit-bridge
+all-on-6 implants -> /prices/all-on-6
+all on 6 -> /prices/all-on-6
+all-on-6 implants price -> /prices/all-on-6
+all-on-6 implants cost -> /prices/all-on-6
+implantes All-on-6 -> /prices/all-on-6
+precio de implantes All-on-6 -> /prices/all-on-6
+metal porcelain crown -> /prices/metal-porcelain-crown
+metal porcelain crown price -> /prices/metal-porcelain-crown
+metal porcelain crown cost -> /prices/metal-porcelain-crown
+coronas de porcelana con metal -> /prices/metal-porcelain-crown
+precio de coronas de porcelana con metal -> /prices/metal-porcelain-crown
+weight loss (ozempic / wegovy / semaglutide) -> /prices/weight-loss-ozempic-wegovy
+weight loss ozempic wegovy -> /prices/weight-loss-ozempic-wegovy
+weight loss (ozempic / wegovy / semaglutide) price -> /prices/weight-loss-ozempic-wegovy
+weight loss (ozempic / wegovy / semaglutide) cost -> /prices/weight-loss-ozempic-wegovy
+medicamentos para bajar de peso -> /prices/weight-loss-ozempic-wegovy
+precio de medicamentos para bajar de peso -> /prices/weight-loss-ozempic-wegovy
+wisdom tooth extraction -> /prices/wisdom-tooth-extraction
+wisdom tooth extraction price -> /prices/wisdom-tooth-extraction
+wisdom tooth extraction cost -> /prices/wisdom-tooth-extraction
+extracción de muelas del juicio -> /prices/wisdom-tooth-extraction
+precio de extracción de muelas del juicio -> /prices/wisdom-tooth-extraction
+crown over implant -> /prices/crown-over-implant
+crown over implant price -> /prices/crown-over-implant
+crown over implant cost -> /prices/crown-over-implant
+corona sobre implante -> /prices/crown-over-implant
+precio de corona sobre implante -> /prices/crown-over-implant
+e-max crown -> /prices/emax-crown
+emax crown -> /prices/emax-crown
+e-max crown price -> /prices/emax-crown
+e-max crown cost -> /prices/emax-crown
+coronas E-Max -> /prices/emax-crown
+precio de coronas E-Max -> /prices/emax-crown
+eye exam -> /prices/eye-exam
+eye exam price -> /prices/eye-exam
+eye exam cost -> /prices/eye-exam
+examen de la vista -> /prices/eye-exam
+precio de examen de la vista -> /prices/eye-exam
+cosmetic consultation -> /prices/cosmetic-consultation
+cosmetic consultation price -> /prices/cosmetic-consultation
+cosmetic consultation cost -> /prices/cosmetic-consultation
+consulta estética -> /prices/cosmetic-consultation
+precio de consulta estética -> /prices/cosmetic-consultation
+lumineer -> /prices/lumineer
+lumineer price -> /prices/lumineer
+lumineer cost -> /prices/lumineer
+respiratory / asthma -> /prices/respiratory-asthma
+respiratory asthma -> /prices/respiratory-asthma
+respiratory / asthma price -> /prices/respiratory-asthma
+respiratory / asthma cost -> /prices/respiratory-asthma
+medicamentos para el asma -> /prices/respiratory-asthma
+precio de medicamentos para el asma -> /prices/respiratory-asthma

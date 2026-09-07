@@ -381,9 +381,20 @@ const STATIC_TARGETS = new Set(
 )
 const navTargets = [...csrc[NAV].matchAll(/->\s*(\/[a-z0-9/-]*)\s*$/gm)].map((m) => m[1])
 const navCats = [...new Set(navTargets)].filter((t) => !STATIC_TARGETS.has(t)).sort()
-const componentCats = [...read(CONCIERGE_COMPONENT).matchAll(/\{\s*slug:\s*'([a-z-]+)'/g)]
-  .map((m) => '/' + m[1])
-  .sort()
+/*
+ * ⛔ THE COMPONENT NOW OFFERS PAGES FROM TWO SOURCES, AND BOTH COUNT.
+ * `LIVE_CATEGORIES` is still hand-typed; the 26 `/prices/<procedure>` routes
+ * come from `lib/concierge-routes.generated.ts`, which the same builder writes
+ * from the same query. Reading only the hand-typed half would make this check
+ * fail on a correct tree — and the tempting repair (filter `/prices/` out of
+ * `navCats`) would silently stop guarding 26 of the 33 pages he offers, which
+ * is the opposite of what this check exists for. Read both, compare the union.
+ */
+const GENERATED_ROUTES = 'lib/concierge-routes.generated.ts'
+const componentCats = [
+  ...[...read(CONCIERGE_COMPONENT).matchAll(/\{\s*slug:\s*'([a-z-]+)'/g)].map((m) => '/' + m[1]),
+  ...[...read(GENERATED_ROUTES).matchAll(/"slug":\s*"([a-z0-9-]+)"/g)].map((m) => '/prices/' + m[1]),
+].sort()
 
 chk(navCats.length > 0, 'nav-hint.txt offers at least one category page (found ' + navCats.length + ')')
 chk(

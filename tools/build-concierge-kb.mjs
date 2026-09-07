@@ -253,6 +253,30 @@ conversation, not a brochure.
 - Explain the comparison: prices here sit next to a US benchmark for the same
   procedure.
 
+## You have hands — use them, do not describe them
+
+You can operate this page, not just talk about it. When somebody asks for
+something, DO IT and narrate what you did — never answer with instructions for
+them to follow.
+
+- **navigate_to** — walk them to a page. For a named procedure prefer the
+  comparison page: "how much is a dental implant" -> \`/prices/dental-implant\`,
+  which lists every clinic that publishes one, next to the US price. That page
+  answers the question better than the quote form does.
+- **click_element** — press things. "Show me a different dentist", "open that
+  one", "filter to the cheapest" — press the control, then say what happened.
+- **find_on_page / scroll_to / highlight_element** — when the answer is already
+  on screen, put it in front of them instead of reading the whole page aloud.
+- **go_back** — they will ask.
+
+Two limits, and they are not style:
+
+- **Never submit a form for them.** You may fill a field they dictated and you
+  may take them to the quote page, but the send is theirs to press. A quote
+  request carries their name and their phone number to a real clinic.
+- **Act when asked, not on a hunch.** Clicking something nobody asked for, on a
+  page somebody is reading, is worse than doing nothing.
+
 ## HARD RULES — these are not style preferences
 
 These matter more here than on an ordinary business site, because this is about
@@ -386,6 +410,92 @@ const spoken = [
 ];
 for (const [phrase, path] of spoken) add(phrase, path);
 
+/* ── /prices/<procedure> — the pages he could not reach ────────────────────
+ *
+ * ⛔ 26 COMPARISON PAGES, AND HE KNEW ABOUT NONE OF THEM. Measured on
+ * production 2026-09-07: 47 nav phrases published, `/prices` appearing in
+ * exactly 0 of them. So "how much is a dental implant?" — the single most
+ * commercially valuable question this site can be asked, and the one the whole
+ * `/prices` tree was built to answer — could not be answered by walking the
+ * visitor to the answer. Worse, `cuanto cuesta` and `how much would it cost`
+ * both resolve to /quote, which STATE.md records as still rendering hardcoded
+ * mock data. He was sending price questions to the weakest page on the site.
+ *
+ * ⛔ DERIVED, NOT HAND-LISTED, AND THAT IS THE WHOLE POINT. The nav list in
+ * SiteConcierge.tsx carries a comment recording that a hand-kept copy of this
+ * kind of thing went stale silently — /spas and /doctors were excluded for
+ * three days after a verification pass, and he simply denied two categories
+ * existed. Hand-listing 26 procedures would repeat that at 26x the scale, and
+ * the whole point of the call sheet is that this list GROWS as prices come in.
+ *
+ * ⛔ THE THRESHOLD IS READ FROM lib/procedure-pages.ts, NOT COPIED. Offering a
+ * page that does not clear the bar is a walk to a 404 — `generateStaticParams`
+ * only emits params for procedures that clear it, and everything else falls
+ * through to notFound(). Two copies of that number is a promise broken on the
+ * first click.
+ */
+const readNum = (file, name) => {
+  const src = readFileSync(join(ROOT, file), "utf8");
+  const m = src.match(new RegExp("export const " + name + "\\s*=\\s*(\\d+)"));
+  if (!m) throw new Error(`could not read ${name} from ${file} — refusing to guess it`);
+  return Number(m[1]);
+};
+const MIN_CLINICS = readNum("lib/procedure-pages.ts", "MIN_CLINICS_FOR_PRICE_PAGE");
+
+/*
+ * The Spanish name for each procedure, lifted from the site's own lookup so he
+ * answers "cuanto cuestan los implantes dentales" as readily as the English.
+ * ⛔ REFUSES AN EMPTY PARSE rather than silently publishing an English-only map
+ * — the same rule this file already applies to an empty database read. A
+ * concierge that is monolingual in an 85%-Hispanic market fails quietly.
+ */
+const esProcedure = (() => {
+  const src = readFileSync(join(ROOT, "lib/i18n/procedure-label.ts"), "utf8");
+  const body = src.slice(src.indexOf("PROCEDURE_ES"));
+  const out = {};
+  for (const m of body.matchAll(/^\s*'([a-z0-9-]+)':\s*'([^']+)'/gm)) out[m[1]] = m[2];
+  if (Object.keys(out).length < 20) {
+    throw new Error(`parsed only ${Object.keys(out).length} Spanish procedure names — refusing`);
+  }
+  return out;
+})();
+
+/* Distinct VERIFIED providers publishing a real price, per procedure — the
+ * same population getPricedProcedures() counts, so his list and the generated
+ * pages cannot disagree. */
+const verifiedIds = new Set(shown.map((p) => p.id));
+const clinicsPerProcedure = {};
+for (const pr of prices) {
+  if (pr.price_usd === null || pr.price_usd === undefined) continue;
+  if (!verifiedIds.has(pr.provider_id)) continue;
+  (clinicsPerProcedure[pr.procedure_id] ??= new Set()).add(pr.provider_id);
+}
+
+const pricedProcedures = procedures
+  .filter((p) => (clinicsPerProcedure[p.id]?.size ?? 0) >= MIN_CLINICS)
+  .map((p) => ({
+    slug: p.slug,
+    name: p.name,
+    es: esProcedure[p.slug] || null,
+    clinics: clinicsPerProcedure[p.id].size,
+  }))
+  .sort((a, b) => b.clinics - a.clinics || a.slug.localeCompare(b.slug));
+
+for (const p of pricedProcedures) {
+  const path = `/prices/${p.slug}`;
+  add(p.name.toLowerCase(), path);
+  add(p.slug.replace(/-/g, " "), path);
+  // "how much is a dental implant" contains "dental implant"; navigate_to takes
+  // the LONGEST matching key, so a specific procedure beats the generic
+  // "cuanto cuesta" -> /quote entry above without that entry being removed.
+  add(`${p.name.toLowerCase()} price`, path);
+  add(`${p.name.toLowerCase()} cost`, path);
+  if (p.es) {
+    add(p.es, path);
+    add(`precio de ${p.es}`, path);
+  }
+}
+
 const navHint = nav.join("\n") + "\n";
 
 /* ── write ───────────────────────────────────────────────────────────────── */
@@ -394,10 +504,45 @@ writeFileSync(join(OUT, "kb.md"), kb, "utf8");
 writeFileSync(join(OUT, "persona-leo.md"), persona, "utf8");
 writeFileSync(join(OUT, "nav-hint.txt"), navHint, "utf8");
 
+/*
+ * ⛔ THE SAME LIST HAS TO REACH THE BROWSER, NOT JUST THE PROMPT.
+ *
+ * nav-hint.txt teaches him the phrases; `window.__PetConciergeNav` is what
+ * `navigate_to` actually resolves against at runtime. A phrase he knows and
+ * cannot resolve is an apology, so both come from this one derivation.
+ *
+ * ⛔ A GENERATED MODULE, NOT A FETCH IN THE ROOT LAYOUT. The obvious
+ * alternative — have app/layout.tsx call getPricedProcedures() and pass it
+ * down — puts a Supabase query in the root layout, i.e. a network dependency
+ * on every one of 414 statically generated pages, and a build that fails
+ * wholesale if the database blips. This ships ~26 rows in the client bundle
+ * and costs nothing at render.
+ */
+const generated =
+  `/* GENERATED by tools/build-concierge-kb.mjs — do not edit by hand.\n` +
+  ` *\n` +
+  ` * The procedure comparison pages Dr. Leo may walk a visitor to. Derived from\n` +
+  ` * the live database using the SAME threshold and the SAME verified-provider\n` +
+  ` * population as getPricedProcedures(), which is what generateStaticParams()\n` +
+  ` * uses — so he can never offer a page that 404s.\n` +
+  ` *\n` +
+  ` * Re-run the builder after any verification or price-collection pass.\n` +
+  ` * Built ${new Date().toISOString().slice(0, 10)} from ${pricedProcedures.length} priced procedures\n` +
+  ` * (>= ${MIN_CLINICS} verified clinics each).\n` +
+  ` */\n` +
+  `export type ConciergeProcedure = { slug: string; name: string; es: string | null }\n\n` +
+  `export const PRICED_PROCEDURES: ConciergeProcedure[] = ${JSON.stringify(
+    pricedProcedures.map(({ slug, name, es }) => ({ slug, name, es })),
+    null,
+    2,
+  )}\n`;
+writeFileSync(join(ROOT, "lib", "concierge-routes.generated.ts"), generated, "utf8");
+
 console.log(`db          : ${SB.replace(/^https:\/\/([a-z]+)\..*/, "$1")}`);
 console.log(`listed      : ${shown.length} verified providers of ${providers.length} rows`);
 console.log(`categories  : ${Object.keys(byCat).length} with listings`);
 console.log(`kb.md       : ${kb.length} chars`);
 console.log(`persona-leo : ${persona.length} chars`);
 console.log(`nav-hint    : ${nav.length} phrases`);
+console.log(`price pages : ${pricedProcedures.length} procedures (>= ${MIN_CLINICS} clinics) -> lib/concierge-routes.generated.ts`);
 console.log(`\nwritten to ${OUT}`);

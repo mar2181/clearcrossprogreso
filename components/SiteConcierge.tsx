@@ -61,6 +61,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { concierge } from '@/lib/concierge'
+import { getLocaleFromPath, localizedPath } from '@/lib/i18n/get-locale'
+import { PRICED_PROCEDURES } from '@/lib/concierge-routes.generated'
 
 /** How long a started session may stay silent before we call it dead. */
 const SILENCE_MS = 9000
@@ -148,6 +150,37 @@ const navMap = (): Record<string, string> => {
     'how does this work': '/how-it-works',
     'the home page': '/',
   })
+
+  /*
+   * The 26 comparison pages — the ones he could not reach at all until
+   * 2026-09-07. Measured on production that day: 47 phrases published, `/prices`
+   * in exactly 0 of them, so "how much is a dental implant?" walked nowhere.
+   *
+   * ⛔ GENERATED, NOT TYPED OUT HERE. `lib/concierge-routes.generated.ts` comes
+   * from the builder, off the live database, using the same threshold and the
+   * same verified-provider population as `getPricedProcedures()` — which is what
+   * `generateStaticParams()` uses. So the set he offers and the set that exists
+   * are the same set, and a price-collection pass that creates a 27th page puts
+   * it in his mouth by re-running one command. The hand-kept list above is
+   * exactly what this avoids: its own comment records /spas and /doctors being
+   * denied for three days after they went live.
+   *
+   * ⛔ `navigate_to` takes the LONGEST matching key, so these beat the generic
+   * 'cuanto cuesta' -> /quote entry without it having to be removed: "how much
+   * is a dental implant" contains both, and "dental implant" is longer.
+   */
+  for (const p of PRICED_PROCEDURES) {
+    const path = `/prices/${p.slug}`
+    const en = p.name.toLowerCase()
+    m[en] = path
+    m[`${en} price`] = path
+    m[`${en} cost`] = path
+    m[p.slug.replace(/-/g, ' ')] = path
+    if (p.es) {
+      m[p.es] = path
+      m[`precio de ${p.es}`] = path
+    }
+  }
   return m
 }
 
@@ -174,6 +207,10 @@ const routeLabels = (): { match: RegExp; label: string }[] => {
     // A provider profile, so he can say where the visitor already is.
     out.push({ match: new RegExp(`^(?:/es)?/${esc(c.slug)}/[^/]+/?$`), label: `${c.en} — provider profile` })
   }
+  // Named individually rather than as one `/prices/[^/]+` catch-all, so that
+  // when he says where the visitor is he can say "Dental Implant prices"
+  // instead of "a price page".
+  for (const p of PRICED_PROCEDURES) add(`/prices/${p.slug}`, `${p.name} — prices compared`)
   return out
 }
 
@@ -197,10 +234,33 @@ export default function SiteConcierge() {
     window.__PetConciergeNav = navMap()
     window.__PetConciergeRoutes = routeLabels()
     window.__PetConciergeNavigate = (path: string) => {
+      /*
+       * ⛔ LOCALISE AT THE LAST MOMENT, NOT IN THE MAP.
+       *
+       * `navMap()` is bilingual in its KEYS and English in its VALUES — every
+       * Spanish phrase points at an English path. So "llévame a los dentistas",
+       * asked by a visitor reading /es, used to answer correctly and then drop
+       * them into the English tree. That is the same defect ProviderCard and
+       * BlogContent both carried: the site understood the question in Spanish
+       * and replied in English.
+       *
+       * Fixed HERE rather than by publishing a second set of /es keys, because
+       * the visitor's language is a property of WHERE THEY ARE, not of which
+       * phrase matched — an English speaker browsing /es should stay on /es,
+       * and `navigate_to` also accepts a raw path from the model that no map
+       * entry ever touched.
+       *
+       * `localizedPath` is the site's own single source of truth: it is
+       * idempotent (a path already starting /es is returned unchanged, so a
+       * model that says "/es/dentists" is not turned into "/es/es/dentists"),
+       * and it carries the ENGLISH_ONLY carve-out, so /auth/register does not
+       * become a 404 in Spanish.
+       */
+      const target = localizedPath(path, getLocaleFromPath(window.location.pathname))
       try {
-        router.push(path)
+        router.push(target)
       } catch {
-        window.location.assign(path)
+        window.location.assign(target)
       }
     }
   }, [enabled, agentId, router])
