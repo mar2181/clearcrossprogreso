@@ -3,6 +3,145 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 🔴 2026-09-07 (later still ×2) — SEVEN INVENTED NUMBERS ON ALL FOURTEEN POSTS, AND A PARKING GUIDE WITH A DENTAL SAVINGS CALCULATOR
+
+Mario: *"continue with the work."* Phase 2 of the SERP plan is the Spanish tree.
+On the way into it, reading `BlogContent.tsx` — a file the morning's claims sweep
+had walked past because it holds no `content/` prose — turned up something worse
+than the forty claims removed that morning.
+
+`npm run verify` **REAL_VERIFY_EXIT=0, 0 FAIL, 331 static pages**; new
+`verify:spanish` **65 checks**; `_mutate_spanish_blog` **16 caught / 0 missed /
+0 skipped**, tree restored byte-identical, guard green after; `tsc --noEmit` clean.
+
+### 🔴 THE FIND: TWO HARDCODED BANDS, SEVEN FIGURES, NOTHING BEHIND ANY OF THEM
+
+`BlogContent` rendered these on **every post, unconditionally, in both languages**,
+and nothing about any of them looked at the post:
+
+| where | what it said |
+|---|---|
+| **above the fold**, under the headline | `80–500%` "Savings vs. U.S." · **`$7,350` "Avg. Dental Savings"** · **`$3,150` "Avg. Rx Savings"** · `30+` "Years of Trust" |
+| mid-article | a "Total Savings Potential" band: `$7,350` / `$3,150` / `$9,280` |
+| mid-article | *"Healthcare costs in the U.S. have risen **40%** in the last decade. Over **27 million** Americans lack health insurance entirely."* |
+| mid-article | a pull quote: *"A single dental implant in the U.S. costs roughly what a full mouth of work costs in Nuevo Progreso."* |
+
+⛔ **TWO OF THEM ARE LABELLED "Avg.", WHICH ASSERTS A CALCULATION OVER A DATASET
+WE NEVER HAD** — and they sat directly under the headline, the most prominent
+numbers on the page. This site **refuses to publish a price it cannot attribute**
+and has a guard for exactly that; it was printing seven of its own on fourteen
+live pages.
+
+⛔ **AND THEY WERE OFF-TOPIC ON SIX OF THE FOURTEEN.** Measured on production
+before touching anything: the **parking guide** shipped the day before —
+a post about where to leave the car and what the turnstile costs — rendered
+*"Total Savings Potential · $7,350 Dental Tourist"*, the US-healthcare paragraph,
+and the implant pull quote.
+
+### ⛔ WHY EVERY GUARD MISSED IT, AND THE FIX IS STRUCTURAL
+
+`honest-claims` §11 asks *what we claim to DO* — verify, inspect, confirm a
+licence. **An unsourced statistic is a different shape of lie** and no rule
+described it. The morning's sweep read all 143 files including this one and
+correctly said nothing.
+
+⇒ the blocks are **gated on the post's own tags** now (`TOPICS`: dental /
+pharmacy / cosmetic), and a post with none of them gets **neither** — silence
+being the correct output rather than a default topic. What replaces the figures
+is a link to the **comparison pages**, which compute prices from clinic-published
+lists and carry their own provenance note.
+⛔ **Deliberately NOT a computed band in the boilerplate.** That would be a second
+place for a price to go stale, in the one place nobody re-reads. Internal links to
+the money pages are the better SEO anyway.
+
+### 🔴 THE GUARD FOUND A SECOND COPY I HAD MISSED ENTIRELY
+
+I removed the mid-article band, wrote the guard, and it **failed on `7,350` and
+`3,150`** — the above-the-fold "KEY STATS BAR", 60 lines away, which I had never
+read. That is this repo's own *"a guard scoped to one path cannot see a copy"*,
+and the only reason it did not ship half-fixed.
+
+### 🟢 THE SPANISH BLOG IS REAL NOW, NOT A TRANSLATED TITLE OVER ENGLISH TEXT
+
+Fourteen `/es/blog/*` URLs served the **English body** with a Spanish `<title>`.
+- `content/blog/es/<slug>.mdx` is read when present; the amber *"this article is
+  in English"* notice renders **if and only if** it is absent. ⛔ The notice and
+  the body read the **same variable**, so "Spanish body under an English notice"
+  and "English body with no notice" are both unreachable — the second being the
+  one that matters, since it is duplicate content that reads as a failed page.
+- **First translation shipped**: *Primera Vez en Nuevo Progreso* (the checklist),
+  hand-written, not machine output. Nine posts still carry the honest notice.
+- `BlogContent` takes a `locale`: the date, 17 chrome strings, both checklists and
+  **every internal link** follow it. Before this a Spanish reader was dropped into
+  the English tree on the first click — the ProviderCard bug again.
+- ⛔ **The translation's own frontmatter beats the hand-written `ES_COPY` map** in
+  both the index and the metadata. The map is maintained by hand, so it is the
+  half that goes stale, and a card advertising a headline the article does not
+  have is worse than no card.
+
+### 🔴 THE SPANISH ARTICLE HAD BEEN RENDERING IN A NARROW COLUMN ON A WHITE PAGE
+
+Pre-existing, found by **looking at a screenshot**, invisible to every assertion.
+`BlogContent` is a full-bleed dark design and the English route renders it bare;
+the Spanish route wrapped it in `max-w-4xl mx-auto` on `bg-white` (a container
+that existed to hold the notice), so a full-viewport hero photograph rendered as
+a centred strip. Every Spanish article looked broken beside its English twin.
+Guarded, and mutation-proven.
+
+### 🔴 AND THE BACKSLASH TRAP SHIPPED YESTERDAY — PRODUCING THE RIGHT ANSWER
+
+`app/es/blog/page.tsx:124` went live as `/s*reads*$/i` where `\s*read\s*$` was
+meant. A shell heredoc ate both backslashes on the way in.
+⛔ **It works.** `s*` happily matches zero s's and `read` is literal, so the output
+is identical on every real input — no test, no type error, and nothing a reader
+could ever notice. Repaired, and a **self-testing sweep** now covers the class.
+- ⛔ **My first sweep was useless** — it read every URL path in the tree as a regex
+  literal and returned 66 KB of noise. String literals are stripped first now.
+- ⛔ **My second sweep was silently blind**: `'[^' + BS + ']'` builds `[^\]`, an
+  **unterminated character class**, which still compiles and matches something
+  else. The self-test **refused to report a clean tree** rather than let that
+  through. Fixed: `BS + BS`.
+- Result across 160 files: **1 real defect, 1 benign false positive** (`/^https?:/`).
+
+### ⛔ The mutation harness found two holes in my own guard
+
+**13 caught / 2 missed** on the first run, and both misses were mine:
+1. *"the route stops looking for a translation"* — the check tested for
+   `getSpanishPostBySlug(slug)` **somewhere**, and it is called **twice** (metadata
+   and page), so mutating the page left the other occurrence satisfying it. Scoped
+   and counted now.
+2. *"the topic button label is stuck in English"* — the topic labels live in
+   `TOPICS`, not `COPY`, so section 5's translation sweep could not see them.
+
+Re-run: **16 caught / 0 missed / 0 skipped.**
+
+### Verified by running it, with controls
+
+- **EN parking guide**: all seven figures **gone**, **no clinical band** — while
+  controls prove the page rendered (`turnstile` 1, `September 7, 2026` 1).
+- **EN pharmacy post**: the pharmacy band **does** render, the **dental** checklist
+  does **not**, and no invented figure returns.
+- **ES translated post**: Spanish title, body, and **5/5 Spanish chrome strings**
+  with **0 English**; date *"7 de septiembre de 2026"* (Spanish, and the 7th — the
+  UTC fix holding); **no notice**.
+- **ES untranslated post**: notice present, Spanish title, no invented figures.
+- In a real browser: **0 horizontal overflow, 0 broken images**, hero 945px, a
+  clean 64px seam where the stats bar used to be, and the Spanish article now
+  full-bleed and identical in treatment to the English.
+- **`getAllPosts()` is still 14** — `content/blog/es/` cannot leak onto the English
+  index. Traversal refused 5/5 with a control that a real slug still resolves.
+
+### ⏭️ Open
+
+1. **Nine posts still await translation** (~15,000 words). The machinery is proven
+   and each is a drop-in file; the notice is honest until then.
+2. **The route-group refactor is still not done** — `/es` emits `lang="en"` in the
+   **server** HTML (`I18nBody` patches it in a `useEffect`, so a browser sees `es`
+   and a crawler sees `en`). That is the risky half of Phase 2 and wants its own
+   session.
+3. Unchanged and still Mario's call: the **Fernando Rodriguez DDS** database
+   description, and the **soft 404** on `/blog/<nonsense>`.
+
 ## 🩺 2026-09-07 — FORTY CLAIMS THE SITE COULD NOT SUBSTANTIATE, AND `content/` HAD NEVER BEEN GUARDED
 
 Mario asked how to drown out the competition in search. Step one of the plan was to verify the

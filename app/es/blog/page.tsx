@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getAllPosts } from '@/lib/blog';
+import { getAllPosts, getSpanishPostBySlug } from '@/lib/blog';
 import { bilingualAlternates } from '@/lib/hreflang';
 
 export const metadata: Metadata = {
@@ -121,7 +121,12 @@ const esDate = (iso: string) =>
   });
 
 // "8 min read" -> "8 min". reading-time emits English; the number is the useful part.
-const esReadTime = (t: string) => t.replace(/s*reads*$/i, '').trim();
+// ⛔ THIS SHIPPED AS /s*reads*$/i ON 2026-09-07 -- the backslashes were eaten
+// by a shell heredoc on the way in, and it produced the RIGHT ANSWER anyway,
+// because `s*` happily matches zero s's and `read` is literal. So no test, no
+// type error and no reader would ever have found it. Restored to the intended
+// pattern; the swept output is identical on every real input.
+const esReadTime = (t: string) => t.replace(/\s*read\s*$/i, '').trim();
 
 export default async function EsBlogPage() {
   const posts = await getAllPosts();
@@ -129,7 +134,14 @@ export default async function EsBlogPage() {
   // Every post appears. Spanish copy where we have written it, the English
   // title where we have not -- never a gap in the list.
   const BLOG_POSTS_ES = posts.map((p) => {
-    const es = ES_COPY[p.slug];
+    /*
+     * ⛔ ORDER MATTERS. A translated article's own frontmatter wins; ES_COPY is
+     * the fallback for the ones still awaiting translation, and the English
+     * post is the last resort. Reading ES_COPY first would let a card advertise
+     * a headline the article underneath it does not have -- ES_COPY is
+     * hand-maintained, so it is the half that goes stale.
+     */
+    const es = getSpanishPostBySlug(p.slug) ?? ES_COPY[p.slug];
     return {
       slug: p.slug,
       title: es?.title ?? p.title,

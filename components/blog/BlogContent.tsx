@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ChevronLeft, Clock, Calendar, User, Share2, BookmarkPlus, ChevronDown, ChevronUp, TrendingUp, DollarSign, Shield, Star } from 'lucide-react';
 import { useState, useRef } from 'react';
+import { localizedPath } from '@/lib/i18n/get-locale';
 
 // ─── Stat Card ────────────────────────────────────────────────────────────
 function StatCard({ number, label, sublabel, color = 'blue' }: { number: string; label: string; sublabel?: string; color?: 'blue' | 'green' | 'amber' }) {
@@ -317,6 +318,100 @@ function RichContent({ content }: { content: string }) {
   return <>{elements}</>;
 }
 
+// ─── Locale + topic ───────────────────────────────────────────────────────
+/*
+ * ⛔ THIS COMPONENT RENDERS BOTH LANGUAGE TREES. Until 2026-09-07 every string
+ * below was English, so a Spanish article -- even one with a translated body --
+ * carried an English date, an English call to action, an English author card
+ * and English links that dropped a Spanish reader into the English tree on the
+ * first click. Same shape as the ProviderCard bug: the body translated, the
+ * chrome not.
+ */
+type BlogLocale = 'en' | 'es';
+
+const COPY = {
+  en: {
+    compareHeading: 'What the clinics actually charge',
+    compareBody:
+      'We list what each clinic publishes, side by side, so you can see the range before you cross. Nothing on this page is a quote.',
+    verifyTitle: 'How to Verify Provider Quality',
+    verifyItems: [
+      'Ask to see the dentist Cédula Profesional at your appointment',
+      'Ask for before-and-after photos of actual patients',
+      'Ask where the dentist studied and trained',
+      'Ask which implant brands they use (Straumann, Nobel Biocare, Zimmer)',
+      'Ask how instruments are sterilized, and what materials they use',
+    ],
+    pharmacyTitle: 'Important Notes About Pharmacy Purchases',
+    pharmacyItems: [
+      'Bring your prescription — it helps especially when re-entering the U.S.',
+      'Stick to licensed pharmacies with a licensed pharmacist on site',
+      'U.S. customs generally allows a 90-day supply for personal use',
+      'Keep medications in their original packaging',
+      'Generic medications usually show the biggest difference against U.S. prices',
+    ],
+    ctaHeading: 'Ready to Find Your Provider?',
+    ctaBody: 'Compare the price every clinic published, side by side, before you cross.',
+    ctaPrimary: 'Find a Provider →',
+    ctaSecondary: 'How It Works',
+    helpful: 'Found this helpful?',
+    share: 'Share',
+    save: 'Save',
+    authorBio:
+      'The ClearCross Progreso team researches published prices and practical detail for people crossing at Progreso, so you know what you are walking into before you go.',
+    related: 'Related Articles',
+    back: 'All Articles',
+    sources:
+      'Prices are researched from published price lists and are not supplied or confirmed by the clinics. They change without notice — confirm at the clinic before you travel.',
+  },
+  es: {
+    compareHeading: 'Lo que realmente cobran las clínicas',
+    compareBody:
+      'Publicamos lo que cada clínica anuncia, una al lado de la otra, para que vea el rango antes de cruzar. Nada en esta página es una cotización.',
+    verifyTitle: 'Cómo verificar la calidad de un consultorio',
+    verifyItems: [
+      'Pida ver la Cédula Profesional del dentista en su cita',
+      'Pida fotos de antes y después de pacientes reales',
+      'Pregunte dónde estudió y se formó el dentista',
+      'Pregunte qué marcas de implante usan (Straumann, Nobel Biocare, Zimmer)',
+      'Pregunte cómo esterilizan los instrumentos y qué materiales usan',
+    ],
+    pharmacyTitle: 'Notas importantes sobre compras en farmacia',
+    pharmacyItems: [
+      'Lleve su receta — ayuda sobre todo al volver a entrar a Estados Unidos',
+      'Use farmacias con licencia y con farmacéutico titulado presente',
+      'La aduana estadounidense normalmente permite 90 días de suministro personal',
+      'Mantenga los medicamentos en su empaque original',
+      'Los medicamentos genéricos suelen mostrar la mayor diferencia de precio',
+    ],
+    ctaHeading: '¿Listo para encontrar su consultorio?',
+    ctaBody: 'Compare el precio que publicó cada clínica, lado a lado, antes de cruzar.',
+    ctaPrimary: 'Buscar un consultorio →',
+    ctaSecondary: 'Cómo funciona',
+    helpful: '¿Le sirvió esto?',
+    share: 'Compartir',
+    save: 'Guardar',
+    authorBio:
+      'El equipo de ClearCross Progreso investiga precios publicados y detalles prácticos para quienes cruzan por Progreso, para que sepa a qué va antes de ir.',
+    related: 'Artículos relacionados',
+    back: 'Todos los artículos',
+    sources:
+      'Los precios se investigaron de listas publicadas y no fueron proporcionados ni confirmados por las clínicas. Cambian sin aviso — confirme en la clínica antes de viajar.',
+  },
+} as const;
+
+/*
+ * ⛔ THE BAND AND THE CHECKLISTS ARE GATED ON THE POST'S OWN TAGS. What was
+ * here before looked at nothing, so a guide about where to park rendered a
+ * dental savings calculator. A post with none of these tags gets neither --
+ * silence is the correct output, not a default topic.
+ */
+const TOPICS = [
+  { key: 'dental', tag: 'dental', href: '/dentists', en: 'See every dentist and their prices', es: 'Ver cada dentista y sus precios' },
+  { key: 'pharmacy', tag: 'pharmacy', href: '/pharmacies', en: 'See every pharmacy and their prices', es: 'Ver cada farmacia y sus precios' },
+  { key: 'cosmetic', tag: 'cosmetic', href: '/cosmetic-surgery', en: 'See every clinic and their prices', es: 'Ver cada clínica y sus precios' },
+] as const;
+
 // ─── Main Blog Content Component ──────────────────────────────────────────
 interface BlogContentProps {
   post: {
@@ -338,15 +433,22 @@ interface BlogContentProps {
     coverImage?: string;
     tags: string[];
   }>;
+  /*
+   * Defaults to 'en' so every existing call site keeps its exact behaviour.
+   * The Spanish route passes 'es'.
+   */
+  locale?: BlogLocale;
 }
 
-export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
+export default function BlogContent({ post, relatedPosts, locale = 'en' }: BlogContentProps) {
+  const t = COPY[locale];
+  const topic = TOPICS.find((x) => post.tags.includes(x.tag)) ?? null;
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '30%']);
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
 
-  const formattedDate = new Date(post.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  const formattedDate = new Date(post.date).toLocaleDateString(locale === 'es' ? 'es' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -376,7 +478,7 @@ export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
             <motion.div className="flex flex-wrap gap-2 mb-5"
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               {post.tags.map(tag => (
-                <Link key={tag} href={`/blog?tag=${encodeURIComponent(tag)}`}
+                <Link key={tag} href={localizedPath(`/blog?tag=${encodeURIComponent(tag)}`, locale)}
                   className="px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-brand-blue bg-brand-blue/10 rounded-full border border-brand-blue/20 hover:bg-brand-blue/20 transition-colors">
                   {tag}
                 </Link>
@@ -416,24 +518,31 @@ export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
         </motion.div>
       </section>
 
-      {/* ===== KEY STATS BAR ===== */}
-      <section className="relative z-10 -mt-16">
-        <div className="max-w-5xl mx-auto px-5 sm:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard number="80–500%" label="Savings vs. U.S." sublabel="Across all categories" color="green" />
-            <StatCard number="$7,350" label="Avg. Dental Savings" sublabel="Two crowns + implant" color="blue" />
-            <StatCard number="$3,150" label="Avg. Rx Savings" sublabel="3 meds + glasses/year" color="amber" />
-            <StatCard number="30+" label="Years of Trust" sublabel="Medical tourism hub" color="green" />
-          </div>
-        </div>
-      </section>
+      {/*
+        ⛔ THE "KEY STATS BAR" THAT SAT HERE IS GONE (2026-09-07). Four claims,
+        above the fold, on every one of the fourteen posts:
 
+          80-500%  "Savings vs. U.S."     across all categories
+          $7,350   "Avg. Dental Savings"  two crowns + implant
+          $3,150   "Avg. Rx Savings"      3 meds + glasses/year
+          30+      "Years of Trust"       medical tourism hub
+
+        Nothing computed any of them. Two were labelled "Avg.", which asserts
+        an average over a dataset we never had, and they rendered directly
+        under the headline -- the most prominent numbers on the page.
+
+        ⛔ NOTHING REPLACES IT, DELIBERATELY. The band existed for visual
+        weight and the hero already carries that. Inventing a substitute
+        figure is precisely how the original arrived. Real per-clinic prices
+        live on the comparison pages, which compute them and cite where they
+        came from; the topic band further down links there.
+      */}
       {/* ===== ARTICLE BODY ===== */}
       <div className="max-w-3xl mx-auto px-5 sm:px-8 py-16">
         {/* Back link */}
-        <Link href="/blog" className="inline-flex items-center text-sm font-semibold text-brand-blue hover:text-white transition-colors mb-10 group">
+        <Link href={localizedPath('/blog', locale)} className="inline-flex items-center text-sm font-semibold text-brand-blue hover:text-white transition-colors mb-10 group">
           <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
-          All Articles
+          {t.back}
         </Link>
 
         {/* Excerpt */}
@@ -441,74 +550,78 @@ export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
           <p className="text-white/70 text-lg leading-relaxed italic">{post.excerpt}</p>
         </div>
 
-        {/* Why This Matters Callout */}
-        <motion.div className="my-14 p-8 rounded-2xl bg-gradient-to-br from-brand-navy/40 to-brand-blue/10 border border-white/[0.06]"
-          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-brand-blue/20 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-brand-blue" />
-            </div>
-            <h3 className="text-lg font-bold font-display text-white">Why This Matters</h3>
-          </div>
-          <p className="text-white/60 leading-relaxed">
-            Healthcare costs in the U.S. have risen 40% in the last decade. Over 27 million Americans lack health insurance entirely. For millions more with high-deductible plans, a single dental emergency or monthly prescription can mean choosing between health and rent. Nuevo Progreso represents a practical, accessible alternative — not a last resort, but a smart financial decision made by millions every year.
-          </p>
-        </motion.div>
-
         {/* Content */}
         <article><RichContent content={post.content} /></article>
 
-        {/* ===== SAVINGS SUMMARY ===== */}
-        <SectionDivider icon="💰" label="Total Savings Potential" />
-        <div className="grid sm:grid-cols-3 gap-5 mb-8">
-          <motion.div className="rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 p-6 text-center"
-            whileHover={{ y: -4 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <DollarSign className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
-            <p className="text-3xl font-bold font-display text-emerald-400">$7,350</p>
-            <p className="text-white/50 text-sm mt-1">Dental Tourist</p>
-            <p className="text-white/30 text-xs mt-2">2 crowns + 1 implant</p>
-          </motion.div>
-          <motion.div className="rounded-2xl bg-gradient-to-br from-brand-blue/10 to-blue-600/5 border border-brand-blue/20 p-6 text-center"
-            whileHover={{ y: -4 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}>
-            <Shield className="w-8 h-8 text-brand-blue mx-auto mb-3" />
-            <p className="text-3xl font-bold font-display text-brand-blue">$3,150</p>
-            <p className="text-white/50 text-sm mt-1">Pharmacy Runner</p>
-            <p className="text-white/30 text-xs mt-2">3 Rx + eye exam/glasses</p>
-          </motion.div>
-          <motion.div className="rounded-2xl bg-gradient-to-br from-amber/10 to-yellow-600/5 border border-amber/20 p-6 text-center"
-            whileHover={{ y: -4 }} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}>
-            <Star className="w-8 h-8 text-amber mx-auto mb-3" />
-            <p className="text-3xl font-bold font-display text-amber">$9,280</p>
-            <p className="text-white/50 text-sm mt-1">Full Makeover</p>
-            <p className="text-white/30 text-xs mt-2">Dental + Botox + glasses</p>
-          </motion.div>
-        </div>
+        {/*
+          ⛔ WHAT USED TO SIT HERE, AND WHY IT IS GONE (2026-09-07).
+          Three blocks rendered on EVERY post, unconditionally, and nothing
+          about any of them looked at the post:
 
-        {/* ===== PULL QUOTE ===== */}
-        <PullQuote>
-          A single dental implant in the U.S. costs roughly what a full mouth of work costs in Nuevo Progreso. If you need extensive dental work, the savings alone can pay for your trip — multiple times over.
-        </PullQuote>
+          - a "Total Savings Potential" band reading $7,350 / $3,150 / $9,280.
+            Nothing computed those figures. They were typed in. This site
+            refuses to publish a price it cannot attribute -- there is a guard
+            for it -- and then printed three of its own on fourteen pages.
+          - a "Why This Matters" paragraph asserting that US healthcare costs
+            "have risen 40% in the last decade" and that "over 27 million
+            Americans lack health insurance". Two specific statistics, stated
+            in our own voice, with no source anywhere on the page.
+          - a pull quote claiming a single US dental implant costs about what a
+            full mouth of work costs in Nuevo Progreso. An unsourced price
+            comparison, and the one number a reader would act on.
 
-        {/* ===== EXPANDABLE: Quality Verification ===== */}
-        <Expandable title="How to Verify Provider Quality" icon={<Shield className="w-4 h-4" />}>
-          <ul className="space-y-2">
-            <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green" /> Ask for before-and-after photos of actual patients</li>
-            <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green" /> Check if the dentist studied or trained in the U.S.</li>
-            <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green" /> Look for memberships in international dental organizations</li>
-            <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green" /> Read patient reviews on third-party platforms</li>
-            <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green" /> Ask about specific implant brands (Straumann, Nobel Biocare, Zimmer)</li>
-          </ul>
-        </Expandable>
+          They were also off-topic on a third of the corpus: a guide about
+          where to park and what the bridge toll costs rendered a dental
+          savings calculator underneath it.
 
-        <Expandable title="Important Notes About Pharmacy Purchases" icon={<Shield className="w-4 h-4" />}>
-          <ul className="space-y-2">
-            <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green" /> Bring your prescription — helps especially when re-entering the U.S.</li>
-            <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green" /> Stick to licensed pharmacies with licensed pharmacists</li>
-            <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green" /> U.S. customs allows 90-day supply for personal use</li>
-            <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green" /> Keep medications in original packaging</li>
-            <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green" /> Generic medications show the biggest savings vs. brand-name</li>
-          </ul>
-        </Expandable>
+          ⛔ THE REPLACEMENT POINTS AT THE PAGES THAT HOLD REAL NUMBERS rather
+          than restating them here. Those are computed from clinic-published
+          prices, they carry their own provenance note, and they are guarded.
+          Duplicating them into blog boilerplate would create a second place
+          for a price to go stale, in the one place nobody would re-read.
+        */}
+        {topic && (
+          <motion.div className="my-14 p-8 rounded-2xl bg-gradient-to-br from-brand-navy/40 to-brand-blue/10 border border-white/[0.06]"
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-brand-blue/20 flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-brand-blue" />
+              </div>
+              <h3 className="text-lg font-bold font-display text-white">{t.compareHeading}</h3>
+            </div>
+            <p className="text-white/60 leading-relaxed mb-6">{t.compareBody}</p>
+            <Link href={localizedPath(topic.href, locale)}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-brand-navy font-bold rounded-xl hover:bg-gray-100 transition-colors">
+              {locale === 'es' ? topic.es : topic.en} →
+            </Link>
+          </motion.div>
+        )}
+
+        {/* ⛔ TOPIC-GATED. Dental advice on a parking guide is how the old
+            blocks got here in the first place. */}
+        {topic?.key === 'dental' && (
+          <Expandable title={t.verifyTitle} icon={<Shield className="w-4 h-4" />}>
+            <ul className="space-y-2">
+              {t.verifyItems.map((item) => (
+                <li key={item} className="flex items-start gap-2">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green flex-shrink-0" /> {item}
+                </li>
+              ))}
+            </ul>
+          </Expandable>
+        )}
+
+        {topic?.key === 'pharmacy' && (
+          <Expandable title={t.pharmacyTitle} icon={<Shield className="w-4 h-4" />}>
+            <ul className="space-y-2">
+              {t.pharmacyItems.map((item) => (
+                <li key={item} className="flex items-start gap-2">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-green flex-shrink-0" /> {item}
+                </li>
+              ))}
+            </ul>
+          </Expandable>
+        )}
 
         {/* ===== CTA ===== */}
         <motion.div className="mt-20 relative overflow-hidden rounded-3xl bg-gradient-to-r from-brand-navy via-brand-blue/80 to-brand-navy p-10 sm:p-14 border border-white/[0.06]"
@@ -516,14 +629,14 @@ export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
           <div className="absolute -top-20 -right-20 w-60 h-60 bg-brand-blue/10 rounded-full blur-3xl" />
           <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-brand-green/10 rounded-full blur-3xl" />
           <div className="relative z-10">
-            <h3 className="text-3xl sm:text-4xl font-bold font-display mb-4">Ready to Find Your Provider?</h3>
-            <p className="text-white/50 text-lg mb-8 max-w-lg">Compare the price every clinic published, side by side, before you cross.</p>
+            <h3 className="text-3xl sm:text-4xl font-bold font-display mb-4">{t.ctaHeading}</h3>
+            <p className="text-white/50 text-lg mb-8 max-w-lg">{t.ctaBody}</p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/search" className="px-8 py-4 bg-white text-brand-navy font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-xl shadow-black/20">
-                Find a Provider →
+              <Link href={localizedPath('/search', locale)} className="px-8 py-4 bg-white text-brand-navy font-bold rounded-xl hover:bg-gray-100 transition-colors shadow-xl shadow-black/20">
+                {t.ctaPrimary}
               </Link>
-              <Link href="/how-it-works" className="px-8 py-4 bg-white/[0.06] text-white font-semibold rounded-xl border border-white/[0.1] hover:bg-white/[0.12] transition-colors">
-                How It Works
+              <Link href={localizedPath('/how-it-works', locale)} className="px-8 py-4 bg-white/[0.06] text-white font-semibold rounded-xl border border-white/[0.1] hover:bg-white/[0.12] transition-colors">
+                {t.ctaSecondary}
               </Link>
             </div>
           </div>
@@ -531,10 +644,10 @@ export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
 
         {/* ===== SHARE BAR ===== */}
         <div className="mt-12 flex items-center justify-between border-t border-b border-white/[0.06] py-4">
-          <span className="text-sm text-white/30">Found this helpful?</span>
+          <span className="text-sm text-white/30">{t.helpful}</span>
           <div className="flex gap-4">
-            <button className="flex items-center gap-1.5 text-sm text-white/40 hover:text-brand-blue transition-colors"><Share2 className="w-4 h-4" />Share</button>
-            <button className="flex items-center gap-1.5 text-sm text-white/40 hover:text-brand-blue transition-colors"><BookmarkPlus className="w-4 h-4" />Save</button>
+            <button className="flex items-center gap-1.5 text-sm text-white/40 hover:text-brand-blue transition-colors"><Share2 className="w-4 h-4" />{t.share}</button>
+            <button className="flex items-center gap-1.5 text-sm text-white/40 hover:text-brand-blue transition-colors"><BookmarkPlus className="w-4 h-4" />{t.save}</button>
           </div>
         </div>
 
@@ -546,7 +659,7 @@ export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
           <div>
             <h4 className="text-lg font-bold text-white font-display">{post.author}</h4>
             <p className="mt-1 text-white/50 leading-relaxed">
-              The ClearCross Progreso team provides accurate, helpful information about medical tourism in Mexico. We help patients make informed decisions about their care across the border.
+              {t.authorBio}
             </p>
           </div>
         </div>
@@ -554,12 +667,12 @@ export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
         {/* ===== RELATED POSTS ===== */}
         {relatedPosts.length > 0 && (
           <div className="mt-20">
-            <h2 className="text-2xl sm:text-3xl font-bold font-display text-white mb-8">Related Articles</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold font-display text-white mb-8">{t.related}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedPosts.map((rp, idx) => (
                 <motion.div key={rp.slug} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }} transition={{ duration: 0.4, delay: idx * 0.1 }}>
-                  <Link href={`/blog/${rp.slug}`}
+                  <Link href={localizedPath(`/blog/${rp.slug}`, locale)}
                     className="group block rounded-xl overflow-hidden bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-1">
                     <div className="relative h-44 overflow-hidden">
                       {rp.coverImage ? (
@@ -585,7 +698,7 @@ export default function BlogContent({ post, relatedPosts }: BlogContentProps) {
         {/* ===== FOOTER NOTE ===== */}
         <div className="mt-20 pt-8 border-t border-white/[0.06] text-center">
           <p className="text-xs text-white/20">
-            Sources: Placidway, Medical Tourism Co, Dental Departures, WhatClinic, Dental Solutions Algodones, TravelAwaits, MexFacts. Prices reflect 2026 market data. Individual results may vary.
+            {t.sources}
           </p>
         </div>
 

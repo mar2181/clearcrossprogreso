@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getAllPosts, getPostBySlug } from '@/lib/blog';
+import { getAllPosts, getPostBySlug, getSpanishPostBySlug } from '@/lib/blog';
 import BlogContent from '@/components/blog/BlogContent';
 import Link from 'next/link';
 import { Globe } from 'lucide-react';
@@ -48,8 +48,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     'progreso-border-wait-times-when-to-cross': 'Tiempos de Espera en el Puente de Progreso: Cuándo Cruzar',
   };
 
-  const spanishTitle = spanishTitles[slug] || post.title;
-  const spanishDescription = post.excerpt; // Would need Spanish translation
+  /*
+   * ⛔ THE TRANSLATION'S OWN FRONTMATTER WINS. The map below is the FALLBACK,
+   * for posts nobody has translated yet -- it gives them a correct Spanish
+   * title over an English body, which is honest and is what the notice on the
+   * page says. Reading the map first would mean a translated post could carry
+   * a title that disagrees with its own text, and the map is hand-maintained,
+   * so it is the half that goes stale.
+   */
+  const es = getSpanishPostBySlug(slug);
+  const spanishTitle = es?.title || spanishTitles[slug] || post.title;
+  const spanishDescription = es?.excerpt || post.excerpt;
 
   return {
     title: `${spanishTitle} | ClearCross Progreso`,
@@ -85,39 +94,66 @@ export default async function EsBlogPostPage({ params }: Props) {
     );
   }
 
+  /*
+   * ⛔ THE NOTICE AND THE BODY ARE ONE DECISION. `es` is either a real Spanish
+   * article or null, and both halves below read the same variable -- so the
+   * page can never show a Spanish body under a notice saying it is in English,
+   * nor an English body with no notice at all. The second of those is the one
+   * that matters: it is a Spanish URL quietly serving English text, which is
+   * duplicate content and reads to a visitor as a page that failed to load.
+   */
+  const es = getSpanishPostBySlug(slug);
+  const shown = es ?? post;
+
   const posts = await getAllPosts();
   const relatedPosts = posts
     .filter((p) => p.tags.some((tag) => post.tags.includes(tag)))
     .filter((p) => p.slug !== slug)
-    .slice(0, 3);
+    .slice(0, 3)
+    // A related card on the Spanish page shows the Spanish title when one
+    // exists. Without this the body is Spanish and the three cards under it
+    // are English, which is the half-translated look this is undoing.
+    .map((p) => {
+      const t = getSpanishPostBySlug(p.slug);
+      return t ? { ...p, title: t.title, excerpt: t.excerpt } : p;
+    });
 
+  /*
+   * ⛔ BlogContent IS A FULL-BLEED DARK DESIGN AND MUST BE RENDERED BARE, the
+   * way the English route renders it. This page used to wrap it in
+   * `min-h-screen bg-white` + `max-w-4xl mx-auto`, which squeezed a
+   * full-viewport hero photograph into a narrow centred column on a white
+   * page -- so every Spanish article looked broken next to its English twin.
+   * Pre-existing, and found by LOOKING at the rendered page rather than by any
+   * assertion. The notice keeps its own container above the article.
+   */
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Language notice */}
-        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-          <div className="flex items-start gap-3">
-            <Globe className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-amber-800 mb-1">
-                Este artículo está disponible en inglés
-              </p>
-              <p className="text-xs text-amber-700 mb-2">
-                El contenido de este artículo está en inglés. Vea la versión original para más detalles.
-              </p>
-              <Link
-                href={`/blog/${slug}`}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-blue hover:text-brand-navy underline"
-              >
-                Leer en inglés →
-              </Link>
+    <>
+      {!es && (
+        <div className="bg-[#0A0A0A] px-5 sm:px-8 pt-6">
+          <div className="max-w-3xl mx-auto p-4 rounded-lg border border-amber-500/30 bg-amber-500/10">
+            <div className="flex items-start gap-3">
+              <Globe className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-amber-200 mb-1">
+                  Este artículo está disponible en inglés
+                </p>
+                <p className="text-xs text-amber-200/70 mb-2">
+                  El contenido de este artículo está en inglés. Vea la versión original para más detalles.
+                </p>
+                <Link
+                  href={`/blog/${slug}`}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-blue hover:text-white underline"
+                >
+                  Leer en inglés →
+                </Link>
+              </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Blog content (English content) */}
-        <BlogContent post={post} relatedPosts={relatedPosts} />
-      </div>
-    </div>
+      <BlogContent post={shown} relatedPosts={relatedPosts} locale="es" />
+    </>
   );
 }
