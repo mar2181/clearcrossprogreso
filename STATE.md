@@ -242,6 +242,52 @@ nothing"* rather than mutating whichever it reached first.
 
 ---
 
+## 🔴 2026-09-07 (later still) — FOUND ON PRODUCTION AFTER THE PUSH: A CLAIM THE GUARD STRUCTURALLY CANNOT SEE
+
+Verifying the push with a site-wide sweep, `/dentists` came back carrying one of the retired
+phrases. It is **not UI copy** — it is a provider `description` in the **database**:
+
+> *"**Trusted ClearCross partner** dentist in Nuevo Progreso with nearly 30 years of
+> experience. **Licensed since 1997.**"*
+
+⛔ **NO PROVIDER HAS SIGNED ANYTHING**, and `/safety` says on the same site that ClearCross has
+not checked anybody’s licence — ask to see the Cédula at your appointment. So the directory
+asserts a partnership that does not exist and a licence it has not verified, about a real named
+dentist, on a health site.
+
+⛔ **THE GUARD CANNOT SEE IT AND THAT IS STRUCTURAL, NOT AN OVERSIGHT.** `honest-claims`
+`PAGE_TREE` walks `components/`, `app/`, `lib/` and (since this morning) `content/`. **A
+Supabase column is in none of them.** Every rule added today would have caught this sentence
+instantly had it been in a dictionary.
+
+**Measured, bounded, with controls:**
+
+| | |
+|---|---|
+| provider descriptions on `/dentists` | **53** (the control — the probe reads them) |
+| carrying any substantiation claim | **1** — Fernando Rodriguez DDS |
+| other categories (pharmacies, optometrists, doctors, spas, vets) | **0** |
+| *"Licensed since 1997"* in **visible** text | **yes** — renders as a badge |
+| *"Trusted ClearCross partner"* in visible text | **no** — RSC payload only |
+
+⚠️ The partner phrase being payload-only is **not** harmless: a crawler reads the whole
+document, and any future component that renders `description` surfaces it.
+
+⛔ **DELIBERATELY NOT FIXED.** It is a write to a live production table describing a real
+business, on an instruction to push a *code* changeset — the same call this estate already
+records for the RGV Reef testimonials. It is one `UPDATE` on one row when Mario says so.
+
+⛔ **AND MY FIRST ATTEMPT TO SIZE IT WAS WORTHLESS.** I checked eight other provider pages for
+the same claim and got eight clean zeros — from **eight slugs I had invented**, every one a
+soft 404. The control is the only reason that did not become "it is just the one record" on no
+evidence. Real slugs were then read out of the listing payload.
+
+🔴 **SEPARATE, ALSO PRE-EXISTING: the blog serves a SOFT 404.** `/blog/<nonsense>` returns
+**HTTP 200** with `<title>Post Not Found</title>`. Google treats a soft 404 as a page that
+exists, and this site is mid-campaign to occupy search results. It also breaks the standard
+control — a bogus path must 404, and here it does not, so every "the claim is absent" reading
+on a blog URL has to discriminate on **content** instead. Not fixed; `/api/*` and category
+routes 404 correctly.
 ## 🔎 2026-09-06 (later) — 354 URLS AND NOT ONE TARGETED THE QUERY PEOPLE ACTUALLY TYPE
 
 Mario: *"forget about latonya, that is gone, lets concentrate on whats next to make sure this
