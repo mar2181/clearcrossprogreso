@@ -6,6 +6,9 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { ChevronLeft, Clock, Calendar, User, Share2, BookmarkPlus, ChevronDown, ChevronUp, TrendingUp, DollarSign, Shield, Star } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { localizedPath } from '@/lib/i18n/get-locale';
+import { procedureLabel } from '@/lib/i18n/procedure-label';
+import { procedurePath } from '@/lib/procedure-pages';
+import { PRICED_PROCEDURES } from '@/lib/concierge-routes.generated';
 
 // ─── Stat Card ────────────────────────────────────────────────────────────
 function StatCard({ number, label, sublabel, color = 'blue' }: { number: string; label: string; sublabel?: string; color?: 'blue' | 'green' | 'amber' }) {
@@ -406,10 +409,16 @@ const COPY = {
  * dental savings calculator. A post with none of these tags gets neither --
  * silence is the correct output, not a default topic.
  */
+const PRICED_SLUGS = new Set(PRICED_PROCEDURES.map((p) => p.slug));
+const PRICED_NAME = new Map(PRICED_PROCEDURES.map((p) => [p.slug, p.name]));
+
 const TOPICS = [
-  { key: 'dental', tag: 'dental', href: '/dentists', en: 'See every dentist and their prices', es: 'Ver cada dentista y sus precios' },
-  { key: 'pharmacy', tag: 'pharmacy', href: '/pharmacies', en: 'See every pharmacy and their prices', es: 'Ver cada farmacia y sus precios' },
-  { key: 'cosmetic', tag: 'cosmetic', href: '/cosmetic-surgery', en: 'See every clinic and their prices', es: 'Ver cada clínica y sus precios' },
+  { key: 'dental', tag: 'dental', href: '/dentists', en: 'See every dentist and their prices', es: 'Ver cada dentista y sus precios',
+    prices: ['dental-implant', 'all-on-4', 'zirconia-crown', 'porcelain-veneer', 'root-canal', 'dentures'] },
+  { key: 'pharmacy', tag: 'pharmacy', href: '/pharmacies', en: 'See every pharmacy and their prices', es: 'Ver cada farmacia y sus precios',
+    prices: ['weight-loss-ozempic-wegovy'] },
+  { key: 'cosmetic', tag: 'cosmetic', href: '/cosmetic-surgery', en: 'See every clinic and their prices', es: 'Ver cada clínica y sus precios',
+    prices: ['cosmetic-consultation'] },
 ] as const;
 
 // ─── Main Blog Content Component ──────────────────────────────────────────
@@ -594,6 +603,18 @@ export default function BlogContent({ post, relatedPosts, locale = 'en' }: BlogC
               className="inline-flex items-center gap-2 px-6 py-3 bg-white text-brand-navy font-bold rounded-xl hover:bg-gray-100 transition-colors">
               {locale === 'es' ? topic.es : topic.en} →
             </Link>
+            {/* Links from an article Google already reads to the price
+                pages it has not read yet. Slugs only: the labels come from
+                procedureLabel and every slug here is checked against the
+                generated list of pages that actually exist. */}
+            <div className="mt-5 flex flex-wrap gap-2">
+              {topic.prices.filter((s) => PRICED_SLUGS.has(s)).map((s) => (
+                <Link key={s} href={localizedPath(procedurePath(s), locale)}
+                  className="text-sm px-3 py-1.5 rounded-full border border-white/[0.12] text-white/80 hover:text-white hover:bg-white/[0.08] transition-colors">
+                  {procedureLabel(s, locale, PRICED_NAME.get(s) ?? s)}
+                </Link>
+              ))}
+            </div>
           </motion.div>
         )}
 

@@ -74,6 +74,12 @@ export const es = {
       vets: { name: 'Veterinaria', savings: '' },
     },
   },
+  priceLinks: {
+    sectionLabel: 'Compare Precios',
+    headline: '¿Cuánto cuesta en Nuevo Progreso?',
+    subtitle: 'Cada consultorio que publica un precio para el mismo procedimiento, lado a lado, del más barato al más caro.',
+    allDentists: 'Ver todos los dentistas',
+  },
   howItWorks: {
     sectionLabel: 'Simple y Transparente',
     headline: 'Cómo Funciona ClearCross',

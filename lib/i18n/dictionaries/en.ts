@@ -74,6 +74,12 @@ export const en = {
       vets: { name: 'Veterinary', savings: '' },
     },
   },
+  priceLinks: {
+    sectionLabel: 'Compare Prices',
+    headline: 'What does it cost in Nuevo Progreso?',
+    subtitle: 'Every clinic that publishes a price for the same procedure, side by side, cheapest first.',
+    allDentists: 'See every dentist',
+  },
   howItWorks: {
     sectionLabel: 'Simple & Transparent',
     headline: 'How ClearCross Works',

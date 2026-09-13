@@ -2,6 +2,7 @@ import Hero from '@/components/home/Hero';
 import SocialProofBar from '@/components/home/SocialProofBar';
 import WhyClearCross from '@/components/home/WhyClearCross';
 import CategoryGrid from '@/components/home/CategoryGrid';
+import PriceLinks from '@/components/home/PriceLinks';
 import HowItWorks from '@/components/home/HowItWorks';
 import TrustBar from '@/components/home/TrustBar';
 import FeaturedProviders from '@/components/home/FeaturedProviders';
@@ -43,6 +44,7 @@ export default async function EsHome() {
       />
       <WhyClearCross />
       <CategoryGrid counts={categoryCounts} />
+      <PriceLinks />
       <HowItWorks />
       <TrustBar />
       <FeaturedProviders providers={featuredProviders} />

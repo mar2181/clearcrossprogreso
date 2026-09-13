@@ -2,6 +2,7 @@ import Hero from '@/components/home/Hero';
 import SocialProofBar from '@/components/home/SocialProofBar';
 import WhyClearCross from '@/components/home/WhyClearCross';
 import CategoryGrid from '@/components/home/CategoryGrid';
+import PriceLinks from '@/components/home/PriceLinks';
 import HowItWorks from '@/components/home/HowItWorks';
 import TrustBar from '@/components/home/TrustBar';
 import FeaturedProviders from '@/components/home/FeaturedProviders';
@@ -51,6 +52,10 @@ export default async function Home() {
 
       {/* Category Grid */}
       <CategoryGrid counts={categoryCounts} />
+
+      {/* Price comparison pages — the home page is the most-crawled page on the
+          site, and until 2026-09-13 it linked to none of them. */}
+      <PriceLinks />
 
       {/* How It Works */}
       <HowItWorks />
