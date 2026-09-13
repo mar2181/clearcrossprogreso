@@ -373,6 +373,7 @@ export const es = {
     rNoVerified: 'Aún no hay reseñas verificadas.',
     pOutOf5: 'de 5',
     pCall: 'Llamar',
+    pCallCode: 'código {n}',
     pChat: 'Chatear',
     pUsCharges: 'En EE. UU. cobran hasta {n}% más por este procedimiento en clínicas comparables',
     pListingChecked: 'Datos del listado revisados. La clínica y las licencias no están inspeccionadas.',

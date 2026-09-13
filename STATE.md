@@ -3,6 +3,28 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 📞 2026-09-13 (later) — ONE TRACKED NUMBER FOR EVERY CLINIC, BUILT AND SWITCHED OFF
+
+Plan: `~/.claude/plans/cheerful-sauteeing-snowflake.md`. Every Call button can dial ONE Twilio
+number and auto-send the clinic's 3-digit code (`tel:+1XXXXXXXXXX,,114`). Twilio gathers the code,
+dials the clinic with the whisper *"Paciente de ClearCross Progreso."*, passes the patient's own
+number as callerId, and logs the call. No recording.
+
+- **Migration 006 APPLIED on `svgsbaahxiaeljmfykzp`, twice, and read back:** 110 clinics coded
+  **100-209**, 0 phones uncoded, sequence `NO CYCLE` at 209, insert/phone-update trigger, table
+  `clearcross_calls` with RLS on and only `service_role`/`postgres` grants. Dental Artistry = **114**.
+- `lib/call-link.ts` (pure) + `lib/twilio-voice.ts` (signature + TwiML) + `app/api/voice/{incoming,
+  route,whisper,status}`. All 3 provider-page Call links and the price-page links go through
+  `callLink()`. ⛔ `lib/schema.ts` telephone untouched — Google keeps the clinic's real number.
+- ⛔ **Switch = `CALL_TRACKING=on` exactly + a valid `TWILIO_NUMBER`.** Anything else → direct
+  `tel:` (now E.164). Webhooks need `TWILIO_AUTH_TOKEN` or answer **503**; a bad signature **403**.
+- Guard `test/call-tracking.mjs`; the signature is checked against the official `twilio@5` library's
+  own answer, not re-derived. `_mutate_call_tracking.mjs` **20 caught / 0 missed / 0 skipped**.
+  `npm run verify` REAL_VERIFY_EXIT=0; `tsc --noEmit` clean. Built page: 3× `tel:+19567428735`.
+- ⏭️ **ON MARIO:** Twilio account, one 956 number, Mexico outbound on. Then Twilio number webhook →
+  `https://clearcrossprogreso.com/api/voice/incoming` (POST), env on production only, redeploy,
+  and the real-phone pause test on iPhone + Android against a test row before any clinic hears it.
+
 ## 🔎 2026-09-13 — NOTHING LINKED THE PRICE PAGES FROM A PAGE GOOGLE READS
 
 Measured with the Search Console URL Inspection API: `/dentists`, `/es/dentists`, `/vets` and

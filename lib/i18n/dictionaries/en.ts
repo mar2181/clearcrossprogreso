@@ -373,6 +373,7 @@ export const en = {
     rNoVerified: 'No verified reviews yet.',
     pOutOf5: 'out of 5',
     pCall: 'Call',
+    pCallCode: 'code {n}',
     pChat: 'Chat',
     pUsCharges: 'US charges up to {n}% more for this procedure at comparable providers',
     pListingChecked: 'Listing details checked. Clinic and licences not inspected.',

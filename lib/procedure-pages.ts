@@ -51,6 +51,7 @@ export interface ComparisonInput {
       name: string;
       verified?: boolean | null;
       phone?: string | null;
+      call_code?: number | null;
       whatsapp?: string | null;
       avg_rating?: number | null;
       review_count?: number | null;
@@ -64,6 +65,8 @@ export interface ComparisonEntry {
   priceUsd: number;
   priceNotes: string | null;
   phone: string | null;
+  /** The clinic's permanent 3-digit code for our tracked number (lib/call-link.ts). */
+  callCode: number | null;
   whatsapp: string | null;
   rating: number | null;
   reviewCount: number;
@@ -132,6 +135,7 @@ export function buildComparison(input: ComparisonInput): Comparison | null {
       priceUsd: row.price_usd,
       priceNotes: row.price_notes ?? null,
       phone: p.phone ?? null,
+      callCode: p.call_code ?? null,
       whatsapp: p.whatsapp ?? null,
       rating: p.avg_rating ?? null,
       reviewCount: p.review_count ?? 0,

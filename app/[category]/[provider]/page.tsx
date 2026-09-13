@@ -27,6 +27,7 @@ import Badge from '@/components/ui/Badge';
 import StarRating from '@/components/ui/StarRating';
 import { Card } from '@/components/ui/Card';
 import { formatUSD } from '@/lib/utils';
+import { callLink } from '@/lib/call-link';
 import { getSavings } from '@/lib/us-benchmarks';
 import { getProviderGallery } from '@/lib/provider-gallery';
 import {
@@ -132,6 +133,12 @@ export default async function ProviderPage({ params, locale = 'en' }: ProviderPa
   const hasGallery = galleryImages.length > 0;
   const providerPrices = (providerData as any).provider_prices || [];
   const hasPrices = providerPrices.length > 0;
+
+  // ⛔ ONE link for all three Call buttons on this page, so they cannot disagree
+  // about which number they dial. With CALL_TRACKING off this is the clinic's own
+  // number; on, it is our tracked number plus this clinic's code. The JSON-LD
+  // below still carries the clinic's REAL number — only the buttons change.
+  const call = callLink(providerData as any, process.env);
   const flashDiscount = await getFlashDiscountForProvider(providerData.id);
 
   // ⛔ ONE expression, read by the visible breadcrumb AND by the JSON-LD below.
@@ -258,12 +265,17 @@ export default async function ProviderPage({ params, locale = 'en' }: ProviderPa
                       <MapPin className="w-4 h-4 text-neutral-400" />
                       <span>{providerData.address}</span>
                     </div>
-                    {providerData.phone && (
+                    {call && (
                       <div className="flex items-center gap-1.5">
                         <Phone className="w-4 h-4 text-neutral-400" />
-                        <a href={`tel:${providerData.phone}`} className="text-brand-blue hover:underline">
-                          {providerData.phone}
+                        {/* ⛔ The visible number is the number the link dials. Showing the
+                            clinic's number over a link that dials ours would be misleading. */}
+                        <a href={call.href} className="text-brand-blue hover:underline">
+                          {call.display}
                         </a>
+                        {call.code !== null && (
+                          <span className="text-neutral-400">· {u.pCallCode.replace('{n}', String(call.code))}</span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -325,9 +337,9 @@ export default async function ProviderPage({ params, locale = 'en' }: ProviderPa
                 pre-existing bug rather than creating one. Wrapping fixes both -- measured
                 -15px (no overflow) at 390 and 360, and the lg column is untouched. */}
             <div className="flex flex-row flex-wrap lg:flex-col lg:flex-nowrap gap-3 flex-shrink-0">
-              {providerData.phone && (
+              {call && (
                 <a
-                  href={`tel:${providerData.phone}`}
+                  href={call.href}
                   className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-blue text-white rounded-xl hover:bg-brand-navy transition-colors font-semibold text-sm shadow-sm"
                 >
                   <Phone size={18} />
@@ -612,9 +624,9 @@ export default async function ProviderPage({ params, locale = 'en' }: ProviderPa
               button at all. This is the CTA a phone visitor actually sees, on a directory
               whose only working conversion path is the telephone. "Chat" and "Get Quote"
               were also hardcoded English and rendered untranslated on the /es tree. */}
-          {providerData.phone && (
+          {call && (
             <a
-              href={`tel:${providerData.phone}`}
+              href={call.href}
               className="flex items-center gap-1.5 px-4 py-3 bg-brand-blue text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-brand-navy transition-colors"
             >
               <Phone className="w-4 h-4" />

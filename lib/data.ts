@@ -904,6 +904,7 @@ export async function getProcedureComparison(slug: string) {
                 name: prov.name,
                 verified: prov.verified,
                 phone: (prov as any).phone ?? null,
+                call_code: (prov as any).call_code ?? null,
                 whatsapp: (prov as any).whatsapp ?? null,
                 avg_rating: prov.avg_rating,
                 review_count: prov.review_count,
@@ -939,7 +940,7 @@ export async function getProcedureComparison(slug: string) {
       `
       price_usd,
       price_notes,
-      provider:provider_id(id, slug, name, verified, phone, whatsapp, avg_rating, review_count)
+      provider:provider_id(id, slug, name, verified, phone, call_code, whatsapp, avg_rating, review_count)
       `
     )
     .eq('procedure_id', proc.id);

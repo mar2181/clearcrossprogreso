@@ -35,6 +35,7 @@ import { localizedPath } from '@/lib/i18n/get-locale';
 import { categoryLabel } from '@/lib/i18n/category-label';
 import { procedureLabel } from '@/lib/i18n/procedure-label';
 import { formatUSD } from '@/lib/utils';
+import { callLink } from '@/lib/call-link';
 
 interface PageProps {
   params: Promise<{ procedure: string }>;
@@ -177,7 +178,9 @@ export default async function ProcedurePricePage({
               </div>
 
               <ul className="divide-y divide-neutral-100">
-                {c.entries.map((e, i) => (
+                {c.entries.map((e, i) => {
+                  const call = callLink({ phone: e.phone, call_code: e.callCode }, process.env);
+                  return (
                   <li
                     key={e.providerSlug}
                     className={`px-5 py-4 sm:grid sm:grid-cols-[1fr_auto_auto] sm:gap-4 sm:items-center ${
@@ -205,9 +208,9 @@ export default async function ProcedurePricePage({
                     </p>
 
                     <div className="flex items-center gap-3 mt-2 sm:mt-0 sm:justify-end">
-                      {e.phone && (
+                      {call && (
                         <a
-                          href={`tel:${e.phone.replace(/[^0-9+]/g, '')}`}
+                          href={call.href}
                           className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-blue hover:text-brand-navy transition-colors"
                         >
                           <Phone className="w-4 h-4" />
@@ -222,7 +225,8 @@ export default async function ProcedurePricePage({
                       </Link>
                     </div>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             </div>
 
