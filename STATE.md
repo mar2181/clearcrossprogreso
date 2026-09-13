@@ -3,6 +3,32 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 🔎 2026-09-13 — NOTHING LINKED THE PRICE PAGES FROM A PAGE GOOGLE READS
+
+Measured with the Search Console URL Inspection API: `/dentists`, `/es/dentists`, `/vets` and
+**every `/prices/*` page** were *"Discovered - currently not indexed"*; `/safety` last crawled
+07-19. Cause: **the home page linked ZERO price pages** — the only page linking all 26 was
+`/dentists`, which Google had not read either.
+
+✅ **Pushed `554628c`, live and verified on production** (bogus path 404s as control):
+- `components/home/PriceLinks.tsx` on `/` and `/es` — **26 price links each**, from the
+  generated `PRICED_PROCEDURES`, so it cannot link a 404.
+- Blog topic band: the dental guide (indexed, top blog by impressions) now carries **6** price links;
+  pharmacy/cosmetic posts link theirs. Filtered against the generated list.
+- `/about`, `/how-it-works` + ES twins: server wrappers with their own titles and hreflang.
+  They shipped the homepage title before. (`/faq`, `/contact` are 404s — not pages.)
+- ⏭️ Deliberately NOT done: `/es` still serves `lang="en"` in server HTML (needs a second root layout).
+
+⛔ **Revenue decided by Mario: FREE for everyone until rankings show up** — supersedes "revenue
+model open" below and parks the Texas Patient Solicitation Act question.
+
+⏭️ **Mario is requesting indexing by hand (~10/day, 3 days)** — D1 `/`, `/dentists`, `/safety`,
+dental-implant, all-on-4, all-on-6, zirconia-crown, porcelain-veneer, root-canal, dentures + sitemap
+resubmit; D2 `/es`, `/es/dentists`, `/es/safety`, braces, teeth-whitening, tooth-extraction,
+emax-crown, weight-loss-ozempic-wegovy, eye-exam, dental-cleaning; D3 four `/es/prices/*`,
+crown-over-implant, bone-graft, wisdom-tooth-extraction, 3-unit-bridge, `/about`, `/how-it-works`.
+Plus Bing Webmaster import. **Re-inspect all of them ~2026-09-20.**
+
 ## 🤖 2026-09-07 (later still ×3) — THE DISMISS BUTTON WAS NEVER MISSING, IT WAS INVISIBLE — AND HE COULD NOT REACH A SINGLE PRICE PAGE
 
 Mario: *"Find a way to remove the pet buddy if user doesn't want it on the screen. We are
