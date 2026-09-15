@@ -5,7 +5,14 @@
 
 ## 🔎 2026-09-14 — STRUCTURED DATA ON THE PRICE PAGES, A /prices HUB, TITLES THAT MATCH THE QUERIES
 
-Non-Twilio SEO round. ⏳ **BUILT + VERIFIED LOCAL, NOT PUSHED.** `npm run verify` REAL_VERIFY_EXIT=0.
+Non-Twilio SEO round. ✅ **PUSHED + LIVE 2026-09-15** — `main` `9eab4c4` (verified with `git ls-remote`),
+production `dpl_3PBvpJbZHZDbT2UdXe1HmKdXMsNV` READY. Verified on clearcrossprogreso.com with a bogus-path
+404 control: `/prices` 200 with 26 rows + ItemList, `/es/prices` 200 with a Spanish title,
+`/prices/dental-implant` 17 Offers + BreadcrumbList, `/pharmacies` new title, home WebSite+Organization and a
+`/prices` link, sitemap 416 locs incl. both hubs, `Content-Language: es` on `/es/prices` (absent on `/prices`),
+IndexNow key file serves, BlogPosting on a live post. `npm run verify` REAL_VERIFY_EXIT=0.
+⚠️ First `node tools/indexnow.mjs --send` minutes after deploy → **HTTP 403 `SiteVerificationNotCompleted`**:
+IndexNow checks the key file asynchronously after first sight. Not a code bug; re-run the same command later.
 
 **Measured first (Search Console API, 28 days, via operator/lib/google.py):** ~130 impressions/day,
 avg position ~9-10, 1-4 clicks/day; USA 1,378 imp / Mexico 392. **Mario's day-1 indexing requests
