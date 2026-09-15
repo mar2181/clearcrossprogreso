@@ -51,7 +51,13 @@ export default function PriceLinks() {
           ))}
         </ul>
 
-        <div className="text-center mt-8">
+        <div className="text-center mt-8 flex flex-wrap justify-center gap-x-8 gap-y-3">
+          <Link
+            href={localizedPath('/prices', locale)}
+            className="inline-flex items-center gap-2 font-semibold text-brand-blue hover:underline"
+          >
+            {dict.ui.pricesHubLink} →
+          </Link>
           <Link
             href={localizedPath('/dentists', locale)}
             className="inline-flex items-center gap-2 font-semibold text-brand-blue hover:underline"

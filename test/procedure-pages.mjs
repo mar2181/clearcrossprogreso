@@ -396,5 +396,195 @@ if (fs.existsSync(builtDir)) {
   });
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. The JSON-LD describes the table, row for row. Built HTML only.
+//
+// ⛔ THIS READS THE BUILT PAGE, NOT procedureGraph(). A unit test of the builder
+// proves it agrees with itself; the failure this site has shipped before is
+// well-formed markup that contradicted the page beside it. So every marked-up
+// clinic and price is compared with the VISIBLE row in the same position.
+// ─────────────────────────────────────────────────────────────────────────────
+const SITE = 'https://clearcrossprogreso.com';
+const decode = (s) => s
+  .replace(/&#x27;|&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<')
+  .replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+const dictValue = (file, key) => {
+  const m = read(file).match(new RegExp(`\\b${key}:\\s*'((?:[^'\\\\]|\\\\.)*)'`));
+  return m ? m[1].replace(/\\'/g, "'") : null;
+};
+
+function graphOf(html) {
+  const tags = html.match(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g) || [];
+  if (tags.length !== 1) return { error: `expected exactly 1 JSON-LD tag, found ${tags.length}` };
+  const body = tags[0].replace(/^<script[^>]*>/, '').replace(/<\/script>$/, '');
+  try { return { graph: JSON.parse(body) }; } catch (e) { return { error: 'JSON-LD does not parse: ' + e.message }; }
+}
+
+/** The visible table: provider link text + the price cell, in DOM order. */
+function visibleRows(html, freeWord) {
+  const start = html.indexOf('<ul class="divide-y');
+  if (start < 0) return null;
+  const table = html.slice(start, html.indexOf('</ul>', start));
+  const rows = [];
+  for (const li of table.split('<li').slice(1)) {
+    const link = li.match(/<a[^>]*href="((?:\/es)?\/[^"\/]+\/[^"]+)"[^>]*>([^<]+)<\/a>/);
+    const priceCell = li.match(/tabular-nums[^"]*">([^<]+)<\/p>/);
+    if (!link || !priceCell) continue;
+    const text = decode(priceCell[1]).trim();
+    const amount = text === freeWord ? 0 : Number(text.replace(/[$,]/g, ''));
+    rows.push({ href: link[1], name: decode(link[2]).trim(), amount });
+  }
+  return rows;
+}
+
+function breadcrumbText(html) {
+  const nav = html.indexOf('<nav');
+  const ol = html.slice(nav, html.indexOf('</ol>', nav));
+  return decode(ol.replace(/<[^>]+>/g, '|'));
+}
+
+for (const tree of [
+  { dir: path.join(APP, 'prices'), prefix: '', dict: 'lib/i18n/dictionaries/en.ts' },
+  { dir: path.join(APP, 'es', 'prices'), prefix: '/es', dict: 'lib/i18n/dictionaries/es.ts' },
+]) {
+  if (!fs.existsSync(tree.dir)) continue;
+  const freeWord = dictValue(tree.dict, 'procFree');
+  const files = fs.readdirSync(tree.dir).filter((f) => f.endsWith('.html'));
+  const label = tree.prefix || '/';
+
+  check(`[${label}] the free-price word was read from the dictionary`, () => {
+    assert.ok(freeWord, `procFree not found in ${tree.dict} — the price comparison below would be blind to Free rows`);
+  });
+
+  let marked = 0;
+  for (const f of files) {
+    const slug = f.replace(/\.html$/, '');
+    const html = read(path.join(tree.dir, f));
+
+    check(`[${label}${'/prices/' + slug}] JSON-LD matches the visible table row for row`, () => {
+      const { graph, error } = graphOf(html);
+      assert.ok(!error, error);
+      const nodes = graph['@graph'] || [];
+      const list = nodes.find((n) => n['@type'] === 'ItemList');
+      const crumb = nodes.find((n) => n['@type'] === 'BreadcrumbList');
+      assert.ok(list, 'no ItemList');
+      assert.ok(crumb, 'no BreadcrumbList');
+
+      const rows = visibleRows(html, freeWord);
+      assert.ok(rows && rows.length >= MIN_CLINICS_FOR_PRICE_PAGE,
+        `could not read the visible table (${rows ? rows.length : 'none'} rows) — the comparison would prove nothing`);
+      assert.strictEqual(list.itemListElement.length, rows.length,
+        `markup lists ${list.itemListElement.length} clinics, the table shows ${rows.length}`);
+      assert.strictEqual(list.numberOfItems, rows.length, 'numberOfItems disagrees with the table');
+
+      list.itemListElement.forEach((li, i) => {
+        const row = rows[i];
+        const biz = li.item;
+        assert.strictEqual(li.position, i + 1, `position ${li.position} at index ${i}`);
+        assert.strictEqual(biz.name, row.name, `row ${i + 1}: markup names "${biz.name}", table shows "${row.name}"`);
+        assert.strictEqual(biz.url, SITE + row.href, `row ${i + 1}: markup url ${biz.url} is not the link the table renders (${row.href})`);
+        const offer = biz.makesOffer;
+        assert.ok(offer && offer.priceCurrency === 'USD', `row ${i + 1}: no USD Offer`);
+        assert.strictEqual(Number(offer.price), row.amount,
+          `row ${i + 1} (${row.name}): markup says ${offer.price}, the table shows ${row.amount}`);
+
+        // The clinic entity is ONE entity across both trees: the English @id.
+        const [, cat, provSlug] = row.href.replace(/^\/es/, '').split('/');
+        assert.strictEqual(biz['@id'], `${SITE}/${cat}/${provSlug}#business`,
+          `row ${i + 1}: business @id ${biz['@id']} is not the clinic page's id`);
+        marked++;
+      });
+
+      // Breadcrumb: names on screen, and URLs in THIS tree.
+      const trail = breadcrumbText(html);
+      for (const item of crumb.itemListElement) {
+        assert.ok(trail.includes(item.name), `breadcrumb name "${item.name}" is not in the visible trail`);
+      }
+      assert.strictEqual(crumb.itemListElement[0].item, SITE + tree.prefix,
+        `home crumb points at ${crumb.itemListElement[0].item}`);
+      assert.ok(crumb.itemListElement[1].item.startsWith(SITE + tree.prefix + '/'),
+        `category crumb ${crumb.itemListElement[1].item} is not in the ${label} tree`);
+    });
+  }
+
+  check(`[${label}] the markup covered every built clinic row`, () => {
+    assert.ok(marked >= files.length * MIN_CLINICS_FOR_PRICE_PAGE,
+      `only ${marked} rows marked up across ${files.length} pages`);
+  });
+}
+
+// The @id on a price page must be the one the clinic's OWN page emits. Read the
+// built clinic page rather than re-deriving the formula here — re-deriving it is
+// exactly how two builders drift while a test keeps agreeing with one of them.
+check('a price page names each clinic by the @id its own page emits', () => {
+  const dir = path.join(APP, 'prices');
+  let compared = 0;
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.html'))) {
+    const { graph } = graphOf(read(path.join(dir, f)));
+    const list = (graph?.['@graph'] || []).find((n) => n['@type'] === 'ItemList');
+    for (const li of list?.itemListElement || []) {
+      const rel = li.item.url.replace(SITE + '/', '');
+      const clinicFile = path.join(APP, rel + '.html');
+      if (!fs.existsSync(clinicFile)) continue;
+      const clinic = graphOf(read(clinicFile)).graph;
+      const biz = (clinic?.['@graph'] || []).find((n) => typeof n['@id'] === 'string' && n['@id'].endsWith('#business'));
+      assert.ok(biz, `${rel} has no #business node`);
+      assert.strictEqual(li.item['@id'], biz['@id'], `${f} names ${rel} as ${li.item['@id']}, its page says ${biz['@id']}`);
+      compared++;
+    }
+  }
+  assert.ok(compared > 0, 'no clinic page was found to compare against — this check proved nothing');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. The /prices hub lists EVERY comparison, with the price that page leads with.
+//
+// ⛔ Compared against the BUILT procedure pages. The hub and the pages share one
+// reader (getPriceIndex -> getProcedureComparison) on purpose, so a mutation of
+// that reader moves both; what this catches is the hub drifting from the pages
+// — a second query, a dropped row, the dearest price instead of the cheapest.
+// ─────────────────────────────────────────────────────────────────────────────
+for (const hub of [
+  { file: path.join(APP, 'prices.html'), dir: path.join(APP, 'prices'), prefix: '', note: /not supplied or confirmed by the clinic/ },
+  { file: path.join(APP, 'es', 'prices.html'), dir: path.join(APP, 'es', 'prices'), prefix: '/es', note: /No fueron proporcionados ni confirmados/ },
+]) {
+  const label = hub.prefix || '/';
+  check(`[hub ${label}] lists every built comparison, at the price that page leads with`, () => {
+    assert.ok(fs.existsSync(hub.file), `${hub.file} was not built`);
+    const html = read(hub.file);
+    const built = fs.readdirSync(hub.dir).filter((f) => f.endsWith('.html')).map((f) => f.replace(/\.html$/, '')).sort();
+    assert.ok(built.length > 0, 'control: no procedure pages to compare against');
+
+    const rows = [...html.matchAll(/data-hub-row="([^"]+)"[\s\S]*?data-hub-from="([^"]+)"/g)]
+      .map((m) => ({ slug: m[1], from: Number(m[2]) }));
+    assert.deepStrictEqual(rows.map((r) => r.slug).sort(), built,
+      'the hub rows are not exactly the built procedure pages');
+
+    for (const r of rows) {
+      assert.ok(html.includes(`href="${hub.prefix}/prices/${r.slug}"`), `${r.slug} is not linked in the ${label} tree`);
+      const page = graphOf(read(path.join(hub.dir, r.slug + '.html'))).graph;
+      const list = (page?.['@graph'] || []).find((n) => n['@type'] === 'ItemList');
+      const lead = Number(list.itemListElement[0].item.makesOffer.price);
+      assert.strictEqual(r.from, lead, `hub says ${r.slug} is from ${r.from}; the page leads with ${lead}`);
+    }
+
+    const { graph, error } = graphOf(html);
+    assert.ok(!error, error);
+    const list = graph['@graph'].find((n) => n['@type'] === 'ItemList');
+    assert.deepStrictEqual(
+      list.itemListElement.map((li) => li.url).sort(),
+      built.map((s) => `${SITE}${hub.prefix}/prices/${s}`).sort(),
+      'the hub ItemList is not exactly the built procedure pages');
+    assert.ok(hub.note.test(html), `the ${label} hub renders no price-source disclosure in its language`);
+  });
+}
+
+check('the home page and every procedure page link to the hub', () => {
+  assert.ok(/localizedPath\('\/prices', locale\)/.test(stripComments(read('components/home/PriceLinks.tsx'))),
+    'PriceLinks does not link /prices');
+  const one = fs.readdirSync(path.join(APP, 'prices')).find((f) => f.endsWith('.html'));
+  assert.ok(read(path.join(APP, 'prices', one)).includes('href="/prices"'), `${one} does not link the hub`);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

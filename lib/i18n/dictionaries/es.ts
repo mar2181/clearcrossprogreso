@@ -500,5 +500,10 @@ export const es = {
     procCompareHeading: 'Compare un precio entre clínicas',
     procCompareSub: 'Elija un tratamiento y vea lo que cobra cada clínica de aquí.',
     procClinicCount: '{n} clínicas',
+    pricesHubCrumb: 'Precios',
+    pricesHubHeading: 'Lista de precios de Nuevo Progreso, clínica por clínica',
+    pricesHubIntro: '{n} tratamientos: cada uno lleva a una página que compara todas las clínicas que publican un precio, de la más barata a la más cara.',
+    pricesHubFrom: 'desde {price}',
+    pricesHubLink: 'Ver todas las comparaciones de precios',
   },
 } as const;

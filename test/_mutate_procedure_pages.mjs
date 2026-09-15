@@ -24,6 +24,9 @@ const FILES = [
   'app/[category]/page.tsx',
   'app/sitemap.ts',
   'lib/i18n/dictionaries/es.ts',
+  'lib/schema.ts',
+  'lib/data.ts',
+  'components/prices/PriceHub.tsx',
 ];
 
 const MUTATIONS = [
@@ -134,6 +137,64 @@ const MUTATIONS = [
     old: "    procTableClinic: 'Clínica',",
     new: "    procTableClinic: 'Clinic',",
   },
+  // ── JSON-LD (section 7). ⛔ These mutate BUILT output, so the harness must
+  // rebuild before judging them (the `build: true` flag).
+  {
+    label: 'JSON-LD: every clinic is marked up at the CHEAPEST price (markup contradicts the table)',
+    file: 'lib/schema.ts',
+    old: "        price: e.priceUsd.toFixed(2),",
+    new: "        price: c.lowUsd.toFixed(2),",
+    build: true,
+  },
+  {
+    label: 'JSON-LD: the first (cheapest) clinic is dropped from the list',
+    file: 'lib/schema.ts',
+    old: '    itemListElement: c.entries.map((e, i) => {',
+    new: '    itemListElement: c.entries.slice(1).map((e, i) => {',
+    build: true,
+  },
+  {
+    label: 'JSON-LD: the business @id drifts from the one the clinic page emits',
+    file: 'lib/schema.ts',
+    old: "          '@id': SITE_URL + '/' + c.categorySlug + '/' + e.providerSlug + '#business',",
+    new: "          '@id': SITE_URL + '/' + c.categorySlug + '/' + e.providerSlug + '#clinic',",
+    build: true,
+  },
+  {
+    label: 'JSON-LD: the Spanish page points its breadcrumb at the English tree',
+    file: 'app/prices/[procedure]/page.tsx',
+    old: "    localePrefix: locale === 'es' ? '/es' : '',",
+    new: "    localePrefix: '',",
+    build: true,
+  },
+  {
+    label: 'JSON-LD: the page stops rendering the script tag',
+    file: 'app/prices/[procedure]/page.tsx',
+    old: '        type="application/ld+json"',
+    new: '        type="application/json"',
+    build: true,
+  },
+  {
+    label: 'hub: advertises the DEAREST price as "from"',
+    file: 'lib/data.ts',
+    old: 'clinicCount: c.entries.length, lowUsd: c.lowUsd }',
+    new: 'clinicCount: c.entries.length, lowUsd: c.highUsd }',
+    build: true,
+  },
+  {
+    label: 'hub: silently drops the last comparison',
+    file: 'lib/data.ts',
+    old: '  return rows.filter((r): r is NonNullable<typeof r> => r !== null);',
+    new: '  return rows.filter((r): r is NonNullable<typeof r> => r !== null).slice(0, -1);',
+    build: true,
+  },
+  {
+    label: 'hub: stops rendering the price disclosure',
+    file: 'components/prices/PriceHub.tsx',
+    old: '{t.priceSourceNote}</p>',
+    new: '{t.pricesHubIntro}</p>',
+    build: true,
+  },
   {
     label: 'the sibling links are removed (no path between the price pages)',
     file: 'app/prices/[procedure]/page.tsx',
@@ -170,8 +231,21 @@ if (!guardIsGreen()) {
 console.log('baseline: GREEN\n');
 
 let caught = 0, missed = 0, skipped = 0;
+let builtDirty = false;
 
-for (const m of MUTATIONS) {
+function build() {
+  try {
+    execSync('npx next build', { cwd: ROOT, stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ⛔ Non-build mutations run FIRST. After a build mutation, .next holds a
+// mutant build until the next build, so a non-build mutation judged then would
+// read that mutant, go red, and score a catch it never made.
+for (const m of [...MUTATIONS.filter((x) => !x.build), ...MUTATIONS.filter((x) => x.build)]) {
   const p = `${ROOT}/${m.file}`;
   const src = orig[m.file].toString('utf8');
   const EOL = src.includes('\r\n') ? '\r\n' : '\n';
@@ -187,11 +261,31 @@ for (const m of MUTATIONS) {
   }
 
   fs.writeFileSync(p, src.replace(oldStr, newStr), 'utf8');
+  // ⛔ A mutation of what the page EMITS is invisible to a guard reading the
+  // previous build. Judging it without rebuilding would score every one MISSED
+  // (or, after an earlier red build, a free catch). A build that FAILS proves
+  // nothing about the guard, so it is scored SKIP, never caught.
+  if (m.build && !build()) {
+    restore();
+    console.log(`SKIP    ${m.label}`);
+    console.log('        the mutated tree did not build — proves nothing');
+    skipped++;
+    builtDirty = true;
+    continue;
+  }
   const green = guardIsGreen();
   restore();
+  if (m.build) builtDirty = true;
 
   if (green) { console.log(`MISSED  ${m.label}`); missed++; }
   else { console.log(`caught  ${m.label}`); caught++; }
+}
+
+// ⛔ The last build was of a MUTATED tree. Leave .next as it is and the next
+// guard run anywhere reads a mutant and reports on code that no longer exists.
+if (builtDirty && !build()) {
+  console.error('REBUILD FAILED after restore — .next may hold a mutant build');
+  process.exitCode = 1;
 }
 
 let dirty = 0;

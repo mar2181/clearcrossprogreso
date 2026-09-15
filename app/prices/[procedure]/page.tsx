@@ -15,12 +15,12 @@
  * the one route the hreflang pair could not derive, and a non-reciprocal
  * hreflang annotation is discarded wholesale by Google.
  *
- * ⚠️ NO JSON-LD, DELIBERATELY, THIS ROUND. An ItemList of Offers here is
- * defensible and probably worth having — but test/schema.mjs walks the eight
- * category directories only, so markup added here would be the one structured-
- * data surface on the site nobody guards. This repo has already shipped a
- * policy violation of exactly that shape (an aggregateRating over a panel
- * reading "No reviews yet"). Ship the markup with its own guard, not before.
+ * ⛔ JSON-LD (lib/schema.ts procedureGraph) SHIPS WITH ITS OWN GUARD, section 7
+ * of test/procedure-pages.mjs, because test/schema.mjs walks the eight category
+ * directories only. It reads the BUILT page and compares every marked-up clinic
+ * and price against the visible table row in the same position. This repo has
+ * already shipped well-formed markup that contradicted its page once (an
+ * aggregateRating over "No reviews yet"); that is the failure it exists for.
  */
 import React from 'react';
 import { Metadata } from 'next';
@@ -36,6 +36,7 @@ import { categoryLabel } from '@/lib/i18n/category-label';
 import { procedureLabel } from '@/lib/i18n/procedure-label';
 import { formatUSD } from '@/lib/utils';
 import { callLink } from '@/lib/call-link';
+import { procedureGraph } from '@/lib/schema';
 
 interface PageProps {
   params: Promise<{ procedure: string }>;
@@ -102,8 +103,22 @@ export default async function ProcedurePricePage({
 
   const price = (n: number) => (n === 0 ? t.procFree : formatUSD(n));
 
+  // Built from the SAME labels the breadcrumb and table below render.
+  const structuredData = procedureGraph({
+    comparison: c,
+    procedureName: procName,
+    categoryLabel: catName,
+    homeLabel: dict.category.home,
+    heading: t.procHeading.replace('{procedure}', procName),
+    localePrefix: locale === 'es' ? '/es' : '',
+  });
+
   return (
     <main className="min-h-screen bg-neutral-50">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }}
+      />
       {/* Breadcrumbs */}
       <nav className="bg-white border-b border-neutral-100">
         <div className="container-page py-3">
@@ -285,6 +300,13 @@ export default async function ProcedurePricePage({
                 className="inline-flex items-center gap-2 text-sm font-semibold text-brand-blue hover:text-brand-navy transition-colors"
               >
                 {t.procBackToCategory.replace('{category}', catName.toLowerCase())}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href={localizedPath('/prices', locale)}
+                className="mt-3 flex items-center gap-2 text-sm font-semibold text-brand-blue hover:text-brand-navy transition-colors"
+              >
+                {t.pricesHubLink}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

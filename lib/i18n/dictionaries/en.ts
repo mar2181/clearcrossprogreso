@@ -500,5 +500,10 @@ export const en = {
     procCompareHeading: 'Compare a price across clinics',
     procCompareSub: 'Pick a treatment and see what every clinic here charges for it.',
     procClinicCount: '{n} clinics',
+    pricesHubCrumb: 'Prices',
+    pricesHubHeading: 'Nuevo Progreso price list, clinic by clinic',
+    pricesHubIntro: '{n} treatments, each linking to a page that compares every clinic publishing a price for it, cheapest first.',
+    pricesHubFrom: 'from {price}',
+    pricesHubLink: 'See every price comparison',
   },
 } as const;

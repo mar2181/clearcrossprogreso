@@ -139,6 +139,10 @@ const BILINGUAL_PAGES = [
   'app/es/[category]/[provider]/page.tsx',
   'app/es/blog/page.tsx',
   'app/es/blog/[slug]/page.tsx',
+  'app/prices/page.tsx',
+  'app/es/prices/page.tsx',
+  'app/prices/[procedure]/page.tsx',
+  'app/es/prices/[procedure]/page.tsx',
 ]
 
 for (const f of BILINGUAL_PAGES) {

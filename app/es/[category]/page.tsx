@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getCategoryBySlug } from '@/lib/data';
+import { getCategoryBySlug, getCategoryCounts } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import { bilingualAlternates } from '@/lib/hreflang';
 
@@ -12,6 +12,29 @@ const CATEGORY_LABELS_ES: Record<string, string> = {
   doctors: 'Doctores',
   liquor: 'Licores',
   vets: 'Veterinaria',
+};
+
+// "Precios de <x>" in the title and "Compare N <x>" in the snippet. Kept as
+// separate maps because Spanish gender makes one noun read wrong in one slot.
+const CATEGORY_TITLE_NOUN_ES: Record<string, string> = {
+  dentists: 'dentistas',
+  pharmacies: 'farmacias',
+  spas: 'spas',
+  doctors: 'doctores',
+  optometrists: 'ópticas',
+  'cosmetic-surgery': 'cirugía estética',
+  vets: 'veterinarios',
+  liquor: 'licores',
+};
+const CATEGORY_NOUN_ES: Record<string, string> = {
+  dentists: 'dentistas',
+  pharmacies: 'farmacias',
+  spas: 'spas',
+  doctors: 'doctores',
+  optometrists: 'ópticas y optometristas',
+  'cosmetic-surgery': 'clínicas de cirugía estética',
+  vets: 'veterinarios',
+  liquor: 'tiendas de licores',
 };
 
 interface CategoryPageProps {
@@ -29,12 +52,24 @@ export async function generateMetadata({
   }
 
   const spanishName = CATEGORY_LABELS_ES[category] || categoryData.name;
+  // ⛔ Mirrors app/[category]/page.tsx: the old description promised "lea
+  // reseñas" over an empty reviews table. See the comment there.
+  const counts = await getCategoryCounts().catch(() => ({} as Record<string, number>));
+  const n = counts[category] || 0;
+  const titleNoun = CATEGORY_TITLE_NOUN_ES[category];
+  const noun = CATEGORY_NOUN_ES[category];
+  const title = n >= 2 && titleNoun
+    ? `Precios de ${titleNoun} en Nuevo Progreso, México — compare ${n} | ClearCross`
+    : `${spanishName} en Nuevo Progreso, México | ClearCross`;
+  const description = n >= 2 && noun
+    ? `Compare ${n} ${noun} en Nuevo Progreso, México, uno al lado del otro: precios publicados y teléfonos en un solo lugar. Conozca el precio antes de cruzar el puente.`
+    : `${spanishName} en Nuevo Progreso, México — parte de ClearCross, un directorio bilingüe de los negocios al otro lado del puente de Progreso.`;
   return {
-    title: `${spanishName} en Nuevo Progreso México — Compare Precios y Ahorre | ClearCross`,
-    description: `Encuentre ${spanishName.toLowerCase()} verificados en Nuevo Progreso, México. Compare precios, lea reseñas y ahorre mucho comparado con precios en EE.UU. Obtenga cotizaciones escritas antes de cruzar.`,
+    title,
+    description,
     openGraph: {
-      title: `${spanishName} en Nuevo Progreso México | ClearCross`,
-      description: `Compare precios y ahorre en ${spanishName.toLowerCase()} en Nuevo Progreso, México.`,
+      title,
+      description,
       type: 'website',
       locale: 'es_MX',
     },

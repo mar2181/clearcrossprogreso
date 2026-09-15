@@ -99,6 +99,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // builds a page the sitemap never mentions is a page nobody finds.
   try {
     const priced = await getPricedProcedures();
+    // The hub that lists every comparison. Emitted only when there is at least
+    // one comparison, because app/prices/page.tsx 404s on an empty index.
+    if (priced.length > 0) {
+      entries.push(...pair('/prices', { changeFrequency: 'weekly', priority: 0.9 }));
+    }
     priced.forEach((p) => {
       if (p.slug) {
         // Priority above a provider page and level with a category: this is

@@ -38,6 +38,35 @@ export default async function Home() {
 
   return (
     <main className="w-full">
+      {/* WebSite + Organization: the markup behind Google's site-name display.
+          ⛔ No SearchAction — the sitelinks search box was retired in 2024.
+          Guarded by test/article-schema.mjs against the built page. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'WebSite',
+                '@id': 'https://clearcrossprogreso.com#website',
+                name: 'ClearCross Progreso',
+                alternateName: 'ClearCross',
+                url: 'https://clearcrossprogreso.com',
+                inLanguage: ['en', 'es'],
+                publisher: { '@id': 'https://clearcrossprogreso.com#organization' },
+              },
+              {
+                '@type': 'Organization',
+                '@id': 'https://clearcrossprogreso.com#organization',
+                name: 'ClearCross Progreso',
+                url: 'https://clearcrossprogreso.com',
+                logo: { '@type': 'ImageObject', url: 'https://clearcrossprogreso.com/apple-touch-icon.png' },
+              },
+            ],
+          }),
+        }}
+      />
       {/* Hero Section */}
       <Hero />
 

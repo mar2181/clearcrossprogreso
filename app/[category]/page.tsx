@@ -15,6 +15,7 @@ import {
   getProceduresForCategory,
   getActiveFlashDiscounts,
   getPricedProcedures,
+  getCategoryCounts,
 } from '@/lib/data';
 import { bilingualAlternates } from '@/lib/hreflang';
 import { en, es, type Locale } from '@/lib/i18n';
@@ -49,6 +50,29 @@ interface CategoryPageProps {
   params: Promise<{ category: string }>;
 }
 
+// What the searcher calls one of these, for the <title> and snippet. A category
+// with no entry falls back to the plain name rather than inventing a noun.
+const CATEGORY_SINGULAR_EN: Record<string, string> = {
+  dentists: 'Dentist',
+  pharmacies: 'Pharmacy',
+  spas: 'Spa',
+  doctors: 'Doctor',
+  optometrists: 'Eye Care',
+  'cosmetic-surgery': 'Cosmetic Surgery',
+  vets: 'Vet',
+  liquor: 'Liquor Store',
+};
+const CATEGORY_NOUN_EN: Record<string, string> = {
+  dentists: 'dentists',
+  pharmacies: 'pharmacies',
+  spas: 'spas',
+  doctors: 'doctors',
+  optometrists: 'eye care providers',
+  'cosmetic-surgery': 'cosmetic surgery clinics',
+  vets: 'vets',
+  liquor: 'liquor stores',
+};
+
 export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
@@ -59,12 +83,35 @@ export async function generateMetadata({
     return { title: 'Category Not Found | ClearCross' };
   }
 
+  // ⛔ WHY THESE TITLES CHANGED (2026-09-14, Search Console, 28 days):
+  // /pharmacies sat at position ~9-10 for "progreso mexico pharmacy price list"
+  // and its variants — ~40 impressions, ZERO clicks — under a title that led
+  // with "Pharmacies in Nuevo Progreso Mexico — Compare Prices & Save". The
+  // searcher's words ("progreso mexico pharmacy ... price") now lead the title.
+  //
+  // ⛔ The old description said "read reviews". clearcross_reviews is EMPTY and
+  // every rating was nulled on 2026-09-06 — a snippet promising reviews is a
+  // false claim sitting in Google's results, not just on the page.
+  const counts = await getCategoryCounts().catch(() => ({} as Record<string, number>));
+  const n = counts[category] || 0;
+  const noun = CATEGORY_NOUN_EN[category];
+  const singular = CATEGORY_SINGULAR_EN[category] || categoryData.name;
+  const title = n >= 2 && noun
+    ? `Nuevo Progreso, Mexico ${singular} Prices — ${n} ${noun.replace(/\b\w/g, (ch) => ch.toUpperCase())} Compared | ClearCross`
+    : `${categoryData.name} in Nuevo Progreso, Mexico | ClearCross`;
+  // ⛔ The fallback makes no claim about prices or phone numbers: it serves the
+  // categories with 0 or 1 listings, and "published prices in one place" over an
+  // empty page is the same false snippet this block exists to remove.
+  const description = n >= 2 && noun
+    ? `Compare ${n} ${noun} in Nuevo Progreso, Mexico side by side: published prices and phone numbers in one place. Know the price before you cross the bridge.`
+    : `${categoryData.name} in Nuevo Progreso, Mexico — part of ClearCross, a bilingual directory of the businesses across the Progreso bridge.`;
+
   return {
-    title: `${categoryData.name} in Nuevo Progreso Mexico — Compare Prices & Save | ClearCross`,
-    description: `Find verified ${categoryData.name.toLowerCase()} in Nuevo Progreso, Mexico. Compare prices, read reviews, and save big vs US costs. Get written quotes before you cross.`,
+    title,
+    description,
     openGraph: {
-      title: `${categoryData.name} in Nuevo Progreso Mexico | ClearCross`,
-      description: `Compare prices and save on ${categoryData.name.toLowerCase()} in Nuevo Progreso, Mexico.`,
+      title,
+      description,
       type: 'website',
     },
     alternates: bilingualAlternates(`/${category}`, 'en'),

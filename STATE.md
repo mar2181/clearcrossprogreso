@@ -3,6 +3,52 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 🔎 2026-09-14 — STRUCTURED DATA ON THE PRICE PAGES, A /prices HUB, TITLES THAT MATCH THE QUERIES
+
+Non-Twilio SEO round. ⏳ **BUILT + VERIFIED LOCAL, NOT PUSHED.** `npm run verify` REAL_VERIFY_EXIT=0.
+
+**Measured first (Search Console API, 28 days, via operator/lib/google.py):** ~130 impressions/day,
+avg position ~9-10, 1-4 clicks/day; USA 1,378 imp / Mexico 392. **Mario's day-1 indexing requests
+all worked** — `/`, `/dentists`, `/safety` and 7 `/prices/*` pages indexed, crawled 09-13. Still
+"Discovered - not indexed": `/es/dentists`, `/prices/braces|teeth-whitening|tooth-extraction`,
+`/about`, `/es/prices/dental-implant`; `/prices/emax-crown` "unknown to Google". Sitemap: 414
+submitted, Google's counter reads 0 indexed (that counter lags; URL Inspection is the truth).
+⭐ `/pharmacies` ranks ~9-10 for "progreso mexico pharmacy price list" + variants (~40 imp, 0 clicks).
+
+**Shipped locally:**
+- **Category titles/descriptions EN+ES** now lead with the searcher's words + count
+  (*"Nuevo Progreso, Mexico Pharmacy Prices — 14 Pharmacies Compared"*). ⛔ The old description said
+  **"read reviews"** over an empty reviews table — a false claim in Google's snippet. Categories with
+  <2 listings (Liquor) make no price/phone claim.
+- **JSON-LD on every `/prices/*` page** (`lib/schema.ts procedureGraph`): BreadcrumbList + ItemList of
+  clinics in table order, each with the one Offer that row renders, business `@id` = the clinic
+  page's own English `#business` id. Guard `test/procedure-pages.mjs` §7 compares the BUILT markup
+  row-for-row with the visible table and reads the built clinic page's `@id`.
+- **`/prices` + `/es/prices` hub** (`components/prices/PriceHub.tsx`, `getPriceIndex()` built from
+  `getProcedureComparison` so "from $X" = that page's lead price). In sitemap as a pair; linked from
+  home PriceLinks and every price page sidebar. Guard §8. ⛔ Hub is a component, not a page with a
+  `locale` prop — Next's static-route PageProps check fails the build on an extra prop.
+- **BlogPosting** on the 14 EN posts + **WebSite/Organization** on home. New guard
+  `test/article-schema.mjs` (147 checks) against built HTML + MDX frontmatter. ES blog not marked up.
+- **`Content-Language: es` header on `/es/*`** (next.config.js). Google ignores `lang`; Bing reads it.
+  The two-root-layout `<html lang>` refactor is still NOT done and now lower value.
+- **IndexNow**: key file `public/37aded259699fa713d43a29ffb3d3001.txt` + `tools/indexnow.mjs`
+  (dry run default; refuses until the key file is live; URLs from the LIVE sitemap). Run
+  `node tools/indexnow.mjs --send` AFTER deploy. ⛔ Google does not read IndexNow.
+
+**Research settled (sourced, 2026-09-14):** a directory with no staffed location is **ineligible for
+Google Business Profile** (lead-gen + online-only are named exclusions; a virtual address is a second
+violation; suspension is the stated consequence) — likewise Bing Places. **FAQ rich results were
+retired 2026-05-07** for everyone; HowTo gone; sitelinks search box retired 2024. Google Indexing API
+is JobPosting/BroadcastEvent only. Wikivoyage/TripAdvisor self-promotion = high spam risk.
+
+**Mutation-proven:** `_mutate_procedure_pages` **25 caught / 0 missed / 0 skipped** (5 JSON-LD + 3 hub
+mutations added, each rebuilding), tree restored byte-for-byte, guard GREEN after. Article guard
+RED-proven on both the blog and home markup, restored tree GREEN.
+
+⏭️ After push: `node tools/indexnow.mjs --send`; request indexing for `/prices`, `/es/prices` and the
+still-unindexed day-2/3 URLs; Bing Webmaster Tools import from Search Console.
+
 ## 📞 2026-09-13 (later) — ONE TRACKED NUMBER FOR EVERY CLINIC, BUILT AND SWITCHED OFF
 
 Plan: `~/.claude/plans/cheerful-sauteeing-snowflake.md`. Every Call button can dial ONE Twilio

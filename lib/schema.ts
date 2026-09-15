@@ -18,6 +18,7 @@
  */
 import type { FlashDiscount, Provider } from '@/lib/types';
 import { effectivePrice, type PricedProcedure } from '@/lib/pricing';
+import type { Comparison } from '@/lib/procedure-pages';
 
 export const SITE_URL = 'https://clearcrossprogreso.com';
 
@@ -252,4 +253,87 @@ export function providerGraph({
   };
 
   return { '@context': 'https://schema.org', '@graph': [business, breadcrumb] };
+}
+
+export interface ProcedureGraphInput {
+  comparison: Comparison;
+  /** The procedure name the PAGE renders, in the visitor's language. */
+  procedureName: string;
+  /** The category label the PAGE renders in its breadcrumb. */
+  categoryLabel: string;
+  /** The "Home" label the PAGE renders in its breadcrumb. */
+  homeLabel: string;
+  /** The page's own H1, used as the list name. */
+  heading: string;
+  /** '' for the English tree, '/es' for the Spanish one. */
+  localePrefix?: string;
+}
+
+/**
+ * JSON-LD for /prices/<procedure>: the breadcrumb, and the comparison itself as
+ * an ItemList of the clinics in the order the table shows them, each carrying
+ * the one price that row renders.
+ *
+ * ⛔ SAME RULE AS providerGraph: it describes the table and nothing else. No
+ * AggregateOffer, no rating, no "best", no savings figure -- the table shows a
+ * price per clinic, so that is what is marked up.
+ *
+ * ⛔ THE BUSINESS @id IS THE ONE THE CLINIC'S OWN PAGE EMITS, and it is the
+ * ENGLISH one on both trees. That is what lets a crawler join "this clinic
+ * charges $790 for an implant" to the clinic entity rather than inventing a
+ * second, unconnected business with the same name. test/procedure-pages.mjs
+ * reads the built clinic page and compares the two ids.
+ */
+export function procedureGraph({
+  comparison: c,
+  procedureName,
+  categoryLabel,
+  homeLabel,
+  heading,
+  localePrefix = '',
+}: ProcedureGraphInput) {
+  const base = SITE_URL + localePrefix;
+  const pageUrl = base + '/prices/' + c.procedureSlug;
+  const type = CATEGORY_SCHEMA_TYPE[c.categorySlug] || 'LocalBusiness';
+
+  const list = {
+    '@type': 'ItemList',
+    '@id': pageUrl + '#prices',
+    name: heading,
+    numberOfItems: c.entries.length,
+    itemListOrder: 'https://schema.org/ItemListOrderAscending',
+    itemListElement: c.entries.map((e, i) => {
+      const offer: Record<string, unknown> = {
+        '@type': 'Offer',
+        itemOffered: { '@type': 'Service', name: procedureName },
+        price: e.priceUsd.toFixed(2),
+        priceCurrency: 'USD',
+      };
+      if (e.priceNotes) offer.description = e.priceNotes;
+      return {
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': type,
+          '@id': SITE_URL + '/' + c.categorySlug + '/' + e.providerSlug + '#business',
+          name: e.providerName,
+          url: base + '/' + c.categorySlug + '/' + e.providerSlug,
+          makesOffer: offer,
+        },
+      };
+    }),
+  };
+
+  // ⛔ Mirrors the visible breadcrumb exactly: Home > Category > Procedure.
+  const breadcrumb = {
+    '@type': 'BreadcrumbList',
+    '@id': pageUrl + '#breadcrumb',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: homeLabel, item: base },
+      { '@type': 'ListItem', position: 2, name: categoryLabel, item: base + '/' + c.categorySlug },
+      { '@type': 'ListItem', position: 3, name: procedureName },
+    ],
+  };
+
+  return { '@context': 'https://schema.org', '@graph': [list, breadcrumb] };
 }

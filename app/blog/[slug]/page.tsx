@@ -62,7 +62,35 @@ export default async function BlogPostPage({ params }: Props) {
     .filter((p) => p.slug !== slug)
     .slice(0, 3);
 
+  // ⛔ Describes what the page renders: the H1 title, the date and author shown
+  // in the byline, the cover image. No rating, no review, no FAQ (Google retired
+  // FAQ rich results in May 2026). Guarded by test/article-schema.mjs against the
+  // BUILT page and the MDX frontmatter.
+  const articleData = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    '@id': `https://clearcrossprogreso.com/blog/${post.slug}#article`,
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.date,
+    inLanguage: 'en',
+    mainEntityOfPage: `https://clearcrossprogreso.com/blog/${post.slug}`,
+    ...(post.coverImage ? { image: `https://clearcrossprogreso.com${post.coverImage}` } : {}),
+    author: { '@type': 'Organization', name: post.author, url: 'https://clearcrossprogreso.com/about' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'ClearCross Progreso',
+      url: 'https://clearcrossprogreso.com',
+      logo: { '@type': 'ImageObject', url: 'https://clearcrossprogreso.com/apple-touch-icon.png' },
+    },
+  };
+
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(articleData).replace(/</g, '\\u003c') }}
+    />
     <BlogContent
       post={{
         slug: post.slug,
@@ -84,5 +112,6 @@ export default async function BlogPostPage({ params }: Props) {
         tags: rp.tags,
       }))}
     />
+    </>
   );
 }

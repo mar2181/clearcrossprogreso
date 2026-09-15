@@ -876,6 +876,28 @@ export async function getPricedProcedures(): Promise<
 }
 
 /**
+ * The /prices hub: every procedure page, with the cheapest published price.
+ *
+ * ⛔ BUILT FROM getProcedureComparison, NOT A SECOND QUERY. The "from $X" on the
+ * hub must be the exact figure at the top of that procedure's own page; a second
+ * reader with its own filtering (verified gate, de-duplication, null handling)
+ * is how the hub would advertise a price the page it links to does not show.
+ * test/procedure-pages.mjs compares the two built pages.
+ */
+export async function getPriceIndex() {
+  const procs = await getPricedProcedures();
+  const rows = await Promise.all(
+    procs.map(async (p) => {
+      const c = await getProcedureComparison(p.slug);
+      return c
+        ? { slug: c.procedureSlug, name: c.procedureName, categorySlug: c.categorySlug, categoryName: c.categoryName, clinicCount: c.entries.length, lowUsd: c.lowUsd }
+        : null;
+    })
+  );
+  return rows.filter((r): r is NonNullable<typeof r> => r !== null);
+}
+
+/**
  * The comparison for one procedure, or null when it does not clear the bar.
  *
  * ⛔ Returning null is what makes the page 404 rather than render a table with
