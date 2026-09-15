@@ -13,6 +13,7 @@ production `dpl_3PBvpJbZHZDbT2UdXe1HmKdXMsNV` READY. Verified on clearcrossprogr
 IndexNow key file serves, BlogPosting on a live post. `npm run verify` REAL_VERIFY_EXIT=0.
 ⚠️ First `node tools/indexnow.mjs --send` minutes after deploy → **HTTP 403 `SiteVerificationNotCompleted`**:
 IndexNow checks the key file asynchronously after first sight. Not a code bug; re-run the same command later.
+✅ Retried 5 min later (01:17) → **HTTP 200**, all 416 live sitemap URLs submitted.
 
 **Measured first (Search Console API, 28 days, via operator/lib/google.py):** ~130 impressions/day,
 avg position ~9-10, 1-4 clicks/day; USA 1,378 imp / Mexico 392. **Mario's day-1 indexing requests
