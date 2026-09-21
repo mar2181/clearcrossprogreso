@@ -187,9 +187,18 @@ for (const f of BILINGUAL_PAGES) {
 const sm = readFileSync('app/sitemap.ts', 'utf8')
 const pushes = sm.match(/entries\.push\(/g) || []
 const paired = sm.match(/entries\.push\(\s*\.\.\.pair\(/g) || []
+// ⛔ ONE sanctioned exception: the webmaster's database posts have no Spanish
+// twin (wm_blogs has no language column), so they go through englishOnly().
+// Exactly one call site, and it must be the /blog/${post.slug} webmaster block —
+// a second englishOnly() is an English-only route sneaking back in.
+const smCode = stripComments(sm)
+const englishOnly = smCode.match(/entries\.push\(\s*\.\.\.englishOnly\(/g) || []
 check(pushes.length > 0, 'control: the sitemap actually pushes entries')
-check(pushes.length === paired.length,
-  `every sitemap entry is emitted as a language PAIR (${paired.length}/${pushes.length})`)
+check(englishOnly.length === 1, `exactly ONE englishOnly() call site in the sitemap (found ${englishOnly.length})`)
+check(/const webmaster = await wmPosts\([\s\S]{0,200}?entries\.push\(\s*\.\.\.englishOnly\(`\/blog\/\$\{post\.slug\}`/.test(smCode),
+  'the englishOnly() call site is the webmaster-post block and nothing else')
+check(pushes.length === paired.length + englishOnly.length,
+  `every other sitemap entry is emitted as a language PAIR (${paired.length}+${englishOnly.length}/${pushes.length})`)
 // ⛔ Pins the CONSTRUCT, not the word. An earlier draft was `/alternates/.test(sm)`
 // and the mutation harness caught it out: replacing the value with
 // `const alternates = undefined` left the identifier in place and read green. A

@@ -21,6 +21,7 @@ const passwordExemptPaths = [
   '/auth/password',
   '/api/auth/password',
   '/api/cron', // Vercel cron sends a Bearer header, not the gate cookie; route enforces CRON_SECRET itself
+  '/api/revalidate', // the webmaster brain sends x-revalidate-secret, not the gate cookie; route enforces REVALIDATE_SECRET itself
   '/_next',
   '/favicon.ico',
 ];

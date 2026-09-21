@@ -1,5 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // ⛔ The blog routes and the sitemap are ISR now (the webmaster's posts come
+  // from Supabase), so they REGENERATE at runtime in a serverless function, and
+  // lib/blog.ts reads content/blog/*.mdx with fs. Measured on this site: a
+  // runtime render that reads those files without them traced into the bundle
+  // gets ENOENT (the sitemap served zero blog posts for weeks that way). These
+  // entries put the MDX into each route's trace.
+  outputFileTracingIncludes: {
+    '/blog': ['./content/blog/**/*'],
+    '/blog/[slug]': ['./content/blog/**/*'],
+    '/sitemap.xml': ['./content/blog/**/*'],
+  },
   images: {
     remotePatterns: [
       {

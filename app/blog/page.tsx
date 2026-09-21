@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getAllPosts, getAllTags } from '@/lib/blog';
+import { mergeBlogIndex, wmPosts } from '@/lib/wm-blog';
 import { bilingualAlternates } from '@/lib/hreflang';
 
 export const metadata: Metadata = {
@@ -18,8 +19,20 @@ export const metadata: Metadata = {
   alternates: bilingualAlternates('/blog', 'en'),
 };
 
+/*
+ * ⛔ ISR: the webmaster's posts (lib/wm-blog.ts) are read from Supabase, so this
+ * index regenerates hourly and /api/revalidate refreshes it the moment a post is
+ * published. content/blog is traced into this route in next.config.js so the
+ * hand-written posts survive a runtime regeneration.
+ */
+export const revalidate = 3600;
+
 export default async function BlogPage() {
-  const posts = await getAllPosts();
+  const mdxPosts = await getAllPosts();
+  // ⛔ An MDX post wins a slug collision, so a webmaster post sharing a slug with
+  // a hand-written one is left off the index rather than listed twice.
+  const webmaster = await wmPosts(mdxPosts.map((p) => p.slug));
+  const posts = mergeBlogIndex(mdxPosts, webmaster);
   const tags = await getAllTags();
 
   return (

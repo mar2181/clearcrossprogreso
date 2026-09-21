@@ -4,8 +4,9 @@
 // catch below swallowed it, and production served 114 URLs with ZERO blog posts —
 // silently, for weeks, while the blog was the only thing on the site ranking page one.
 // Generated at build time, fs works and all 10 posts are emitted.
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
 import { getAllPosts } from '@/lib/blog';
+import { wmPosts } from '@/lib/wm-blog';
 import { getAllCategories, getAllProviderSlugs, getPricedProcedures } from '@/lib/data';
 import { bilingualAlternates, enUrl, esUrl } from '@/lib/hreflang';
 
@@ -37,6 +38,28 @@ function pair(
     { url: esUrl(path), lastModified, changeFrequency: opts.changeFrequency, priority: Math.max(0.1, opts.priority - 0.1), alternates },
   ];
 }
+
+/**
+ * ONE English URL with NO hreflang pair — used for the webmaster's database
+ * posts and nothing else.
+ *
+ * ⛔ The exception to pair(), and a deliberate one: a webmaster post has no
+ * Spanish twin (wm_blogs has no language column and nothing translates a post),
+ * so pairing it would advertise /es/blog/<slug> — a 404 — as its translation.
+ * test/bilingual.mjs allows exactly ONE englishOnly() call site and pins it to
+ * the webmaster block.
+ */
+function englishOnly(
+  path: string,
+  opts: { changeFrequency: Entry['changeFrequency']; priority: number; lastModified?: Date }
+): Entry[] {
+  return [{ url: enUrl(path), lastModified: opts.lastModified ?? new Date(), changeFrequency: opts.changeFrequency, priority: opts.priority }];
+}
+
+// ⛔ ISR, matching the blog routes: the webmaster posts come from Supabase. The
+// MDX files are read with fs, so next.config.js traces content/blog into this
+// route — without that a runtime regeneration throws on the blog block below.
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
@@ -77,6 +100,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // break the build rather than quietly ship a sitemap missing its best pages.
     console.error('Error fetching blog posts for sitemap:', error);
     throw error;
+  }
+
+  // The webmaster's published posts (lib/wm-blog.ts). ⛔ English only, and an MDX
+  // post wins a slug collision, so a clashing database post is not listed twice.
+  // A failed read degrades to "no webmaster posts" inside wmPosts itself; the
+  // hand-written posts above must never be taken down by a third party.
+  try {
+    const mdxSlugs = (await getAllPosts()).map((p) => p.slug);
+    const webmaster = await wmPosts(mdxSlugs);
+    webmaster.forEach((post) => {
+      entries.push(
+        ...englishOnly(`/blog/${post.slug}`, {
+          changeFrequency: 'monthly',
+          priority: 0.7,
+          lastModified: post.date ? new Date(post.date) : undefined,
+        })
+      );
+    });
+  } catch (error) {
+    console.error('Error fetching webmaster posts for sitemap:', error);
   }
 
   // Provider pages — data layer handles mock vs Supabase
