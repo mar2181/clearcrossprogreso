@@ -147,6 +147,7 @@ export const es = {
     copyright: 'ClearCross Progreso. Todos los derechos reservados.',
     privacyPolicy: 'Política de Privacidad',
     termsOfService: 'Términos de Servicio',
+    webmaster: 'Acceso del webmaster',
   },
   about: {
     title: 'Acerca de ClearCross',

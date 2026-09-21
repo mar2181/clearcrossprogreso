@@ -137,6 +137,15 @@ export function Footer() {
               >
                 {d.termsOfService}
               </Link>
+              {/* The owner console lives on the brain, one page served to every
+                  client; nofollow because a login screen is not content. */}
+              <a
+                href="https://clearcross-progreso-brain.vercel.app"
+                rel="nofollow"
+                className="text-neutral-light/80 hover:text-white transition-colors text-xs sm:text-sm"
+              >
+                {d.webmaster}
+              </a>
             </div>
           </div>
         </div>

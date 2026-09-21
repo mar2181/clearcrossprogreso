@@ -147,6 +147,7 @@ export const en = {
     copyright: 'ClearCross Progreso. All rights reserved.',
     privacyPolicy: 'Privacy Policy',
     termsOfService: 'Terms of Service',
+    webmaster: 'Webmaster login',
   },
   about: {
     title: 'About ClearCross',
