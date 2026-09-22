@@ -3,6 +3,27 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 🔒 2026-09-15 — DEPENDENCY PATCH ROUND (29 Dependabot alerts) + TWILIO RE-CHECKED
+
+- **Twilio still INACTIVE** (re-checked 2026-09-15): account `ACb1fb…` answers 401 / 20003 "status 4 is not active".
+  The control (a made-up SID) says "does not exist", so the account is real but suspended. No `CALL_TRACKING` /
+  `TWILIO_*` env on Vercel production, so every Call button still dials the clinic directly, and an unsigned
+  `/api/voice/incoming` answers 503. ⏭️ ON MARIO: reactivate + fund, confirm +19565866887, enable Mexico outbound,
+  rotate the pasted auth token.
+- **Patch:**
+  - `next` and `eslint-config-next` pinned to **15.5.25**. ⛔ Never 16: that is the ERESOLVE that broke the build.
+  - Dev `postcss` bumped to ^8.5.23.
+  - `overrides` in `package.json`: sharp ^0.35.4, nanoid, qs, js-yaml@3/@4, brace-expansion@1/@5, browserslist,
+    baseline-browser-mapping, postcss-selector-parser@6, and `next > postcss ^8.5.28`.
+  - ⛔ next hard-pins postcss 8.4.31. The nested override only took after deleting
+    `node_modules/next/node_modules/postcss` and its lockfile entry, then reinstalling.
+- **`npm audit`:** 10 (1 critical) → **0**; prod-only 6 → **0**.
+- **Verify:** `npm run verify` REAL_VERIFY_EXIT=0 (333 static pages; call-tracking harness 20/20).
+- **Local smoke on `next start`:** `/`, `/prices`, `/es/prices`, `/prices/dental-implant`, `/dentists`, a blog post
+  and `/_next/image` all 200; bogus path 404.
+- **Reachability, for the record:** the Next critical RCEs need self-hosted image optimisation (AVIF) or a Windows
+  host; Vercel is neither. qs (via stripe) and js-yaml 3 (gray-matter, our own MDX) are not fed visitor input.
+
 ## 🔎 2026-09-14 — STRUCTURED DATA ON THE PRICE PAGES, A /prices HUB, TITLES THAT MATCH THE QUERIES
 
 Non-Twilio SEO round. ✅ **PUSHED + LIVE 2026-09-15** — `main` `9eab4c4` (verified with `git ls-remote`),
