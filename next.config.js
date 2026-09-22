@@ -27,6 +27,17 @@ const nextConfig = {
   // today. Bing does read Content-Language as a language signal, and a header is
   // server-side, so this gives the Spanish tree a correct declaration to the
   // crawler that reads one without moving a single route.
+  // The owner console lives on the brain (one page served to every client), so
+  // /owner here is a door, not a page. ⛔ Temporary (307), never permanent: a
+  // cached 308 would outlive any move of the console.
+  async redirects() {
+    const brain = 'https://clearcross-progreso-brain.vercel.app';
+    return ['/owner', '/owner/:path*', '/es/owner', '/es/owner/:path*'].map((source) => ({
+      source,
+      destination: brain,
+      permanent: false,
+    }));
+  },
   async headers() {
     const es = [{ key: 'Content-Language', value: 'es' }];
     return [
