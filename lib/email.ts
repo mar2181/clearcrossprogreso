@@ -254,6 +254,68 @@ export async function sendClearCrossQuoteAlert({
   }
 }
 
+// ── Provider claim request, sent to ClearCross ──────────────────────
+/**
+ * A self-serve provider registration matched an EXISTING listing.
+ *
+ * Registration used to always INSERT a brand-new, empty clearcross_providers
+ * row from whatever the clinic typed — so a real clinic signing up never
+ * connected to their real, price-populated, SEO-valuable listing, and the
+ * self-serve path had no way to alert anybody either. Fixed: a name match
+ * blocks the duplicate-row insert AND stops the account being granted
+ * role='provider' automatically — that role carries an RLS grant to edit
+ * THAT listing's prices and read its quotes, so an unverified match must
+ * not hand out write access to what could be a competitor's real page.
+ * This mail is the only place that request becomes visible until it is.
+ */
+export async function sendProviderClaimAlert({
+  matchedProviderId,
+  matchedProviderName,
+  registrantName,
+  registrantEmail,
+  registrantPhone,
+}: {
+  matchedProviderId: string;
+  matchedProviderName: string;
+  registrantName: string;
+  registrantEmail: string;
+  registrantPhone: string;
+}): Promise<{ ok: boolean; reason?: string }> {
+  if (!emailConfigured()) return { ok: false, reason: 'RESEND_API_KEY is not configured' };
+  if (!CLEARCROSS_INBOX) return { ok: false, reason: 'QUOTE_NOTIFY_TO is not configured' };
+
+  try {
+    await getResend()!.emails.send({
+      from: FROM_EMAIL,
+      to: CLEARCROSS_INBOX,
+      replyTo: registrantEmail,
+      subject: `[Claim] Someone wants to manage ${esc(matchedProviderName)}`,
+      html: `
+        <div style="font-family: Inter, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px 24px;">
+          <h1 style="color:#1A5CB0;font-size:20px;margin:0 0 16px;">Provider claim request</h1>
+          <p style="color:#2C2C2A;">
+            Someone registered saying they run <strong>${esc(matchedProviderName)}</strong>, which
+            is already a listing. Their account was created as a patient — they have
+            NOT been granted provider access. Verify it's really them (call the
+            clinic's own listed number, not the one they typed) before flipping
+            their role to provider.
+          </p>
+          <table style="width:100%;border-collapse:collapse;color:#2C2C2A;font-size:14px;margin-top:16px;">
+            <tr><td style="padding:4px 0;color:#5F5E5A;width:130px;">Matched listing</td><td>${esc(matchedProviderName)} (${esc(matchedProviderId)})</td></tr>
+            <tr><td style="padding:4px 0;color:#5F5E5A;">They said</td><td>${esc(registrantName)}</td></tr>
+            <tr><td style="padding:4px 0;color:#5F5E5A;">Email</td><td>${esc(registrantEmail)}</td></tr>
+            <tr><td style="padding:4px 0;color:#5F5E5A;">Phone</td><td>${esc(registrantPhone)}</td></tr>
+          </table>
+        </div>
+      `,
+    });
+    return { ok: true };
+  } catch (error) {
+    console.error('[Email] Failed to send the provider claim alert:', error);
+    return { ok: false, reason: String(error).slice(0, 200) };
+  }
+}
+
 // ── Quote status update sent to the patient ─────────────────────────
 export async function sendQuoteStatusUpdate({
   patientEmail,

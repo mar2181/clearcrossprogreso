@@ -30,6 +30,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [claimedProviderName, setClaimedProviderName] = useState<string | null>(null);
 
   // "List Your Business" arrives here as ?role=provider.
   //
@@ -73,13 +74,45 @@ export default function RegisterPage() {
         return;
       }
 
-      // Step 2: Create user record
+      // Step 2: If claiming to be a provider, check for an EXISTING listing
+      // first — the whole reason this matters is in claim/route.ts's header
+      // comment. A match means we do not create a duplicate, and we do not
+      // grant provider access until it's verified.
+      let effectiveRole: 'patient' | 'provider' = role;
+      let matchedProvider: { id: string; name: string } | null = null;
+
+      if (role === 'provider') {
+        try {
+          const claimRes = await fetch('/api/providers/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clinicName,
+              registrantName: fullName,
+              registrantEmail: email,
+              registrantPhone: phone,
+            }),
+          });
+          const claimData = await claimRes.json();
+          if (claimData?.matched && claimData.provider) {
+            matchedProvider = claimData.provider;
+            effectiveRole = 'patient';
+          }
+        } catch {
+          // Claim-check failed to reach the server. Fall through to the
+          // create-new path below rather than blocking registration on it —
+          // an unmatched-by-default outcome here is the SAME outcome as a
+          // genuinely new clinic, which is the safe direction.
+        }
+      }
+
+      // Step 3: Create user record
       const { error: userError } = await supabase.from('clearcross_users').insert({
         id: data.user.id,
         email,
         full_name: fullName,
         phone: phone || null,
-        role,
+        role: effectiveRole,
       });
 
       if (userError) {
@@ -88,8 +121,8 @@ export default function RegisterPage() {
         return;
       }
 
-      // Step 3: If provider, create provider record
-      if (role === 'provider') {
+      // Step 4: Only create a NEW provider listing when nothing matched.
+      if (role === 'provider' && !matchedProvider) {
         const { data: providerData, error: providerError } = await supabase
           .from('clearcross_providers')
           .insert({
@@ -120,6 +153,9 @@ export default function RegisterPage() {
           .eq('id', data.user.id);
       }
 
+      if (matchedProvider) {
+        setClaimedProviderName(matchedProvider.name);
+      }
       setSuccess(true);
       setLoading(false);
     } catch (err: any) {
@@ -138,10 +174,19 @@ export default function RegisterPage() {
               <h2 className="text-2xl font-bold text-neutral-900 mb-2">
                 Registration Successful!
               </h2>
-              <p className="text-neutral-600 mb-6">
-                Please check your email to verify your account and complete
-                registration.
-              </p>
+              {claimedProviderName ? (
+                <p className="text-neutral-600 mb-6">
+                  <strong>{claimedProviderName}</strong> is already listed with
+                  us. We've sent your request to manage it to our team — once
+                  we verify it's really you, we'll activate your provider
+                  access. Please also check your email to verify your account.
+                </p>
+              ) : (
+                <p className="text-neutral-600 mb-6">
+                  Please check your email to verify your account and complete
+                  registration.
+                </p>
+              )}
               <Link href="/auth/login">
                 <Button variant="primary" size="lg" className="w-full">
                   Back to Sign In

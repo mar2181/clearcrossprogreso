@@ -3,6 +3,69 @@
 > Authoritative current state. This OVERRIDES older scattered notes.
 > Bump "Last verified" when things change. Keep it tight (~150 lines).
 
+## 🚨 2026-09-24 — LEAD PIPELINE: THE CODE WAS THE EASY PART, AND TWO REAL PATIENTS ARE STILL WAITING
+
+Mario relayed the site's first real lead (LaTonya Glaze, 08-30, Dental Artistry, an all-on-6
+full-mouth case) by phone, because nothing in the system ever tells a clinic a quote came in.
+
+⛔ **CONFIRMED AGAINST LIVE DATA: `clearcross_users` has ZERO `role='provider'` rows, for any of
+the ~100+ real clinics, ever.** `sendProviderQuoteAlert` (`lib/email.ts`) has been fully built and
+gated correctly since the 2026-09-04 incident fix — and has never fired once, because no provider
+has ever had an account for it to fire to. Every quote has always landed only in ClearCross's own
+inbox, which means every lead has always depended on a human noticing it.
+
+🔴 **STEP 0 FINDING — the Operator's Desk safety net (`lead_clock.py`, every 15 min) works for
+NEW leads and is structurally blind to old ones.** It baselined on 2026-09-13; LaTonya's lead
+pre-dates that baseline, so it will **never** alert on her — `first_seen` on that first run marked
+her `backlog`, permanently silenced. A second lead, **Kathy Martin** (submitted TODAY, 19:24 UTC,
+for **Alpha Dental Implant Center** — all-on-6 implants for two grandsons, both full upper+lower,
+plausibly $40-50k+ combined), WAS caught correctly: Decision Queue card
+`ef0526dd-eef6-4b51-bfbb-692fa8e75725`, created 20:24:53Z, currently **open and unanswered** in
+Mario's Telegram/Decision Queue.
+
+### What shipped (code only — no real clinic has an account yet)
+
+- **`app/admin/quotes/page.tsx`** — every quote across every provider, unanswered-oldest-first,
+  gated on the pre-existing (never-before-used) `clearcross_users.role='admin'`. Reads via
+  `createAdminClient() ?? supabase` — no new RLS policy, no admin-bypass added to the schema.
+- **`app/api/admin/quotes/[id]/handle/route.ts`** — records that a lead was handled BY HAND
+  (stamps `responded_at`, appends a timestamped note to `provider_notes`). ⛔ **Never sets `status`
+  or `quoted_price`** — no clinic has actually quoted anything, and this must not fabricate one.
+  `responded_at` is exactly the signal `lead_clock.py`'s `answered = ... or bool(responded_at)`
+  already reads, so marking a lead handled here is what would have kept LaTonya's off the backlog
+  the day it was baselined.
+- **`app/api/providers/claim/route.ts`** + **`app/auth/register/page.tsx`** — self-serve provider
+  registration now searches `clearcross_providers` (slug, then name) for an EXISTING listing
+  before ever creating a new one. A match does **not** auto-grant provider access (that would let
+  anyone claim a competitor's listing) — it registers them as `patient` and emails
+  `sendProviderClaimAlert` (new fn in `lib/email.ts`) so Mario verifies-and-promotes by hand.
+- **`scripts/provision-provider.mjs`** / **`scripts/provision-admin.mjs`** — dry-run-by-default
+  admin scripts to wire a real clinic to its EXISTING listing, or grant `role='admin'`. Both read
+  credentials from `custom-designs-brain/.env` (this repo has **no `.env.local` at all** — see
+  Traps). Both handle the shared-Supabase-project collision (an `auth.users` row already existing
+  for an email from an unrelated Mario product) by reusing that id rather than failing.
+  ⛔ **`provision-provider.mjs --apply` has NOT been run for real** — I do not have real email
+  addresses for Dental Artistry or Alpha Dental Implant Center. Dry-run only, against the real
+  provider ids, confirms both listings resolve correctly. **Needs Mario to supply (or collect by
+  phone) the clinic's actual email** before this closes for real.
+
+### Verified
+
+`next build` **exit 0**, all three new routes compiled clean (`/admin/quotes`,
+`/api/admin/quotes/[id]/handle`, `/api/providers/claim`) — zero type errors.
+`node test/quote-delivery.mjs` **44/44 PASS** (directly exercises the `lib/email.ts` edit).
+`node test/honest-claims.mjs` **full PASS**, 164 files swept including the three new
+surfaces — the new admin/claim copy trips no overclaiming pattern.
+⛔ Did NOT run the full `npm run verify` chain — `places-discover`/`places-write`/`border-wait`
+hit live external APIs and are untouched by this change; running them would spend real calls for
+zero signal on what actually changed.
+
+⚠️ **Not committed, not pushed.** This repo is git-linked — a push to `main` IS a production
+deploy — and per standing rule that needs Mario's explicit go-ahead, asked separately.
+
+⏭️ **Phase 3 (GA4/Search Console confirmation, extending Operator's Desk's `client_report.py` to
+cover ClearCross) — not started.** Full plan: `C:\Users\mario\.claude\plans\pasted-content-id-6cbe-i-want-shimmering-parrot.md`.
+
 ## 🔒 2026-09-15 — DEPENDENCY PATCH ROUND (29 Dependabot alerts) + TWILIO RE-CHECKED
 
 - **Twilio still INACTIVE** (re-checked 2026-09-15): account `ACb1fb…` answers 401 / 20003 "status 4 is not active".
@@ -1815,6 +1878,13 @@ A chain ending in `tail` reports *tail's* exit and a failed suite reads as 0. Hi
 2. **Resend domain verification** for `clearcrossprogreso.com` (DNS), then `QUOTE_FROM_EMAIL`.
 3. **Which inbox** quote requests land in → `QUOTE_NOTIFY_TO`.
 4. Optional: GA4 property → `NEXT_PUBLIC_GA_ID` → redeploy.
+5. 🚨 **NEW 2026-09-24, urgent: real contact emails for Dental Artistry and Alpha Dental Implant
+   Center**, so `scripts/provision-provider.mjs --apply` can actually wire them to
+   `sendProviderQuoteAlert`. Cannot be fabricated. Meanwhile: **Kathy Martin's lead (today,
+   Alpha Dental Implant Center, two grandsons, all-on-6) is open and unanswered in the Decision
+   Queue right now** — same relay-by-phone Mario already did for LaTonya, needed again today.
+6. Push confirmation for `main` — everything above (admin quotes view, claim-flow fix, provision
+   scripts) is built and verified but not pushed. This repo auto-deploys on push.
 
 ## Open — recorded, not started
 - 🔴 **The `/es` tree is the English pages with a translated `<title>`.** Measured: 82 English
