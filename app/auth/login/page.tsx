@@ -13,7 +13,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/dashboard';
 
-  const [mode, setMode] = useState<'password' | 'magic-link'>('password');
+  const [mode, setMode] = useState<'password' | 'magic-link' | 'forgot'>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -84,11 +84,42 @@ function LoginForm() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        // Same-browser cookie-stored code exchange as the Magic Link path
+        // above — reuses /auth/callback, just with its own allowlisted
+        // destination so the visitor lands on the "set a new password"
+        // form instead of straight into the dashboard.
+        redirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent('/auth/reset-password')}`,
+      });
+
+      if (resetError) {
+        setError(resetError.message);
+        setLoading(false);
+        return;
+      }
+
+      setSuccess(`Password reset link sent to ${email}. Check your email!`);
+      setEmail('');
+      setLoading(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset link');
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     if (mode === 'password') {
       handlePasswordSignIn(e);
-    } else {
+    } else if (mode === 'magic-link') {
       handleMagicLinkSignIn(e);
+    } else {
+      handleForgotPassword(e);
     }
   };
 
@@ -142,6 +173,18 @@ function LoginForm() {
             </button>
           </div>
 
+          {mode === 'magic-link' && (
+            <p className="text-xs text-neutral-500 mb-4 -mt-2">
+              Skip the password — we'll email you a one-time link to sign in.
+            </p>
+          )}
+
+          {mode === 'forgot' && (
+            <p className="text-xs text-neutral-500 mb-4 -mt-2">
+              We'll email you a link to set a new password.
+            </p>
+          )}
+
           {/* Error */}
           {error && (
             <div className="mb-4 p-3 bg-error-light text-error rounded-lg text-sm">
@@ -169,15 +212,28 @@ function LoginForm() {
             />
 
             {mode === 'password' && (
-              <Input
-                label="Password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
+              <>
+                <Input
+                  label="Password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('forgot');
+                    setError('');
+                    setSuccess('');
+                  }}
+                  className="text-sm text-brand-blue hover:underline -mt-2"
+                >
+                  Forgot your password?
+                </button>
+              </>
             )}
 
             <Button
@@ -188,8 +244,26 @@ function LoginForm() {
               size="lg"
               className="w-full"
             >
-              {mode === 'password' ? 'Sign In' : 'Send Magic Link'}
+              {mode === 'password'
+                ? 'Sign In'
+                : mode === 'magic-link'
+                  ? 'Send Magic Link'
+                  : 'Send Reset Link'}
             </Button>
+
+            {mode === 'forgot' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('password');
+                  setError('');
+                  setSuccess('');
+                }}
+                className="text-sm text-neutral-600 hover:underline w-full text-center"
+              >
+                Back to sign in
+              </button>
+            )}
           </form>
 
           {/* Footer */}

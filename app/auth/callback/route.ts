@@ -40,9 +40,12 @@ export async function GET(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    // Decode redirectTo to prevent open redirect
+    // Decode redirectTo to prevent open redirect — allowlist, never a raw pass-through.
     let finalRedirect = '/dashboard';
-    if (redirectTo && ['/dashboard', '/provider'].includes(decodeURIComponent(redirectTo))) {
+    if (
+      redirectTo &&
+      ['/dashboard', '/provider', '/auth/reset-password'].includes(decodeURIComponent(redirectTo))
+    ) {
       finalRedirect = decodeURIComponent(redirectTo);
     } else if (userData?.role === 'provider') {
       finalRedirect = '/provider';
