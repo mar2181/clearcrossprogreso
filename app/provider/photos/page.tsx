@@ -1,17 +1,18 @@
 export const dynamic = 'force-dynamic';
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import ProviderProfileForm from '@/components/providers/ProviderProfileForm';
+import { resolveProviderPhotoUrl } from '@/lib/provider-photo';
+import ProviderPhotoUpload from '@/components/providers/ProviderPhotoUpload';
 import ProviderSubnav from '@/components/providers/ProviderSubnav';
 import { getPortalLocale } from '@/lib/i18n/serverLocale';
 import { dictFor } from '@/lib/i18n/dict';
 
 export const metadata = {
-  title: 'Edit Profile - ClearCross Progreso',
-  description: 'Update your provider profile information',
+  title: 'Manage Photos - ClearCross Progreso',
+  description: 'Upload real photos of your clinic',
 };
 
-export default async function ProviderProfilePage() {
+export default async function ProviderPhotosPage() {
   const supabase = createServerSupabaseClient();
   const locale = await getPortalLocale();
   const t = dictFor(locale).provider;
@@ -21,7 +22,7 @@ export default async function ProviderProfilePage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/auth/login?redirectTo=/provider/profile');
+    redirect('/auth/login?redirectTo=/provider/photos');
   }
 
   const { data: userData } = await supabase
@@ -36,7 +37,7 @@ export default async function ProviderProfilePage() {
 
   const { data: providerData } = await supabase
     .from('clearcross_providers')
-    .select('*')
+    .select('id, gallery_urls, gallery_pending')
     .eq('id', userData.provider_id)
     .single();
 
@@ -44,17 +45,26 @@ export default async function ProviderProfilePage() {
     redirect('/provider');
   }
 
+  const live = ((providerData.gallery_urls as string[] | null) ?? []).map((path) => ({
+    path,
+    url: resolveProviderPhotoUrl(path),
+  }));
+  const pending = ((providerData.gallery_pending as string[] | null) ?? []).map((path) => ({
+    path,
+    url: resolveProviderPhotoUrl(path),
+  }));
+
   return (
     <>
       <ProviderSubnav />
       <div className="min-h-screen bg-neutral-50 py-12">
         <div className="max-w-2xl mx-auto px-4">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2">{t.profileHeading}</h1>
-            <p className="text-neutral-600">{t.profileSubtitle}</p>
+            <h1 className="text-3xl font-bold text-neutral-900 mb-2">{t.photosHeading}</h1>
+            <p className="text-neutral-600">{t.photosSubtitle}</p>
           </div>
 
-          <ProviderProfileForm provider={providerData} locale={locale} />
+          <ProviderPhotoUpload providerId={providerData.id} live={live} pending={pending} locale={locale} />
         </div>
       </div>
     </>

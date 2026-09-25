@@ -2,14 +2,19 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Save, CheckCircle, AlertCircle } from 'lucide-react';
 import type { Provider } from '@/lib/types';
+import type { Locale } from '@/lib/i18n/context';
+import { dictFor } from '@/lib/i18n/dict';
+import Button from '@/components/ui/Button';
 
 interface ProviderProfileFormProps {
   provider: Provider;
+  locale: Locale;
 }
 
-export default function ProviderProfileForm({ provider }: ProviderProfileFormProps) {
+export default function ProviderProfileForm({ provider, locale }: ProviderProfileFormProps) {
+  const t = dictFor(locale).provider;
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -43,14 +48,14 @@ export default function ProviderProfileForm({ provider }: ProviderProfileFormPro
       const data = await res.json();
 
       if (!res.ok) {
-        setMessage({ type: 'error', text: data.error || 'Failed to save changes' });
+        setMessage({ type: 'error', text: t.profileErrorSave });
         return;
       }
 
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setMessage({ type: 'success', text: t.profileSuccessSave });
       router.refresh();
     } catch {
-      setMessage({ type: 'error', text: 'Something went wrong. Please try again.' });
+      setMessage({ type: 'error', text: t.profileErrorGeneric });
     } finally {
       setSaving(false);
     }
@@ -62,7 +67,7 @@ export default function ProviderProfileForm({ provider }: ProviderProfileFormPro
         {/* Clinic Name */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-neutral-700 mb-1.5">
-            Clinic / Business Name
+            {t.profileNameLabel}
           </label>
           <input
             id="name"
@@ -78,7 +83,7 @@ export default function ProviderProfileForm({ provider }: ProviderProfileFormPro
         {/* Address */}
         <div>
           <label htmlFor="address" className="block text-sm font-medium text-neutral-700 mb-1.5">
-            Address
+            {t.profileAddressLabel}
           </label>
           <input
             id="address"
@@ -86,7 +91,7 @@ export default function ProviderProfileForm({ provider }: ProviderProfileFormPro
             value={form.address}
             onChange={(e) => handleChange('address', e.target.value)}
             className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-colors"
-            placeholder="Street address in Nuevo Progreso"
+            placeholder={t.profileAddressPlaceholder}
           />
         </div>
 
@@ -94,7 +99,7 @@ export default function ProviderProfileForm({ provider }: ProviderProfileFormPro
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-neutral-700 mb-1.5">
-              Phone
+              {t.profilePhoneLabel}
             </label>
             <input
               id="phone"
@@ -102,12 +107,12 @@ export default function ProviderProfileForm({ provider }: ProviderProfileFormPro
               value={form.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
               className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-colors"
-              placeholder="+52 899 123 4567"
+              placeholder={t.profilePhonePlaceholder}
             />
           </div>
           <div>
             <label htmlFor="whatsapp" className="block text-sm font-medium text-neutral-700 mb-1.5">
-              WhatsApp
+              {t.profileWhatsappLabel}
             </label>
             <input
               id="whatsapp"
@@ -115,7 +120,7 @@ export default function ProviderProfileForm({ provider }: ProviderProfileFormPro
               value={form.whatsapp}
               onChange={(e) => handleChange('whatsapp', e.target.value)}
               className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-colors"
-              placeholder="+52 899 123 4567"
+              placeholder={t.profilePhonePlaceholder}
             />
           </div>
         </div>
@@ -123,7 +128,7 @@ export default function ProviderProfileForm({ provider }: ProviderProfileFormPro
         {/* Website */}
         <div>
           <label htmlFor="website" className="block text-sm font-medium text-neutral-700 mb-1.5">
-            Website
+            {t.profileWebsiteLabel}
           </label>
           <input
             id="website"
@@ -131,14 +136,14 @@ export default function ProviderProfileForm({ provider }: ProviderProfileFormPro
             value={form.website}
             onChange={(e) => handleChange('website', e.target.value)}
             className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-colors"
-            placeholder="https://yourwebsite.com"
+            placeholder={t.profileWebsitePlaceholder}
           />
         </div>
 
         {/* Description */}
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-neutral-700 mb-1.5">
-            About Your Practice
+            {t.profileAboutLabel}
           </label>
           <textarea
             id="description"
@@ -146,11 +151,11 @@ export default function ProviderProfileForm({ provider }: ProviderProfileFormPro
             onChange={(e) => handleChange('description', e.target.value)}
             rows={5}
             className="w-full px-3 py-2.5 border border-neutral-300 rounded-lg text-neutral-900 focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-colors resize-y"
-            placeholder="Tell patients about your clinic, experience, and what makes you different..."
+            placeholder={t.profileAboutPlaceholder}
             maxLength={2000}
           />
           <p className="text-xs text-neutral-400 mt-1">
-            {form.description.length}/2000 characters
+            {t.profileCharCount.replace('{n}', String(form.description.length))}
           </p>
         </div>
       </div>
@@ -174,18 +179,10 @@ export default function ProviderProfileForm({ provider }: ProviderProfileFormPro
       )}
 
       {/* Submit */}
-      <button
-        type="submit"
-        disabled={saving}
-        className="inline-flex items-center gap-2 px-6 py-3 bg-brand-blue text-white rounded-lg font-semibold hover:bg-brand-navy transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {saving ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <Save className="w-4 h-4" />
-        )}
-        {saving ? 'Saving...' : 'Save Changes'}
-      </button>
+      <Button type="submit" size="lg" loading={saving}>
+        {!saving && <Save className="w-4 h-4 mr-2" />}
+        {saving ? t.profileSaving : t.profileSaveChanges}
+      </Button>
     </form>
   );
 }

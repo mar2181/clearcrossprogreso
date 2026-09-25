@@ -8,7 +8,10 @@ import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import ProviderSubnav from '@/components/providers/ProviderSubnav';
 import { Loader2, ChevronDown } from 'lucide-react';
+import { usePortalLocale } from '@/lib/i18n/usePortalLocale';
+import { dictFor } from '@/lib/i18n/dict';
 
 interface Quote {
   id: string;
@@ -26,6 +29,8 @@ interface Quote {
 export default function QuotesPage() {
   const router = useRouter();
   const supabase = createClient();
+  const locale = usePortalLocale();
+  const t = dictFor(locale).provider;
 
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,8 +90,9 @@ export default function QuotesPage() {
         .order('created_at', { ascending: false });
 
       setQuotes(quoteData || []);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load quotes');
+    } catch (err) {
+      console.error('Failed to load quotes:', err);
+      setError(t.quotesErrorLoad);
     } finally {
       setLoading(false);
     }
@@ -101,7 +107,7 @@ export default function QuotesPage() {
       const notes = responseNotes[quoteId];
 
       if (!price || parseFloat(price) <= 0) {
-        setError('Please enter a valid price');
+        setError(t.quotesErrorValidPrice);
         setResponding(null);
         return;
       }
@@ -118,14 +124,15 @@ export default function QuotesPage() {
 
       if (updateError) throw updateError;
 
-      setSuccess('Quote sent successfully!');
+      setSuccess(t.quotesSuccessSend);
       setTimeout(() => setSuccess(''), 3000);
       setResponsePrice({ ...responsePrice, [quoteId]: '' });
       setResponseNotes({ ...responseNotes, [quoteId]: '' });
       setExpandedId(null);
       await fetchQuotes();
-    } catch (err: any) {
-      setError(err.message || 'Failed to respond to quote');
+    } catch (err) {
+      console.error('Failed to respond to quote:', err);
+      setError(t.quotesErrorRespond);
     } finally {
       setResponding(null);
     }
@@ -152,8 +159,25 @@ export default function QuotesPage() {
     }
   };
 
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return t.statusPending;
+      case 'quoted':
+        return t.statusQuoted;
+      case 'accepted':
+        return t.statusAccepted;
+      case 'rejected':
+        return t.statusRejected;
+      case 'completed':
+        return t.statusCompleted;
+      default:
+        return status;
+    }
+  };
+
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -171,12 +195,14 @@ export default function QuotesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 py-12">
+    <>
+      <ProviderSubnav />
+      <div className="min-h-screen bg-neutral-50 py-12">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-neutral-900 mb-2">Quote Requests</h1>
-          <p className="text-neutral-600">Respond to patient requests for quotes</p>
+          <h1 className="text-4xl font-bold text-neutral-900 mb-2">{t.quotesHeading}</h1>
+          <p className="text-neutral-600">{t.quotesSubtitle}</p>
         </div>
 
         {/* Tabs */}
@@ -191,7 +217,7 @@ export default function QuotesPage() {
                   : 'bg-white text-neutral-700 border border-neutral-200 hover:border-neutral-300'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'all' ? t.quotesTabAll : statusLabel(tab)}
             </button>
           ))}
         </div>
@@ -216,7 +242,9 @@ export default function QuotesPage() {
             {filteredQuotes.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-neutral-600">
-                  No {filter !== 'all' ? filter : ''} quote requests
+                  {filter === 'all'
+                    ? t.quotesEmptyAll
+                    : t.quotesEmpty.replace('{filter}', statusLabel(filter).toLowerCase())}
                 </p>
               </div>
             ) : (
@@ -234,10 +262,10 @@ export default function QuotesPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <p className="font-semibold text-neutral-900">
-                              {quote.user?.full_name || 'Anonymous Patient'}
+                              {quote.user?.full_name || t.quotesAnonymousPatient}
                             </p>
                             <p className="text-sm text-neutral-600">
-                              {quote.procedure?.name || 'Custom Request'}
+                              {quote.procedure?.name || t.quotesCustomRequest}
                             </p>
                             <p className="text-xs text-neutral-500 mt-1">
                               {formatDate(quote.created_at)}
@@ -246,7 +274,7 @@ export default function QuotesPage() {
 
                           <div className="flex items-center gap-3">
                             <Badge variant={getStatusBadgeVariant(quote.status)}>
-                              {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
+                              {statusLabel(quote.status)}
                             </Badge>
                             <ChevronDown
                               className={`w-5 h-5 text-neutral-500 transition-transform ${
@@ -265,7 +293,7 @@ export default function QuotesPage() {
                         {quote.description && (
                           <div>
                             <p className="text-sm font-semibold text-neutral-900 mb-2">
-                              Patient Request
+                              {t.quotesPatientRequest}
                             </p>
                             <p className="text-neutral-700 text-sm">{quote.description}</p>
                           </div>
@@ -275,14 +303,19 @@ export default function QuotesPage() {
                         {quote.photo_url && (
                           <div>
                             <p className="text-sm font-semibold text-neutral-900 mb-2">
-                              Reference Photo
+                              {t.quotesReferencePhoto}
                             </p>
                             <img
                               src={quote.photo_url.startsWith('http')
                                 ? quote.photo_url
                                 : `/api/quotes/photo?path=${encodeURIComponent(quote.photo_url)}`}
-                              alt="Patient reference"
+                              alt=""
                               className="max-w-xs rounded-lg"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src =
+                                  'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23e5e5e5"/%3E%3C/svg%3E';
+                              }}
                             />
                           </div>
                         )}
@@ -290,10 +323,10 @@ export default function QuotesPage() {
                         {/* Respond Form */}
                         {quote.status === 'pending' && (
                           <div className="space-y-4 border-t border-neutral-100 pt-4">
-                            <p className="text-sm font-semibold text-neutral-900">Send Quote</p>
+                            <p className="text-sm font-semibold text-neutral-900">{t.quotesSendQuote}</p>
 
                             <Input
-                              label="Price (USD)"
+                              label={t.quotesPriceLabel}
                               type="number"
                               placeholder="0.00"
                               value={responsePrice[quote.id] || ''}
@@ -308,8 +341,8 @@ export default function QuotesPage() {
                             />
 
                             <Textarea
-                              label="Notes (Optional)"
-                              placeholder="e.g., This includes the initial consultation..."
+                              label={t.quotesNotesLabel}
+                              placeholder={t.quotesNotesPlaceholder}
                               value={responseNotes[quote.id] || ''}
                               onChange={(e) =>
                                 setResponseNotes({
@@ -327,14 +360,14 @@ export default function QuotesPage() {
                                 loading={responding === quote.id}
                                 disabled={responding === quote.id}
                               >
-                                Send Quote
+                                {t.quotesSendQuote}
                               </Button>
                               <Button
                                 variant="outline"
                                 onClick={() => setExpandedId(null)}
                                 disabled={responding === quote.id}
                               >
-                                Cancel
+                                {t.quotesCancel}
                               </Button>
                             </div>
                           </div>
@@ -344,7 +377,7 @@ export default function QuotesPage() {
                         {quote.status !== 'pending' && quote.quoted_price && (
                           <div className="bg-neutral-50 p-4 rounded-lg border-t border-neutral-100">
                             <p className="text-sm font-semibold text-neutral-900 mb-2">
-                              Your Quote
+                              {t.quotesYourQuote}
                             </p>
                             <p className="text-2xl font-bold text-brand-blue mb-2">
                               ${quote.quoted_price.toFixed(2)}
@@ -363,6 +396,7 @@ export default function QuotesPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

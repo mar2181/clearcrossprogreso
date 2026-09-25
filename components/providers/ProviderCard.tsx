@@ -87,6 +87,7 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
                       expiresAt={activeFlash.expires_at}
                       onExpire={() => setIsFlashExpired(true)}
                       className="bg-black/70 text-white px-2 py-0.5 rounded-full backdrop-blur-sm"
+                      locale={locale}
                     />
                   </div>
                 </div>
@@ -101,11 +102,12 @@ const ProviderCard: React.FC<ProviderCardProps> = ({ provider, filteredProcedure
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-full shadow-sm animate-pulse">
                 <Zap className="w-3 h-3 fill-current" />
-                FLASH DEAL
+                {dict.ui.flashDeal}
               </span>
               <CountdownTimer
                 expiresAt={activeFlash.expires_at}
                 onExpire={() => setIsFlashExpired(true)}
+                locale={locale}
               />
             </div>
           </div>

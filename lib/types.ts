@@ -22,6 +22,7 @@ export interface Provider {
   logo_url: string | null;
   photo_url: string | null;
   gallery_urls: string[];
+  gallery_pending: string[];
   verified: boolean;
   featured: boolean;
   plan: 'free' | 'featured' | 'premium';

@@ -30,6 +30,7 @@ import { formatUSD } from '@/lib/utils';
 import { callLink } from '@/lib/call-link';
 import { getSavings } from '@/lib/us-benchmarks';
 import { getProviderGallery } from '@/lib/provider-gallery';
+import { resolveProviderPhotoUrl } from '@/lib/provider-photo';
 import {
   getProviderBySlug,
   getProviderReviews,
@@ -129,7 +130,17 @@ export default async function ProviderPage({ params, locale = 'en' }: ProviderPa
 
   const categoryData = (providerData as any).categories || { name: 'Services', slug: category };
   const yearsExp = getYearsExperience((providerData as any).graduation_year);
-  const galleryImages = getProviderGallery(providerData.slug, category);
+  // A provider who has uploaded and had real photos approved sees THOSE
+  // instead of the static generated set — gallery_urls only ever holds
+  // admin-approved paths (see app/api/admin/photos/[providerId]), so this
+  // can never show something a review step hasn't cleared. Falls back to
+  // the static map, which never returns empty, so a provider who hasn't
+  // uploaded anything still gets a gallery.
+  const realGallery: string[] = (providerData as any).gallery_urls ?? [];
+  const galleryImages =
+    realGallery.length > 0
+      ? realGallery.map((path) => resolveProviderPhotoUrl(path))
+      : getProviderGallery(providerData.slug, category);
   const hasGallery = galleryImages.length > 0;
   const providerPrices = (providerData as any).provider_prices || [];
   const hasPrices = providerPrices.length > 0;

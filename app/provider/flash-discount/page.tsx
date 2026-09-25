@@ -2,18 +2,30 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Zap, ArrowLeft, Clock, DollarSign, Percent, MessageSquare, AlertCircle } from 'lucide-react';
 import { FlashDiscount } from '@/lib/types';
+import { createClient } from '@/lib/supabase/client';
 import CountdownTimer from '@/components/ui/CountdownTimer';
+import ProviderSubnav from '@/components/providers/ProviderSubnav';
 import { cn, formatUSD } from '@/lib/utils';
+import { usePortalLocale } from '@/lib/i18n/usePortalLocale';
+import { dictFor } from '@/lib/i18n/dict';
 
-// Duration presets in hours
+// Duration presets in hours. The label shown for each is looked up from the
+// dictionary at render time (durationLabel below) rather than stored here,
+// so it stays bilingual instead of hardcoding English text.
 const DURATION_PRESETS = [
-  { label: '2 hours', hours: 2 },
-  { label: '4 hours', hours: 4 },
-  { label: '8 hours', hours: 8 },
-  { label: '12 hours', hours: 12 },
+  { hours: 2 },
+  { hours: 4 },
+  { hours: 8 },
+  { hours: 12 },
 ];
+
+// A discount cannot be re-armed within this many hours of the last one ending
+// — matches the "4-hour cooldown" text already printed at the bottom of this
+// page, which had nothing enforcing it before this rewrite.
+const COOLDOWN_HOURS = 4;
 
 interface ProcedureOption {
   id: string;
@@ -21,7 +33,27 @@ interface ProcedureOption {
   price_usd: number | null;
 }
 
+function durationLabel(hours: number, t: ReturnType<typeof dictFor>['provider']) {
+  switch (hours) {
+    case 2:
+      return t.flashDuration2h;
+    case 4:
+      return t.flashDuration4h;
+    case 8:
+      return t.flashDuration8h;
+    case 12:
+      return t.flashDuration12h;
+    default:
+      return `${hours}h`;
+  }
+}
+
 export default function FlashDiscountPage() {
+  const router = useRouter();
+  const supabase = createClient();
+  const locale = usePortalLocale();
+  const t = dictFor(locale).provider;
+
   // Form state
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage');
   const [discountValue, setDiscountValue] = useState<number>(20);
@@ -29,54 +61,141 @@ export default function FlashDiscountPage() {
   const [durationHours, setDurationHours] = useState<number>(4);
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data for procedures (in real mode, fetched from API)
+  const [providerId, setProviderId] = useState<string | null>(null);
   const [procedures, setProcedures] = useState<ProcedureOption[]>([]);
   const [activeDiscount, setActiveDiscount] = useState<FlashDiscount | null>(null);
+  const [cooldownUntil, setCooldownUntil] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+
+      if (!authUser) {
+        router.push('/auth/login?redirectTo=/provider/flash-discount');
+        return;
+      }
+
+      const { data: userData } = await supabase
+        .from('clearcross_users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (!userData || userData.role !== 'provider' || !userData.provider_id) {
+        router.push('/');
+        return;
+      }
+
+      setProviderId(userData.provider_id);
+
+      const { data: providerData } = await supabase
+        .from('clearcross_providers')
+        .select('category_id')
+        .eq('id', userData.provider_id)
+        .single();
+
+      // The procedures actually priced by this provider — real category, real
+      // prices, never a hardcoded dental-only guess for whatever category the
+      // signed-in provider happens to be.
+      if (providerData?.category_id) {
+        const { data: priceRows } = await supabase
+          .from('clearcross_provider_prices')
+          .select('procedure_id, price_usd, procedure:clearcross_procedures(id, name)')
+          .eq('provider_id', userData.provider_id)
+          .not('price_usd', 'is', null);
+
+        const opts: ProcedureOption[] = (priceRows || [])
+          .filter((r: any) => r.procedure)
+          .map((r: any) => ({
+            id: r.procedure_id,
+            name: r.procedure.name,
+            price_usd: r.price_usd,
+          }));
+        setProcedures(opts);
+      }
+
+      // An active discount for this provider, if any.
+      const { data: active } = await supabase
+        .from('clearcross_flash_discounts')
+        .select('*')
+        .eq('provider_id', userData.provider_id)
+        .eq('is_active', true)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      setActiveDiscount(active as FlashDiscount | null);
+
+      // The most recent discount at all (active or already expired/ended), to
+      // enforce the cooldown even once the active one has lapsed.
+      const { data: mostRecent } = await supabase
+        .from('clearcross_flash_discounts')
+        .select('expires_at')
+        .eq('provider_id', userData.provider_id)
+        .order('expires_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (mostRecent?.expires_at) {
+        const cooldownEnds = new Date(
+          new Date(mostRecent.expires_at).getTime() + COOLDOWN_HOURS * 60 * 60 * 1000
+        );
+        if (cooldownEnds > new Date()) {
+          setCooldownUntil(cooldownEnds.toISOString());
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load flash discount settings:', err);
+      setError(t.flashErrorLoad);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Fetch provider's procedures and any active flash discount
-    // For now, use mock data endpoint
-    fetch('/api/providers?action=my-procedures')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.procedures) setProcedures(data.procedures);
-        if (data.activeFlashDiscount) setActiveDiscount(data.activeFlashDiscount);
-      })
-      .catch(() => {
-        // Fallback mock procedures for development
-        setProcedures([
-          { id: 'proc-cleaning', name: 'Dental Cleaning', price_usd: 30 },
-          { id: 'proc-whitening', name: 'Teeth Whitening', price_usd: 150 },
-          { id: 'proc-crown-zirconia', name: 'Zirconia Crown', price_usd: 360 },
-          { id: 'proc-implant', name: 'Dental Implant', price_usd: 1050 },
-          { id: 'proc-veneer-porcelain', name: 'Porcelain Veneer', price_usd: 380 },
-        ]);
-      });
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Validation
   const validationError = useMemo(() => {
     if (discountType === 'percentage' && (discountValue < 1 || discountValue > 50)) {
-      return 'Percentage discount must be between 1% and 50%';
+      return t.flashErrorPercentRange;
     }
     if (discountType === 'fixed' && (discountValue < 1 || discountValue > 200)) {
-      return 'Fixed discount must be between $1 and $200';
+      return t.flashErrorFixedRange;
     }
     if (durationHours < 1 || durationHours > 24) {
-      return 'Duration must be between 1 and 24 hours';
+      return t.flashErrorDuration;
     }
     if (message.length > 140) {
-      return 'Message must be 140 characters or fewer';
+      return t.flashErrorMessageLength;
     }
     return null;
-  }, [discountType, discountValue, durationHours, message]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discountType, discountValue, durationHours, message, locale]);
 
   const handleSubmit = async () => {
     if (validationError) {
       setError(validationError);
+      return;
+    }
+    if (!providerId) {
+      setError(t.flashErrorNoProvider);
+      return;
+    }
+    if (cooldownUntil) {
+      setError(t.flashErrorCooldown);
       return;
     }
 
@@ -84,28 +203,31 @@ export default function FlashDiscountPage() {
     setError(null);
 
     try {
-      const res = await fetch('/api/providers?action=create-flash-discount', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const startsAt = new Date();
+      const expiresAt = new Date(startsAt.getTime() + durationHours * 60 * 60 * 1000);
+
+      const { data, error: insertError } = await supabase
+        .from('clearcross_flash_discounts')
+        .insert({
+          provider_id: providerId,
           discount_type: discountType,
           discount_value: discountValue,
           procedure_ids: selectedProcedures.length > 0 ? selectedProcedures : [],
-          duration_hours: durationHours,
+          starts_at: startsAt.toISOString(),
+          expires_at: expiresAt.toISOString(),
           message: message || null,
-        }),
-      });
+          is_active: true,
+        })
+        .select('*')
+        .single();
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to create flash discount');
-      }
+      if (insertError) throw insertError;
 
-      const data = await res.json();
-      setActiveDiscount(data.flashDiscount);
+      setActiveDiscount(data as FlashDiscount);
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      console.error('Failed to post flash discount:', err);
+      setError(t.flashErrorPost);
     } finally {
       setIsSubmitting(false);
     }
@@ -114,16 +236,27 @@ export default function FlashDiscountPage() {
   const handleEndEarly = async () => {
     if (!activeDiscount) return;
 
+    setIsEnding(true);
+    setError(null);
+
     try {
-      await fetch('/api/providers?action=end-flash-discount', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ discount_id: activeDiscount.id }),
-      });
+      const { error: updateError } = await supabase
+        .from('clearcross_flash_discounts')
+        .update({ is_active: false })
+        .eq('id', activeDiscount.id);
+
+      if (updateError) throw updateError;
+
       setActiveDiscount(null);
       setSuccess(false);
-    } catch {
-      setError('Failed to end discount');
+      // Ending early still starts the cooldown clock from now.
+      const cooldownEnds = new Date(Date.now() + COOLDOWN_HOURS * 60 * 60 * 1000);
+      setCooldownUntil(cooldownEnds.toISOString());
+    } catch (err) {
+      console.error('Failed to end flash discount:', err);
+      setError(t.flashErrorEnd);
+    } finally {
+      setIsEnding(false);
     }
   };
 
@@ -144,8 +277,18 @@ export default function FlashDiscountPage() {
 
   const sampleOriginalPrice = procedures.find((p) => p.price_usd && p.price_usd > 0)?.price_usd || 100;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <Zap className="w-8 h-8 text-orange-500 animate-pulse" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-neutral-50 py-12">
+    <>
+      <ProviderSubnav />
+      <div className="min-h-screen bg-neutral-50 py-12">
       <div className="max-w-3xl mx-auto px-4">
         {/* Back link */}
         <Link
@@ -153,7 +296,7 @@ export default function FlashDiscountPage() {
           className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-brand-blue mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Dashboard
+          {t.flashBackToDashboard}
         </Link>
 
         {/* Page header */}
@@ -162,9 +305,9 @@ export default function FlashDiscountPage() {
             <Zap className="w-6 h-6 text-white fill-current" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-dark">Flash Discount</h1>
+            <h1 className="text-2xl font-bold text-neutral-dark">{t.flashHeading}</h1>
             <p className="text-sm text-neutral-500">
-              Create a time-limited deal to fill empty appointment slots
+              {t.flashSubtitle}
             </p>
           </div>
         </div>
@@ -175,43 +318,59 @@ export default function FlashDiscountPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Zap className="w-5 h-5 fill-current" />
-                <span className="font-bold text-lg">Active Flash Discount</span>
+                <span className="font-bold text-lg">{t.flashActiveLabel}</span>
               </div>
               <CountdownTimer
                 expiresAt={activeDiscount.expires_at}
                 onExpire={() => setActiveDiscount(null)}
                 size="md"
                 className="!text-yellow-200"
+                locale={locale}
               />
             </div>
             <p className="text-white/90 mb-1">
               {activeDiscount.discount_type === 'percentage'
-                ? `${activeDiscount.discount_value}% off`
-                : `$${activeDiscount.discount_value} off`}
+                ? t.flashOffPercent.replace('{n}', String(activeDiscount.discount_value))
+                : t.flashOffFixed.replace('{n}', String(activeDiscount.discount_value))}
               {activeDiscount.procedure_ids.length > 0
-                ? ` on ${activeDiscount.procedure_ids.length} procedure(s)`
-                : ' on all procedures'}
+                ? ` ${t.flashOnProcedures.replace('{n}', String(activeDiscount.procedure_ids.length))}`
+                : ` ${t.flashOnAll}`}
             </p>
             {activeDiscount.message && (
               <p className="text-white/75 text-sm italic">"{activeDiscount.message}"</p>
             )}
             <button
               onClick={handleEndEarly}
-              className="mt-4 px-5 py-2 bg-white/20 hover:bg-white/30 text-white font-medium rounded-lg transition-colors text-sm"
+              disabled={isEnding}
+              className="mt-4 px-5 py-2 bg-white/20 hover:bg-white/30 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors text-sm"
             >
-              End Early
+              {isEnding ? t.flashEnding : t.flashEndEarly}
             </button>
           </div>
         )}
 
-        {/* Creation Form (hidden when active discount exists) */}
-        {!activeDiscount && (
+        {/* Cooldown notice — shown once a discount just ended or expired */}
+        {!activeDiscount && cooldownUntil && (
+          <div className="mb-6 flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            {t.flashCooldownNotice.replace(
+              '{time}',
+              new Date(cooldownUntil).toLocaleTimeString(locale === 'es' ? 'es-MX' : 'en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+              })
+            )}
+          </div>
+        )}
+
+        {/* Creation Form (hidden when active discount exists or cooling down) */}
+        {!activeDiscount && !cooldownUntil && (
           <div className="space-y-6">
             {/* Discount Type */}
             <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
               <h2 className="font-semibold text-neutral-dark mb-4 flex items-center gap-2">
                 <Percent className="w-4 h-4 text-brand-blue" />
-                Discount Type
+                {t.flashDiscountType}
               </h2>
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -224,8 +383,8 @@ export default function FlashDiscountPage() {
                   )}
                 >
                   <Percent className="w-6 h-6 mx-auto mb-2" />
-                  <span className="font-semibold block">Percentage Off</span>
-                  <span className="text-xs">e.g., 20% off</span>
+                  <span className="font-semibold block">{t.flashPercentageOff}</span>
+                  <span className="text-xs">{t.flashPercentageExample}</span>
                 </button>
                 <button
                   onClick={() => setDiscountType('fixed')}
@@ -237,8 +396,8 @@ export default function FlashDiscountPage() {
                   )}
                 >
                   <DollarSign className="w-6 h-6 mx-auto mb-2" />
-                  <span className="font-semibold block">Fixed Amount Off</span>
-                  <span className="text-xs">e.g., $50 off</span>
+                  <span className="font-semibold block">{t.flashFixedAmountOff}</span>
+                  <span className="text-xs">{t.flashFixedExample}</span>
                 </button>
               </div>
             </div>
@@ -246,7 +405,7 @@ export default function FlashDiscountPage() {
             {/* Discount Value */}
             <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
               <h2 className="font-semibold text-neutral-dark mb-4">
-                {discountType === 'percentage' ? 'Discount Percentage' : 'Discount Amount'}
+                {discountType === 'percentage' ? t.flashDiscountPercentage : t.flashDiscountAmount}
               </h2>
               <div className="flex items-center gap-3">
                 {discountType === 'percentage' ? (
@@ -275,13 +434,13 @@ export default function FlashDiscountPage() {
                   </div>
                 )}
                 <span className="text-sm text-neutral-500">
-                  Max: {discountType === 'percentage' ? '50%' : '$200'}
+                  {discountType === 'percentage' ? t.flashMaxPercent : t.flashMaxFixed}
                 </span>
               </div>
 
               {/* Live preview */}
               <div className="mt-4 p-3 bg-neutral-50 rounded-lg">
-                <p className="text-xs text-neutral-500 mb-1">Preview</p>
+                <p className="text-xs text-neutral-500 mb-1">{t.flashPreview}</p>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-neutral-400 line-through">
                     {formatUSD(sampleOriginalPrice)}
@@ -290,9 +449,9 @@ export default function FlashDiscountPage() {
                     {formatUSD(previewPrice)}
                   </span>
                   <span className="text-xs text-orange-600 font-medium">
-                    Save {discountType === 'percentage'
-                      ? `${discountValue}%`
-                      : formatUSD(discountValue)}
+                    {discountType === 'percentage'
+                      ? t.flashSavePercent.replace('{n}', String(discountValue))
+                      : t.flashSaveFixed.replace('{value}', formatUSD(discountValue))}
                   </span>
                 </div>
               </div>
@@ -302,10 +461,10 @@ export default function FlashDiscountPage() {
             {procedures.length > 0 && (
               <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
                 <h2 className="font-semibold text-neutral-dark mb-2">
-                  Apply to Procedures
+                  {t.flashApplyToProcedures}
                 </h2>
                 <p className="text-sm text-neutral-500 mb-4">
-                  Select specific procedures, or leave empty to apply to all.
+                  {t.flashApplyToProceduresHint}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {procedures.map((proc) => (
@@ -326,7 +485,7 @@ export default function FlashDiscountPage() {
                 </div>
                 {selectedProcedures.length === 0 && (
                   <p className="text-xs text-neutral-400 mt-2 italic">
-                    No procedures selected — discount applies to all your listed prices
+                    {t.flashNoProceduresSelected}
                   </p>
                 )}
               </div>
@@ -336,7 +495,7 @@ export default function FlashDiscountPage() {
             <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
               <h2 className="font-semibold text-neutral-dark mb-4 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-brand-blue" />
-                Duration
+                {t.flashDuration}
               </h2>
               <div className="flex flex-wrap gap-2">
                 {DURATION_PRESETS.map((preset) => (
@@ -350,7 +509,7 @@ export default function FlashDiscountPage() {
                         : 'bg-white text-neutral-600 border-neutral-200 hover:border-brand-navy'
                     )}
                   >
-                    {preset.label}
+                    {durationLabel(preset.hours, t)}
                   </button>
                 ))}
               </div>
@@ -360,14 +519,14 @@ export default function FlashDiscountPage() {
             <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
               <h2 className="font-semibold text-neutral-dark mb-4 flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-brand-blue" />
-                Message (Optional)
+                {t.flashMessage}
               </h2>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 maxLength={140}
                 rows={2}
-                placeholder="e.g., Open slot this afternoon — walk-ins welcome!"
+                placeholder={t.flashMessagePlaceholder}
                 className="w-full px-4 py-3 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue resize-none"
               />
               <p className="text-xs text-neutral-400 mt-1 text-right">
@@ -395,15 +554,15 @@ export default function FlashDiscountPage() {
               )}
             >
               <Zap className="w-5 h-5 fill-current" />
-              {isSubmitting ? 'Going Live...' : 'Go Live'}
+              {isSubmitting ? t.flashGoingLive : t.flashGoLive}
             </button>
 
             {/* Rules */}
             <div className="text-xs text-neutral-400 space-y-1">
-              <p>• Maximum discount: 50% or $200</p>
-              <p>• Duration: 1–24 hours</p>
-              <p>• Only 1 active flash discount at a time</p>
-              <p>• 4-hour cooldown between discounts</p>
+              <p>• {t.flashRuleMax}</p>
+              <p>• {t.flashRuleDuration}</p>
+              <p>• {t.flashRuleOneActive}</p>
+              <p>• {t.flashRuleCooldown}</p>
             </div>
           </div>
         )}
@@ -412,14 +571,15 @@ export default function FlashDiscountPage() {
         {success && activeDiscount && (
           <div className="mt-6 p-4 bg-brand-green/10 border border-brand-green/20 rounded-xl text-center">
             <p className="text-brand-green font-semibold mb-2">
-              Your flash discount is live!
+              {t.flashSuccessLive}
             </p>
             <p className="text-sm text-neutral-600">
-              Patients browsing your category can now see your deal with a countdown timer.
+              {t.flashSuccessBody}
             </p>
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

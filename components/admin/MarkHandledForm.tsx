@@ -4,8 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
 import Textarea from '@/components/ui/Textarea';
+import type { Locale } from '@/lib/i18n/context';
+import { dictFor } from '@/lib/i18n/dict';
 
-export default function MarkHandledForm({ quoteId }: { quoteId: string }) {
+export default function MarkHandledForm({ quoteId, locale }: { quoteId: string; locale: Locale }) {
+  const t = dictFor(locale).admin;
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
@@ -24,7 +27,7 @@ export default function MarkHandledForm({ quoteId }: { quoteId: string }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Failed to save');
+        setError(t.markHandledError);
         setSaving(false);
         return;
       }
@@ -32,7 +35,7 @@ export default function MarkHandledForm({ quoteId }: { quoteId: string }) {
       setNote('');
       router.refresh();
     } catch {
-      setError('Failed to save');
+      setError(t.markHandledError);
       setSaving(false);
     }
   };
@@ -40,7 +43,7 @@ export default function MarkHandledForm({ quoteId }: { quoteId: string }) {
   if (!open) {
     return (
       <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
-        Mark handled
+        {t.markHandled}
       </Button>
     );
   }
@@ -48,7 +51,7 @@ export default function MarkHandledForm({ quoteId }: { quoteId: string }) {
   return (
     <form onSubmit={submit} className="space-y-2 w-full max-w-sm">
       <Textarea
-        placeholder="What did you do? e.g. Called the clinic directly and connected the patient."
+        placeholder={t.markHandledPlaceholder}
         value={note}
         onChange={(e) => setNote(e.target.value)}
         required
@@ -58,7 +61,7 @@ export default function MarkHandledForm({ quoteId }: { quoteId: string }) {
       {error && <p className="text-xs text-error">{error}</p>}
       <div className="flex gap-2">
         <Button type="submit" size="sm" loading={saving} disabled={saving}>
-          Save
+          {t.markHandledSave}
         </Button>
         <Button
           type="button"
@@ -70,7 +73,7 @@ export default function MarkHandledForm({ quoteId }: { quoteId: string }) {
           }}
           disabled={saving}
         >
-          Cancel
+          {t.markHandledCancel}
         </Button>
       </div>
     </form>

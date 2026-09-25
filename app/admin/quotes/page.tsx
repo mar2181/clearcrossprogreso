@@ -6,6 +6,10 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { Card, CardContent } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import MarkHandledForm from '@/components/admin/MarkHandledForm';
+import AdminSubnav from '@/components/admin/AdminSubnav';
+import { getPortalLocale } from '@/lib/i18n/serverLocale';
+import { dictFor } from '@/lib/i18n/dict';
+import type { Locale } from '@/lib/i18n/context';
 
 // The system of record for every quote request across the whole directory,
 // regardless of whether the clinic it went to has an account yet. Today
@@ -30,16 +34,16 @@ type AdminQuote = {
   } | null;
 };
 
-function ageLabel(createdAt: string): string {
+function ageLabel(createdAt: string, t: ReturnType<typeof dictFor>['admin']): string {
   const ms = Date.now() - new Date(createdAt).getTime();
   const hours = ms / 36e5;
-  if (hours < 1) return `${Math.max(1, Math.round(ms / 6e4))} min ago`;
-  if (hours < 48) return `${Math.round(hours)} h ago`;
-  return `${Math.round(hours / 24)} days ago`;
+  if (hours < 1) return t.quotesAgeMinutes.replace('{n}', String(Math.max(1, Math.round(ms / 6e4))));
+  if (hours < 48) return t.quotesAgeHours.replace('{n}', String(Math.round(hours)));
+  return t.quotesAgeDays.replace('{n}', String(Math.round(hours / 24)));
 }
 
-function fmt(dateString: string): string {
-  return new Date(dateString).toLocaleString('en-US', {
+function fmt(dateString: string, locale: Locale): string {
+  return new Date(dateString).toLocaleString(locale === 'es' ? 'es-MX' : 'en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -49,6 +53,8 @@ function fmt(dateString: string): string {
 }
 
 export default async function AdminQuotesPage() {
+  const locale = await getPortalLocale();
+  const t = dictFor(locale).admin;
   const supabase = createServerSupabaseClient();
 
   const {
@@ -95,16 +101,20 @@ export default async function AdminQuotesPage() {
   const answered = quotes.filter((q) => q.responded_at).reverse();
 
   return (
-    <div className="min-h-screen bg-neutral-50 px-4 py-10">
+    <>
+      <AdminSubnav />
+      <div className="min-h-screen bg-neutral-50 px-4 py-10">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-neutral-900">
-            Every lead, every provider
+            {t.quotesHeading}
           </h1>
           <p className="text-neutral-600 text-sm mt-1">
             {error
-              ? 'Could not read the quote table — this is a failed read, not an empty list.'
-              : `${unanswered.length} waiting, ${answered.length} handled`}
+              ? t.quotesErrorRead
+              : t.quotesSummary
+                  .replace('{waiting}', String(unanswered.length))
+                  .replace('{handled}', String(answered.length))}
           </p>
         </div>
 
@@ -117,11 +127,11 @@ export default async function AdminQuotesPage() {
         )}
 
         <h2 className="text-lg font-semibold text-neutral-900 mb-3">
-          Waiting ({unanswered.length})
+          {t.quotesWaitingHeading.replace('{n}', String(unanswered.length))}
         </h2>
         <div className="space-y-3 mb-10">
           {unanswered.length === 0 && !error && (
-            <p className="text-sm text-neutral-500">Nothing waiting right now.</p>
+            <p className="text-sm text-neutral-500">{t.quotesNothingWaiting}</p>
           )}
           {unanswered.map((q) => (
             <Card key={q.id} className="border-amber-300">
@@ -131,18 +141,18 @@ export default async function AdminQuotesPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant={`status-${q.status}` as any}>{q.status}</Badge>
                       <span className="text-xs text-neutral-500">
-                        {ageLabel(q.created_at)} · {fmt(q.created_at)}
+                        {ageLabel(q.created_at, t)} · {fmt(q.created_at, locale)}
                       </span>
                     </div>
                     <p className="font-medium text-neutral-900">
-                      {q.user?.full_name || 'Unknown patient'}{' '}
+                      {q.user?.full_name || t.quotesUnknownPatient}{' '}
                       <span className="font-normal text-neutral-500 text-sm">
                         {q.user?.email} {q.user?.phone ? `· ${q.user.phone}` : ''}
                       </span>
                     </p>
                     <p className="text-sm text-neutral-700 mt-1">
                       <span className="font-medium">
-                        {q.provider?.name || 'Unknown provider'}
+                        {q.provider?.name || t.quotesUnknownProvider}
                       </span>
                       {q.provider?.phone ? ` — ${q.provider.phone}` : ''}
                       {q.procedure?.name ? ` · ${q.procedure.name}` : ''}
@@ -157,12 +167,12 @@ export default async function AdminQuotesPage() {
                         href={`/dentists/${q.provider.slug}`}
                         className="text-xs text-brand-blue hover:underline mt-1 inline-block"
                       >
-                        View listing →
+                        {t.quotesViewListing} →
                       </Link>
                     )}
                   </div>
                   <div className="shrink-0">
-                    <MarkHandledForm quoteId={q.id} />
+                    <MarkHandledForm quoteId={q.id} locale={locale} />
                   </div>
                 </div>
               </CardContent>
@@ -171,7 +181,7 @@ export default async function AdminQuotesPage() {
         </div>
 
         <h2 className="text-lg font-semibold text-neutral-900 mb-3">
-          Handled ({answered.length})
+          {t.quotesHandledHeading.replace('{n}', String(answered.length))}
         </h2>
         <div className="space-y-3">
           {answered.map((q) => (
@@ -180,11 +190,11 @@ export default async function AdminQuotesPage() {
                 <div className="flex items-center gap-2 mb-1">
                   <Badge variant={`status-${q.status}` as any}>{q.status}</Badge>
                   <span className="text-xs text-neutral-500">
-                    closed {fmt(q.responded_at as string)}
+                    {t.quotesClosed.replace('{when}', fmt(q.responded_at as string, locale))}
                   </span>
                 </div>
                 <p className="text-sm text-neutral-800">
-                  {q.user?.full_name || 'Unknown patient'} → {q.provider?.name || 'Unknown provider'}
+                  {q.user?.full_name || t.quotesUnknownPatient} → {q.provider?.name || t.quotesUnknownProvider}
                 </p>
                 {q.provider_notes && (
                   <p className="text-xs text-neutral-500 mt-1 whitespace-pre-wrap">
@@ -196,6 +206,7 @@ export default async function AdminQuotesPage() {
           ))}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

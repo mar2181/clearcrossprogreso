@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import type { Locale } from '@/lib/i18n/context';
+import { dictFor } from '@/lib/i18n/dict';
 
 interface CountdownTimerProps {
   expiresAt: string;
   onExpire?: () => void;
   className?: string;
   size?: 'sm' | 'md';
+  // Optional so the three public-site callers that don't yet resolve a
+  // locale (FlashDiscountBanner, FlashNotificationBanner) keep behaving
+  // exactly as before. The portal always passes its own resolved locale.
+  locale?: Locale;
 }
 
 function getTimeRemaining(expiresAt: string) {
@@ -22,12 +28,13 @@ function getTimeRemaining(expiresAt: string) {
   };
 }
 
-function formatTime(time: ReturnType<typeof getTimeRemaining>) {
-  if (time.total <= 0) return 'Expired';
+function formatTime(time: ReturnType<typeof getTimeRemaining>, locale: Locale) {
+  const t = dictFor(locale).provider;
+  if (time.total <= 0) return t.countdownExpired;
   if (time.hours > 0) {
-    return `${time.hours}h ${time.minutes}m left`;
+    return t.countdownHoursMinutes.replace('{h}', String(time.hours)).replace('{m}', String(time.minutes));
   }
-  return `${time.minutes}m ${time.seconds}s left`;
+  return t.countdownMinutesSeconds.replace('{m}', String(time.minutes)).replace('{s}', String(time.seconds));
 }
 
 export default function CountdownTimer({
@@ -35,6 +42,7 @@ export default function CountdownTimer({
   onExpire,
   className,
   size = 'sm',
+  locale = 'en',
 }: CountdownTimerProps) {
   const [time, setTime] = useState(getTimeRemaining(expiresAt));
 
@@ -78,7 +86,7 @@ export default function CountdownTimer({
         <circle cx="12" cy="12" r="10" />
         <polyline points="12 6 12 12 16 14" />
       </svg>
-      {formatTime(time)}
+      {formatTime(time, locale)}
     </span>
   );
 }

@@ -5,7 +5,10 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
-import { BarChart3, Eye, FileText, TrendingUp, Zap } from 'lucide-react';
+import ProviderSubnav from '@/components/providers/ProviderSubnav';
+import { getPortalLocale } from '@/lib/i18n/serverLocale';
+import { dictFor } from '@/lib/i18n/dict';
+import { BarChart3, Camera, Eye, FileText, TrendingUp, Zap } from 'lucide-react';
 
 export const metadata = {
   title: 'Provider Dashboard - ClearCross Progreso',
@@ -14,6 +17,8 @@ export const metadata = {
 
 export default async function ProviderDashboardPage() {
   const supabase = createServerSupabaseClient();
+  const locale = await getPortalLocale();
+  const t = dictFor(locale).provider;
 
   // Check authentication
   const {
@@ -79,6 +84,16 @@ export default async function ProviderDashboardPage() {
         : 0,
   };
 
+  // A brand-new account with zero leads and nothing priced yet gets a short
+  // "getting started" card instead of "Welcome back" over four zeros with no
+  // explanation of what to do next.
+  const { count: pricedCount } = await supabase
+    .from('clearcross_provider_prices')
+    .select('id', { count: 'exact', head: true })
+    .eq('provider_id', userData.provider_id)
+    .not('price_usd', 'is', null);
+  const isGettingStarted = totalRequests === 0 && !pricedCount;
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'pending':
@@ -96,8 +111,25 @@ export default async function ProviderDashboardPage() {
     }
   };
 
+  const statusLabel = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return t.statusPending;
+      case 'quoted':
+        return t.statusQuoted;
+      case 'accepted':
+        return t.statusAccepted;
+      case 'rejected':
+        return t.statusRejected;
+      case 'completed':
+        return t.statusCompleted;
+      default:
+        return status;
+    }
+  };
+
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(locale === 'es' ? 'es-MX' : 'en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -105,15 +137,29 @@ export default async function ProviderDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 py-12">
+    <>
+      <ProviderSubnav />
+      <div className="min-h-screen bg-neutral-50 py-12">
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-neutral-900 mb-2">
-            Welcome back, {providerData?.name || 'Provider'}
+            {t.dashboardWelcome.replace('{name}', providerData?.name || t.dashboardDefaultName)}
           </h1>
-          <p className="text-neutral-600">Manage your quotes and pricing</p>
+          <p className="text-neutral-600">{t.dashboardSubtitle}</p>
         </div>
+
+        {/* Getting-started card — only while there is nothing to show yet */}
+        {isGettingStarted && (
+          <div className="mb-8 rounded-xl border border-brand-blue/20 bg-brand-blue/5 p-5">
+            <p className="font-semibold text-neutral-900 mb-1">{t.dashboardGettingStartedHeading}</p>
+            <p className="text-sm text-neutral-600 mb-3">{t.dashboardGettingStartedBody}</p>
+            <ol className="text-sm text-neutral-700 space-y-1 list-decimal list-inside">
+              <li>{t.dashboardStepProfile}</li>
+              <li>{t.dashboardStepPrices}</li>
+            </ol>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -121,7 +167,7 @@ export default async function ProviderDashboardPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm font-medium">Quote Requests</p>
+                  <p className="text-gray-500 text-sm font-medium">{t.statQuoteRequests}</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-2">
                     {stats.totalRequests}
                   </p>
@@ -135,7 +181,7 @@ export default async function ProviderDashboardPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm font-medium">Accepted Quotes</p>
+                  <p className="text-gray-500 text-sm font-medium">{t.statAcceptedQuotes}</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-2">
                     {stats.acceptedQuotes}
                   </p>
@@ -149,7 +195,7 @@ export default async function ProviderDashboardPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm font-medium">Completed Visits</p>
+                  <p className="text-gray-500 text-sm font-medium">{t.statCompletedVisits}</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-2">
                     {stats.completedVisits}
                   </p>
@@ -163,7 +209,7 @@ export default async function ProviderDashboardPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm font-medium">Conversion Rate</p>
+                  <p className="text-gray-500 text-sm font-medium">{t.statConversionRate}</p>
                   <p className="text-3xl font-bold text-neutral-900 mt-2">
                     {stats.conversionRate}%
                   </p>
@@ -180,13 +226,13 @@ export default async function ProviderDashboardPage() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader className="border-b border-neutral-100">
-                <h2 className="text-xl font-bold text-neutral-900">Recent Quote Requests</h2>
+                <h2 className="text-xl font-bold text-neutral-900">{t.recentRequestsHeading}</h2>
               </CardHeader>
 
               <CardContent className="pt-6">
                 {quotes.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-neutral-600">No quote requests yet</p>
+                    <p className="text-neutral-600">{t.noQuoteRequests}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -197,10 +243,10 @@ export default async function ProviderDashboardPage() {
                       >
                         <div>
                           <p className="font-semibold text-neutral-900">
-                            {quote.user?.full_name || 'Anonymous'}
+                            {quote.user?.full_name || t.anonymousPatient}
                           </p>
                           <p className="text-sm text-neutral-600">
-                            {quote.procedure?.name || 'Custom Request'}
+                            {quote.procedure?.name || t.customRequest}
                           </p>
                           <p className="text-xs text-neutral-500 mt-1">
                             {formatDate(quote.created_at)}
@@ -208,12 +254,12 @@ export default async function ProviderDashboardPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <Badge variant={getStatusBadgeVariant(quote.status)}>
-                            {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
+                            {statusLabel(quote.status)}
                           </Badge>
                           {quote.status === 'pending' && (
                             <Link href="/provider/quotes">
                               <Button variant="outline" size="sm">
-                                Respond
+                                {t.respond}
                               </Button>
                             </Link>
                           )}
@@ -230,28 +276,34 @@ export default async function ProviderDashboardPage() {
           <div className="space-y-4">
             <Card>
               <CardHeader className="border-b border-neutral-100">
-                <h3 className="font-bold text-neutral-900">Quick Actions</h3>
+                <h3 className="font-bold text-neutral-900">{t.quickActionsHeading}</h3>
               </CardHeader>
               <CardContent className="pt-6 space-y-3">
                 <Link href="/provider/flash-discount">
                   <Button variant="primary" size="lg" className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 border-none">
                     <Zap className="w-4 h-4 mr-2 fill-current" />
-                    Flash Discount
+                    {t.actionFlashDiscount}
                   </Button>
                 </Link>
                 <Link href="/provider/prices">
                   <Button variant="primary" size="lg" className="w-full">
-                    Manage Prices
+                    {t.actionManagePrices}
                   </Button>
                 </Link>
                 <Link href="/provider/profile">
                   <Button variant="outline" size="lg" className="w-full">
-                    Edit Profile
+                    {t.actionEditProfile}
+                  </Button>
+                </Link>
+                <Link href="/provider/photos">
+                  <Button variant="outline" size="lg" className="w-full">
+                    <Camera className="w-4 h-4 mr-2" />
+                    {t.actionManagePhotos}
                   </Button>
                 </Link>
                 <Link href="/provider/quotes">
                   <Button variant="outline" size="lg" className="w-full">
-                    View All Quotes
+                    {t.actionViewAllQuotes}
                   </Button>
                 </Link>
               </CardContent>
@@ -262,12 +314,12 @@ export default async function ProviderDashboardPage() {
               <CardContent className="pt-6">
                 <div className="text-sm space-y-3">
                   <div>
-                    <p className="text-neutral-600 text-xs">Business</p>
+                    <p className="text-neutral-600 text-xs">{t.infoBusiness}</p>
                     <p className="font-semibold text-neutral-900">{providerData?.name}</p>
                   </div>
                   {providerData?.phone && (
                     <div>
-                      <p className="text-neutral-600 text-xs">Phone</p>
+                      <p className="text-neutral-600 text-xs">{t.infoPhone}</p>
                       <p className="font-semibold text-neutral-900">{providerData.phone}</p>
                     </div>
                   )}
@@ -283,6 +335,7 @@ export default async function ProviderDashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

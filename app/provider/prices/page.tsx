@@ -7,7 +7,10 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/Button';
+import ProviderSubnav from '@/components/providers/ProviderSubnav';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import { usePortalLocale } from '@/lib/i18n/usePortalLocale';
+import { dictFor } from '@/lib/i18n/dict';
 
 interface ProcedurePrice {
   id: string;
@@ -20,6 +23,8 @@ interface ProcedurePrice {
 export default function PricesPage() {
   const router = useRouter();
   const supabase = createClient();
+  const locale = usePortalLocale();
+  const t = dictFor(locale).provider;
 
   const [user, setUser] = useState<any>(null);
   const [provider, setProvider] = useState<any>(null);
@@ -117,8 +122,9 @@ export default function PricesPage() {
         });
         setPrices(initialPrices);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load prices');
+    } catch (err) {
+      console.error('Failed to load prices:', err);
+      setError(t.pricesErrorLoad);
     } finally {
       setLoading(false);
     }
@@ -160,11 +166,13 @@ export default function PricesPage() {
         if (updateError) throw updateError;
       }
 
-      setSuccess(`Price saved for ${procedures.find((p) => p.procedure_id === procedureId)?.procedure_name}`);
+      const savedName = procedures.find((p) => p.procedure_id === procedureId)?.procedure_name || '';
+      setSuccess(t.pricesSuccessSave.replace('{procedure}', savedName));
       setTimeout(() => setSuccess(''), 3000);
       await fetchData();
-    } catch (err: any) {
-      setError(err.message || 'Failed to save price');
+    } catch (err) {
+      console.error('Failed to save price:', err);
+      setError(t.pricesErrorSave);
     } finally {
       setSavingId(null);
     }
@@ -179,23 +187,22 @@ export default function PricesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 py-12">
+    <>
+      <ProviderSubnav />
+      <div className="min-h-screen bg-neutral-50 py-12">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-neutral-900 mb-2">Manage Pricing</h1>
-          <p className="text-neutral-600">Set prices for procedures in your category</p>
+          <h1 className="text-4xl font-bold text-neutral-900 mb-2">{t.pricesHeading}</h1>
+          <p className="text-neutral-600">{t.pricesSubtitle}</p>
         </div>
 
         {/* Warning Banner */}
         <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex gap-3">
           <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-amber-900 text-sm">Important Note</p>
-            <p className="text-amber-800 text-sm mt-0.5">
-              Prices you set here are binding. Once a patient accepts a quote at these prices, the
-              price cannot be changed.
-            </p>
+            <p className="font-semibold text-amber-900 text-sm">{t.pricesWarningTitle}</p>
+            <p className="text-amber-800 text-sm mt-0.5">{t.pricesWarningBody}</p>
           </div>
         </div>
 
@@ -217,16 +224,14 @@ export default function PricesPage() {
         <Card>
           <CardHeader className="border-b border-neutral-100">
             <h2 className="text-xl font-bold text-neutral-900">
-              Procedures & Pricing for {provider?.name}
+              {t.pricesTableHeading.replace('{name}', provider?.name || '')}
             </h2>
           </CardHeader>
 
           <CardContent className="pt-6">
             {procedures.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-neutral-600">
-                  No procedures available for your category. Contact support to update your category.
-                </p>
+                <p className="text-neutral-600">{t.pricesEmptyCategory}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -236,13 +241,13 @@ export default function PricesPage() {
                     <thead>
                       <tr className="border-b border-neutral-200">
                         <th className="text-left py-3 px-4 font-semibold text-neutral-900 text-sm">
-                          Procedure
+                          {t.pricesColProcedure}
                         </th>
                         <th className="text-left py-3 px-4 font-semibold text-neutral-900 text-sm">
-                          Price (USD)
+                          {t.pricesColPrice}
                         </th>
                         <th className="text-left py-3 px-4 font-semibold text-neutral-900 text-sm">
-                          Notes
+                          {t.pricesColNotes}
                         </th>
                         <th className="text-right py-3 px-4"></th>
                       </tr>
@@ -256,7 +261,7 @@ export default function PricesPage() {
                           <td className="py-4 px-4">
                             <Input
                               type="number"
-                              placeholder="0.00"
+                              placeholder={t.pricesPricePlaceholder}
                               value={prices[proc.procedure_id]?.price || ''}
                               onChange={(e) =>
                                 setPrices({
@@ -275,7 +280,7 @@ export default function PricesPage() {
                           <td className="py-4 px-4">
                             <Input
                               type="text"
-                              placeholder="e.g., Includes cleaning"
+                              placeholder={t.pricesNotesPlaceholder}
                               value={prices[proc.procedure_id]?.notes || ''}
                               onChange={(e) =>
                                 setPrices({
@@ -297,7 +302,7 @@ export default function PricesPage() {
                               loading={savingId === proc.procedure_id}
                               disabled={savingId === proc.procedure_id}
                             >
-                              Save
+                              {t.pricesSave}
                             </Button>
                           </td>
                         </tr>
@@ -316,9 +321,9 @@ export default function PricesPage() {
                         </div>
 
                         <Input
-                          label="Price (USD)"
+                          label={t.pricesColPrice}
                           type="number"
-                          placeholder="0.00"
+                          placeholder={t.pricesPricePlaceholder}
                           value={prices[proc.procedure_id]?.price || ''}
                           onChange={(e) =>
                             setPrices({
@@ -334,9 +339,9 @@ export default function PricesPage() {
                         />
 
                         <Input
-                          label="Notes"
+                          label={t.pricesColNotes}
                           type="text"
-                          placeholder="e.g., Includes cleaning"
+                          placeholder={t.pricesNotesPlaceholder}
                           value={prices[proc.procedure_id]?.notes || ''}
                           onChange={(e) =>
                             setPrices({
@@ -357,7 +362,7 @@ export default function PricesPage() {
                           disabled={savingId === proc.procedure_id}
                           className="w-full"
                         >
-                          Save Price
+                          {t.pricesSavePrice}
                         </Button>
                       </CardContent>
                     </Card>
@@ -368,6 +373,7 @@ export default function PricesPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
