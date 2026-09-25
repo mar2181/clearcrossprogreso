@@ -44,12 +44,21 @@ export default function PhotoReviewActions({
 
   return (
     <div>
+      {/*
+        Not the shared <Button/> component: its smallest size (px-3 py-1.5
+        text-sm) is too wide for this pair to sit side by side inside a
+        grid-cols-4 photo tile without wrapping. Kept as raw buttons at the
+        same compact size as before, but on the app's own brand token for
+        approve (bg-brand-green, matching Button's `secondary` variant and
+        MarkHandledForm) instead of Tailwind's unrelated default green-600 —
+        and the same focus ring Button uses, for keyboard parity.
+      */}
       <div className="flex gap-1.5">
         <button
           type="button"
           onClick={() => decide('approve')}
           disabled={busy !== null}
-          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded disabled:opacity-50"
+          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-brand-green hover:bg-brand-green/90 active:bg-brand-green/80 text-white text-xs font-semibold rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-blue disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {busy === 'approve' ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -62,7 +71,7 @@ export default function PhotoReviewActions({
           type="button"
           onClick={() => decide('reject')}
           disabled={busy !== null}
-          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-neutral-200 hover:bg-neutral-300 text-neutral-700 text-xs font-semibold rounded disabled:opacity-50"
+          className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-neutral-200 hover:bg-neutral-300 text-neutral-700 text-xs font-semibold rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-blue disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {busy === 'reject' ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />

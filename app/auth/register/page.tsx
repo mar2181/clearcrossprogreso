@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { friendlyAuthError } from '@/lib/auth-errors';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -63,13 +64,14 @@ export default function RegisterPage() {
       });
 
       if (signUpError) {
-        setError(signUpError.message);
+        console.error('Sign-up failed:', signUpError);
+        setError(friendlyAuthError(signUpError, "We couldn't create your account."));
         setLoading(false);
         return;
       }
 
       if (!data.user) {
-        setError('Failed to create account');
+        setError("We couldn't create your account. Please try again.");
         setLoading(false);
         return;
       }
@@ -116,7 +118,8 @@ export default function RegisterPage() {
       });
 
       if (userError) {
-        setError(userError.message);
+        console.error('User record creation failed:', userError);
+        setError(friendlyAuthError(userError, "We couldn't finish creating your account."));
         setLoading(false);
         return;
       }
@@ -141,7 +144,8 @@ export default function RegisterPage() {
           .single();
 
         if (providerError) {
-          setError(providerError.message);
+          console.error('Provider listing creation failed:', providerError);
+          setError(friendlyAuthError(providerError, "We couldn't create your listing."));
           setLoading(false);
           return;
         }
@@ -159,7 +163,8 @@ export default function RegisterPage() {
       setSuccess(true);
       setLoading(false);
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      console.error('Registration failed:', err);
+      setError(friendlyAuthError(err, "We couldn't complete your registration."));
       setLoading(false);
     }
   };

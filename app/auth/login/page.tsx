@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { friendlyAuthError } from '@/lib/auth-errors';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -34,7 +35,8 @@ function LoginForm() {
       });
 
       if (signInError) {
-        setError(signInError.message);
+        console.error('Password sign-in failed:', signInError);
+        setError(friendlyAuthError(signInError, "We couldn't sign you in."));
         setLoading(false);
         return;
       }
@@ -51,7 +53,8 @@ function LoginForm() {
         router.push(finalRedirect);
       }
     } catch (err: any) {
-      setError(err.message || 'Sign in failed');
+      console.error('Password sign-in failed:', err);
+      setError(friendlyAuthError(err, "We couldn't sign you in."));
       setLoading(false);
     }
   };
@@ -70,7 +73,8 @@ function LoginForm() {
       });
 
       if (signInError) {
-        setError(signInError.message);
+        console.error('Magic link send failed:', signInError);
+        setError(friendlyAuthError(signInError, "We couldn't send the magic link."));
         setLoading(false);
         return;
       }
@@ -79,7 +83,8 @@ function LoginForm() {
       setEmail('');
       setLoading(false);
     } catch (err: any) {
-      setError(err.message || 'Failed to send magic link');
+      console.error('Magic link send failed:', err);
+      setError(friendlyAuthError(err, "We couldn't send the magic link."));
       setLoading(false);
     }
   };
@@ -99,7 +104,8 @@ function LoginForm() {
       });
 
       if (resetError) {
-        setError(resetError.message);
+        console.error('Password reset send failed:', resetError);
+        setError(friendlyAuthError(resetError, "We couldn't send the reset link."));
         setLoading(false);
         return;
       }
@@ -108,7 +114,8 @@ function LoginForm() {
       setEmail('');
       setLoading(false);
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset link');
+      console.error('Password reset send failed:', err);
+      setError(friendlyAuthError(err, "We couldn't send the reset link."));
       setLoading(false);
     }
   };
