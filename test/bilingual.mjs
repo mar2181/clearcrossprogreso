@@ -194,9 +194,11 @@ const paired = sm.match(/entries\.push\(\s*\.\.\.pair\(/g) || []
 const smCode = stripComments(sm)
 const englishOnly = smCode.match(/entries\.push\(\s*\.\.\.englishOnly\(/g) || []
 check(pushes.length > 0, 'control: the sitemap actually pushes entries')
-check(englishOnly.length === 1, `exactly ONE englishOnly() call site in the sitemap (found ${englishOnly.length})`)
+check(englishOnly.length === 2, `exactly TWO englishOnly() call sites in the sitemap: webmaster posts and webmaster service pages (found ${englishOnly.length})`)
 check(/const webmaster = await wmPosts\([\s\S]{0,200}?entries\.push\(\s*\.\.\.englishOnly\(`\/blog\/\$\{post\.slug\}`/.test(smCode),
   'the englishOnly() call site is the webmaster-post block and nothing else')
+check(/allVeraPages\(\)\.forEach\(\(spec\) => \{\s*entries\.push\(\.\.\.englishOnly\(`\/services\/\$\{spec\.slug\}`/.test(smCode),
+  'the second englishOnly() call site is the webmaster service-page block (/services/<slug>, no Spanish twin) and nothing else')
 check(pushes.length === paired.length + englishOnly.length,
   `every other sitemap entry is emitted as a language PAIR (${paired.length}+${englishOnly.length}/${pushes.length})`)
 // ⛔ Pins the CONSTRUCT, not the word. An earlier draft was `/alternates/.test(sm)`

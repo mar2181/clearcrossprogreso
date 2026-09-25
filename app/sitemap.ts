@@ -7,6 +7,7 @@
 import type { MetadataRoute } from 'next';
 import { getAllPosts } from '@/lib/blog';
 import { wmPosts } from '@/lib/wm-blog';
+import { allVeraPages } from '@/lib/vera-pages';
 import { getAllCategories, getAllProviderSlugs, getPricedProcedures } from '@/lib/data';
 import { bilingualAlternates, enUrl, esUrl } from '@/lib/hreflang';
 
@@ -121,6 +122,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch (error) {
     console.error('Error fetching webmaster posts for sitemap:', error);
   }
+
+  // The webmaster's pages (lib/vera-pages.ts), /services/<slug>. ⛔ English only,
+  // for the same reason as the posts above, and read from the SAME function the
+  // route's generateStaticParams uses, so the sitemap cannot list a guide the
+  // router did not build. Local files: a read failure is a real defect, so it
+  // is not caught.
+  allVeraPages().forEach((spec) => {
+    entries.push(...englishOnly(`/services/${spec.slug}`, { changeFrequency: 'monthly', priority: 0.7 }));
+  });
 
   // Provider pages — data layer handles mock vs Supabase
   try {

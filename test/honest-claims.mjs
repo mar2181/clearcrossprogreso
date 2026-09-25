@@ -452,6 +452,11 @@ const walkTree = (dir, out = []) => {
     const p = join(dir, entry)
     if (statSync(p).isDirectory()) walkTree(p, out)
     else if (/\.(tsx?|mdx)$/.test(entry) && !entry.endsWith('.d.ts')) out.push(p.split('\\').join('/'))
+    // ⛔ The webmaster's page specs are MODEL-WRITTEN copy published on a health
+    // site (lib/vera-pages.ts). They are JSON, so the extension test above never
+    // saw them; a spec saying "every clinic we list is vetted" would ship past
+    // every rule in this file. Scoped to that one folder: other JSON is data.
+    else if (entry.endsWith('.json') && p.split('\\').join('/').includes('content/vera-pages/')) out.push(p.split('\\').join('/'))
   }
   return out
 }
@@ -466,7 +471,13 @@ const PAGE_TREE = ['components', 'app', 'lib', 'content'].flatMap((d) => walkTre
 // line while a stray apostrophe opens a string that never closes. The moment
 // content/ entered PAGE_TREE, every consumer of it had to pick its stripper by
 // extension -- markdown has no JS comments, it has HTML ones.
-const readPage = (p) => (p.endsWith('.mdx') || p.endsWith('.md') ? readProse(p) : read(p))
+// A spec's text is every string value in it, each read as its own sentence.
+const specStrings = (v) => (typeof v === 'string' ? [v] : Array.isArray(v) ? v.flatMap(specStrings)
+  : v && typeof v === 'object' ? Object.values(v).flatMap(specStrings) : [])
+const readSpec = (p) => specStrings(JSON.parse(readFileSync(p, 'utf8')))
+  .map((t) => t.replace(/[.!?]?\s*$/, '.')).join(' ')
+const readPage = (p) => (p.endsWith('.json') ? readSpec(p)
+  : p.endsWith('.mdx') || p.endsWith('.md') ? readProse(p) : read(p))
 
 // CONTROL. A walk that returns nothing reports the same all-green as a walk over
 // a clean tree, and it is the single most likely way this section dies quietly.
