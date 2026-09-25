@@ -137,7 +137,7 @@ export default async function AdminQuotesPage() {
             <Card key={q.id} className="border-amber-300">
               <CardContent className="py-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex-1 min-w-[240px]">
+                  <div className="flex-1 min-w-[240px] break-words">
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant={`status-${q.status}` as any}>{q.status}</Badge>
                       <span className="text-xs text-neutral-500">

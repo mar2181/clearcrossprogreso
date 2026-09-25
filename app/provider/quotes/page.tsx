@@ -310,7 +310,7 @@ export default function QuotesPage() {
                                 ? quote.photo_url
                                 : `/api/quotes/photo?path=${encodeURIComponent(quote.photo_url)}`}
                               alt=""
-                              className="max-w-xs rounded-lg"
+                              className="max-w-full sm:max-w-xs rounded-lg"
                               onError={(e) => {
                                 e.currentTarget.onerror = null;
                                 e.currentTarget.src =
