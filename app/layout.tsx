@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { I18nBody } from '@/components/layout/I18nBody'
 import SiteConcierge from '@/components/SiteConcierge'
+import VeraEdit from '@/components/VeraEdit'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics'
@@ -68,6 +69,8 @@ export default function RootLayout({
         {/* Dr. Leo. Renders nothing until provisioned, and injects the two
             platform tags only after the page has settled. */}
         <SiteConcierge />
+        {/* Edit my website: applies the owner's saved swaps; the editor with a ticket. */}
+        <VeraEdit />
         {/* Measurement. Vercel Analytics and Speed Insights need no key and no
             env var — they are wired to this project by the platform, so they
             start reporting on the first deploy. GA4 stays inert until
